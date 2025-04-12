@@ -1,0 +1,294 @@
+{% extends "main1.html" %}
+{% load static %}
+
+{% block title %}Apply Leave{% endblock %}
+{% block content %}
+
+<div class="wrapper d-flex flex-column min-vh-100">
+
+  <!-- Navbar -->b
+  {% include 'navbar.html' %}
+  <!-- /.navbar -->
+
+  {% include 'sidebar.html' %}
+
+  <!-- Content Wrapper -->
+  <div class="content-wrapper d-flex align-items-center justify-content-center" style="background: #f4f6f9;">
+    <section class="content w-100">
+      <div class="container-fluid h-100 d-flex align-items-center justify-content-center">
+
+        <div class="row w-100">
+          <!-- Leave Detail Section -->
+          <div class="col-lg-4 col-md-5 col-sm-12 mb-3">
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-primary text-white text-center">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-calendar-alt"></i> Leave Details
+            </h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-hover table-bordered text-center">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Type</th>
+                        <th>SL <i class="fas fa-briefcase-medical"></i></th>
+                        <th>CL <i class="fas fa-umbrella-beach"></i></th>
+                        <th>LWP <i class="fas fa-hand-paper"></i></th>
+                        <th>Special <i class="fas fa-star"></i></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="bg-light">
+                        <td><strong>Total</strong></td>
+                        <td>{{ total_sick_leave }}</td>
+                        <td>{{ total_casual_leave }}</td>
+                        <td>{{ total_lwp }}</td>
+                        <td>{{ total_special_leave }}</td>
+
+                    </tr>
+                    <tr>
+                        <td><strong>Availed</strong></td>
+                        <td> {{ availed_sick_leave }}</td>
+                        <td>{{ availed_casual_leave }}</td>
+                        <td>{{ availed_lwp }}</td>
+                        <td>{{ availed_special_leave }}</td>
+                    </tr>
+                    <tr class="bg-light">
+                        <td><strong>Balance</strong></td>
+                        <td class="{% if balance_sick_leave < 5 %}text-danger{% endif %}">
+                            {{ balance_sick_leave }}
+                        </td>
+                        <td class="{% if balance_casual_leave < 5 %}text-danger{% endif %}">
+                            {{ balance_casual_leave }}
+                        </td>
+                        <td>{{ balance_lwp }}</td>
+                        <td>{{ balance_special_leave }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+          <!-- Leave Form Section -->
+          <div class="col-lg-6 col-md-7 col-sm-12">
+            <div class="card shadow">
+              <div class="card-header bg-primary text-white">
+                <h5 class="card-title text-center">Leave Form</h5>
+              </div>
+              <div class="card-body">
+    <form action="{% url 'apply_leave' %}" method="POST" enctype="multipart/form-data" class="p-3" id="leaveForm">
+        {% csrf_token %}
+
+        <!-- Removed 'name' field since it's handled via session/user backend -->
+
+        <div class="form-group">
+            <label for="leave_type">Leave Type:</label>
+            <select id="leave_type" name="leave_type" class="form-control" required>
+                <option value="" disabled selected>-- Select Leave Type --</option>
+                {% for leave in leaves %}
+                <option value="{{ leave.id }}">{{ leave.leavetype }}</option>
+                {% endfor %}
+            </select>
+            <small class="text-danger d-none" id="leaveTypeError">⚠ Please select a leave type.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="from_date">From Date:</label>
+            <input type="date" id="from_date" name="from_date" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="till_date">Till Date:</label>
+            <input type="date" id="till_date" name="till_date" class="form-control" required>
+            <small class="text-danger d-none" id="dateError">⚠ Till Date must be the same or after From Date.</small>
+        </div>
+            <div class="form-group">
+    <label>
+        <input type="checkbox" id="halfDayToggle" name="half_day_enabled">
+        Apply for Half Day Leave?
+    </label>
+</div>
+
+<div id="halfDayOptions" class="form-group" style="display: none;">
+    <label>Select Half Day for Each Date (if any):</label>
+    <div id="halfDayContainer"></div>
+</div>
+        <div class="form-group">
+            <label for="reason">Reason:</label>
+            <textarea id="reason" name="reason" class="form-control" required minlength="10" maxlength="500"></textarea>
+            <small class="text-danger d-none" id="reasonError">⚠ Reason must be between 10 and 500 characters.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="attachment">Attachment (Optional, Max: 2MB):</label>
+            <input type="file" id="attachment" name="attachment" class="form-control" accept=".pdf,.doc,.docx,.jpg,.png">
+            <small class="text-muted">Allowed formats: PDF, DOC, DOCX, JPG, PNG. Max 2MB.</small>
+            <small class="text-danger d-none" id="fileError">⚠ File size must be less than 2MB.</small>
+        </div>
+
+        <button type="submit" class="btn btn-success w-100">Apply</button>
+    </form>
+</div>
+
+<!-- Error Alert Box -->
+<div id="errorAlert" class="alert alert-danger d-none mt-3"></div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let today = new Date().toISOString().split("T")[0];
+        let fromDate = document.getElementById("from_date");
+        let tillDate = document.getElementById("till_date");
+        let errorAlert = document.getElementById("errorAlert");
+
+        // Restrict past dates
+        fromDate.setAttribute("min", today);
+        tillDate.setAttribute("min", today);
+
+        // Ensure Till Date is not before From Date
+        fromDate.addEventListener("change", function () {
+            tillDate.setAttribute("min", this.value);
+        });
+
+        // File Size Validation
+        document.getElementById("attachment").addEventListener("change", function () {
+            let file = this.files[0];
+            if (file && file.size > 2 * 1024 * 1024) {
+                document.getElementById("fileError").classList.remove("d-none");
+                this.value = "";
+            } else {
+                document.getElementById("fileError").classList.add("d-none");
+            }
+        });
+
+        // Form Validation Before Submission
+        document.getElementById("leaveForm").addEventListener("submit", function (event) {
+            let name = document.getElementById("name").value.trim();
+            let leaveType = document.getElementById("leave_type").value;
+            let reason = document.getElementById("reason").value.trim();
+            let isValid = true;
+            let errorMessages = [];
+
+            // Name Validation
+            if (name.length < 2 || !/^[A-Za-z ]+$/.test(name)) {
+                document.getElementById("nameError").classList.remove("d-none");
+                isValid = false;
+                errorMessages.push("Name must be at least 2 characters and contain only alphabets.");
+            } else {
+                document.getElementById("nameError").classList.add("d-none");
+            }
+
+            // Leave Type Validation
+            if (!leaveType) {
+                document.getElementById("leaveTypeError").classList.remove("d-none");
+                isValid = false;
+                errorMessages.push("Please select a leave type.");
+            } else {
+                document.getElementById("leaveTypeError").classList.add("d-none");
+            }
+
+            // Date Validation
+            if (tillDate.value < fromDate.value) {
+                document.getElementById("dateError").classList.remove("d-none");
+                isValid = false;
+                errorMessages.push("Till Date must be the same or after From Date.");
+            } else {
+                document.getElementById("dateError").classList.add("d-none");
+            }
+
+            // Reason Validation
+            if (reason.length < 10 || reason.length > 500) {
+                document.getElementById("reasonError").classList.remove("d-none");
+                isValid = false;
+                errorMessages.push("Reason must be between 10 and 500 characters.");
+            } else {
+                document.getElementById("reasonError").classList.add("d-none");
+            }
+
+            // Show Error Alert if Invalid
+            if (!isValid) {
+                event.preventDefault();
+                errorAlert.innerHTML = "<strong>Error!</strong> Please fix the following issues:<ul><li>" + errorMessages.join("</li><li>") + "</li></ul>";
+                errorAlert.classList.remove("d-none");
+            } else {
+                errorAlert.classList.add("d-none");
+            }
+        });
+    });
+</script>
+<script>
+    const fromDateInput = document.getElementById("from_date");
+    const tillDateInput = document.getElementById("till_date");
+    const toggle = document.getElementById("halfDayToggle");
+    const container = document.getElementById("halfDayContainer");
+    const halfDaySection = document.getElementById("halfDayOptions");
+
+    function renderHalfDaySelectors() {
+        const fromDate = new Date(fromDateInput.value);
+        const tillDate = new Date(tillDateInput.value);
+        container.innerHTML = "";
+
+        if (isNaN(fromDate.getTime()) || isNaN(tillDate.getTime()) || fromDate > tillDate) {
+            container.innerHTML = "<p class='text-danger'>Please select valid From and Till dates first.</p>";
+            return;
+        }
+
+        for (let d = new Date(fromDate); d <= tillDate; d.setDate(d.getDate() + 1)) {
+            const dateStr = d.toISOString().split('T')[0];
+            const label = document.createElement("label");
+            label.innerHTML = `
+                <div class="mb-2">
+                    <strong>${dateStr}</strong>:
+                    <select name="half_day_status_${dateStr}" class="form-control d-inline-block w-auto">
+                        <option value="none">Full Day</option>
+                        <option value="first_half">First Half</option>
+                        <option value="second_half">Second Half</option>
+                    </select>
+                </div>
+            `;
+            container.appendChild(label);
+        }
+    }
+
+    toggle.addEventListener("change", function () {
+        halfDaySection.style.display = this.checked ? "block" : "none";
+        if (this.checked) {
+            renderHalfDaySelectors();
+        } else {
+            container.innerHTML = "";
+        }
+    });
+
+    fromDateInput.addEventListener("change", () => {
+        if (toggle.checked) renderHalfDaySelectors();
+    });
+    tillDateInput.addEventListener("change", () => {
+        if (toggle.checked) renderHalfDaySelectors();
+    });
+</script>
+              </div>
+            </div>
+          </div>
+
+        </div>
+    </section>
+  </div>
+
+  <!-- Footer -->
+  {% include 'footer.html' %}
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    let fileInput = document.querySelector('input[type="file"]');
+    fileInput.addEventListener("change", function() {
+        if (this.files[0].size > 2097152) {
+            alert("File size should be less than 2MB!");
+            this.value = "";
+        }
+    });
+});
+</script>
+
+{% endblock %}

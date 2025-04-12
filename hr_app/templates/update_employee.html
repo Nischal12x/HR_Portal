@@ -1,0 +1,131 @@
+{% extends "main1.html" %}
+{% load static %}
+
+{% block title %}Apply Leave{% endblock %}
+{% block content %}
+<div class="wrapper">
+  <!-- Navbar -->
+  {% include 'navbar.html' %}
+  <!-- /.navbar -->
+    <!-- Sidebar -->
+
+  {% include 'sidebar.html' %}
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Home</a></li>
+              <li class="breadcrumb-item active">DataTables</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                 <h2><i class="fas fa-users icon"></i> Update Employee</h2>
+
+              </div>
+              <!-- /.card-header -->
+              <div class="card-body">
+                  <form action="{% url 'update_employee' employee.id %}" method="POST">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label class="form-label">Full Name</label>
+            <input type="text" name="full_name" value="{{ employee.full_name }}" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" value="{{ employee.email }}" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Phone</label>
+            <input type="text" name="phone" value="{{ employee.phone }}" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Date of Birth</label>
+            <input type="date" name="dob" value="{{ employee.dob|date:'Y-m-d' }}" class="form-control">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Gender</label>
+            <select name="gender" class="form-control">
+                <option value="Male" {% if employee.gender == "Male" %}selected{% endif %}>Male</option>
+                <option value="Female" {% if employee.gender == "Female" %}selected{% endif %}>Female</option>
+                <option value="Other" {% if employee.gender == "Other" %}selected{% endif %}>Other</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Address</label>
+            <textarea name="address" class="form-control">{{ employee.address }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Department</label>
+            <select name="department" class="form-control">
+                <option value="IT" {% if employee.department == "IT" %}selected{% endif %}>IT</option>
+                <option value="HR" {% if employee.department == "HR" %}selected{% endif %}>HR</option>
+                <option value="Marketing" {% if employee.department == "Marketing" %}selected{% endif %}>Marketing</option>
+                <option value="Finance" {% if employee.department == "Finance" %}selected{% endif %}>Finance</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Designation</label>
+            <input type="text" name="designation" value="{{ employee.designation }}" class="form-control">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Joining Date</label>
+            <input type="date" name="joining_date" value="{{ employee.joining_date|date:'Y-m-d' }}" class="form-control">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Salary</label>
+            <input type="number" name="salary" value="{{ employee.salary }}" class="form-control">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Employment Type</label>
+            <select name="employment_type" class="form-control">
+                <option value="Full-time" {% if employee.employment_type == "Full-time" %}selected{% endif %}>Full-time</option>
+                <option value="Part-time" {% if employee.employment_type == "Part-time" %}selected{% endif %}>Part-time</option>
+                <option value="Contract" {% if employee.employment_type == "Contract" %}selected{% endif %}>Contract</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">Update Employee</button>
+    </form>
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+            <!-- /.card -->
+          </div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+  {% endblock %}

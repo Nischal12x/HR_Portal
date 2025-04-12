@@ -1,0 +1,238 @@
+{% load static %}
+<!-- Main Sidebar Container -->
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <!-- Brand Logo -->
+    <a href="{% url 'index3' %}" class="brand-link text-center">
+        <img src="{% static 'img/logo1.png' %}" alt="BISP Solutions" width="140px">
+    </a>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <!-- User Panel -->
+        <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+            <div class="image" style="display: flex; justify-content: center; align-items: center;">
+                {% if employee and employee.attachment %}
+                    <img src="{{ request.session.attachment }}" class="img-circle elevation-2" alt="User Image">
+                {% else %}
+                    <img src="{% static 'img/user2-160x160.jpg' %}" class="img-circle elevation-2" style="width : 40px" alt="User Image">
+                {% endif %}
+            </div>
+            <div class="info">
+                <a href="#" class="d-block">{{ request.session.name|default:"User Name" }}</a>
+                <span class="text-muted">{{ request.session.role|default:"Sr. Software Developer" }}</span>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="mt-2">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                <li class="nav-item">
+                    <a href="{% url 'index' %}" class="nav-link {% if request.path == '/' or request.path == '/dashboard_v2' or request.path == '/dashboard_v3/' %} active {% endif %}">
+                        <i class="nav-icon fas fa-tachometer-alt"></i>
+                        <p>Dashboard</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'widgets' %}" class="nav-link {% if request.path == '/Projects' %} active {% endif %}">
+                        <i class="nav-icon fas fa-project-diagram"></i>
+                        <p>Projects</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'widgets' %}" class="nav-link {% if request.path == '/tasks' %} active {% endif %}">
+                        <i class="nav-icon fas fa-tasks"></i>
+                        <p>Tasks</p>
+                    </a>
+                </li>
+
+                <!-- Timesheet Dropdown -->
+                <li class="nav-item has-treeview">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-table"></i>
+                        <p>
+                            Timesheet
+                            <i class="fas fa-angle-left right"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="pages/tables/simple.html" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Simple Tables</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="pages/tables/data.html" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>DataTables</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="pages/tables/jsgrid.html" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>jsGrid</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Leave Management Dropdown -->
+                <li class="nav-item has-treeview">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-tree"></i>
+                        <p>
+                            Leave
+                            <i class="fas fa-angle-left right"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{% url 'leave_dashboard' %}" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Leave Record</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'index2' %}" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Apply Leave</p>
+                            </a>
+                        </li>
+                        {% if request.session.role == 'HR' %}
+                        <li class="nav-item">
+                            <a href="{% url 'leave_dashboard1' 1 %}" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Staff Leave</p>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </li>
+                <!-- add Member dropdown-->
+                {% if request.session.department == 'HR' or not request.session.department %}
+                <li class="nav-item has-treeview">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-user nav-icon"></i>
+                        <p>
+                            Staff
+                            <i class="fas fa-angle-left right"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{% url 'add_employees' %}" class="nav-link">
+
+                                <i class="fas fa-id-badge nav-icon"></i>
+                                <p>Add Employee</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'employees' %}" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Employees</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item has-treeview">
+    <a href="#" class="nav-link">
+        <i class="fas fa-cogs nav-icon"></i>
+        <p>
+            Configuration
+            <i class="fas fa-angle-left right"></i>
+        </p>
+    </a>
+    <ul class="nav nav-treeview">
+        <li class="nav-item">
+            <a href="{% url 'payroll_setting' %}" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Payroll Setting</p>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'employee_salary' %}" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Employee Salary</p>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'add_employees' %}" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Employee</p>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'leave_settings' %}" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Leave</p>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'holiday_list' %}" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Holiday</p>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'upload_handbook' %}" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Upload Handbook</p>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'assets' %}" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Assets</p>
+            </a>
+        </li>
+    </ul>
+</li>
+                {% endif %}
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-book"></i>
+                        <p>Handbook PDF</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-play-circle"></i>
+                        <p>Learning Video</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-chalkboard-teacher"></i>
+                        <p>Training Module</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-file-invoice-dollar"></i>
+                        <p>Investment Declaration</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-door-open"></i>
+                        <p>Exit Management System</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-qrcode"></i>
+                        <p>Student QR Scan Record</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'log_out' %}" class="nav-link {% if request.path == '/Projects' %} active {% endif %}">
+                        <i class="nav-icon fas fa-project-diagram"></i>
+                        <p>Log Out</p>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</aside>

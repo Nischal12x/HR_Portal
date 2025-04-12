@@ -1,0 +1,269 @@
+{% extends "main1.html" %}
+{% load static %}
+
+{% block title %}AdminLTE3 | Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="wrapper">
+
+  <!-- Preloader -->
+  <div class="preloader flex-column justify-content-center align-items-center">
+<img class="animation__shake" src="{% static 'img/AdminLTELogo.png' %}" alt="AdminLTELogo" height="60" width="60">
+
+  </div>
+
+  <!-- Navbar -->
+  {% include 'navbar.html' %}
+  <!-- /.navbar -->
+
+      <!-- Sidebar Menu -->
+      {% include 'sidebar.html' %}
+
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Dashboard</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Home</a></li>
+              <li class="breadcrumb-item active">Dashboard v1</li>
+            </ol>
+          </div><!-- /.col -->
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+
+    <div class="container-fluid">
+  <!-- Summary Cards -->
+
+      <div class="row">
+          <div class="col-md-3 col-sm-6 col-12">
+            <div class="info-box bg-info" >
+               <span class="info-box-icon"><i class="far fa-bookmark"></i></span>
+
+              <div class="info-box-content">
+
+                <span class="info-box-number">Total Employee</span>
+
+                <div class="progress">
+                  <div class="progress-bar" style="width: 100%"></div>
+                </div>
+                    <span class="progress-description"> 30
+
+                </span>
+              </div>
+              <!-- /.info-box-content -->
+            </div>
+            <!-- /.info-box -->
+          </div>
+          <!-- ./col -->
+          <div class="col-md-3 col-sm-6 col-12">
+            <div class="info-box bg-info">
+              <span class="info-box-icon"><i class="far fa-bookmark"></i></span>
+
+              <div class="info-box-content">
+                <span class="info-box-number">Total Holiday </span>
+
+                <div class="progress">
+                  <div class="progress-bar" style="width: 70%"></div>
+                </div>
+                    <span class="progress-description"> 30
+
+                </span>
+              </div>
+              <!-- /.info-box-content -->
+            </div>
+            <!-- /.info-box -->
+          </div>
+          <!-- ./col -->
+          <div class="col-md-3 col-sm-6 col-12">
+            <div class="info-box bg-info">
+              <span class="info-box-icon"><i class="far fa-bookmark"></i></span>
+
+              <div class="info-box-content">
+
+                <span class="info-box-number">Total Leave</span>
+
+                <div class="progress">
+                  <div class="progress-bar" style="width: 70%"></div>
+                </div>
+                    <span class="progress-description"> 30
+
+                </span>
+              </div>
+              <!-- /.info-box-content -->
+            </div>
+            <!-- /.info-box -->
+          </div>
+            <!-- small box -->
+           <div class="col-md-3 col-sm-6 col-12">
+            <div class="info-box bg-info">
+              <span class="info-box-icon"><i class="far fa-bookmark"></i></span>
+
+              <div class="info-box-content">
+
+                <span class="info-box-number">Total Request </span>
+
+                <div class="progress">
+                  <div class="progress-bar" style="width: 70%"></div>
+                </div>
+                    <span class="progress-description"> 30
+
+                </span>
+              </div>
+              <!-- /.info-box-content -->
+            </div>
+            <!-- /.info-box -->
+          </div>
+          <!-- ./col -->
+         <div class="col-md-3 col-sm-6 col-12">
+            <div class="info-box bg-info">
+              <span class="info-box-icon"><i class="far fa-bookmark"></i></span>
+
+              <div class="info-box-content">
+
+                <span class="info-box-number">Availed Leave</span>
+
+                <div class="progress">
+                  <div class="progress-bar" style="width: 70%"></div>
+                </div>
+                    <span class="progress-description"> 30
+
+                </span>
+              </div>
+              <!-- /.info-box-content -->
+            </div>
+            <!-- /.info-box -->
+          </div>
+          <!-- ./col -->
+          <div class="col-md-3 col-sm-6 col-12">
+            <div class="info-box bg-info">
+              <span class="info-box-icon"><i class="far fa-bookmark"></i></span>
+
+              <div class="info-box-content">
+
+                <span class="info-box-number">Project</span>
+
+                <div class="progress">
+                  <div class="progress-bar" style="width: 70%"></div>
+                </div>
+                    <span class="progress-description">  30
+
+                </span>
+              </div>
+              <!-- /.info-box-content -->
+            </div>
+            <!-- /.info-box -->
+          </div>
+          <div class="col-md-3 col-sm-6 col-12">
+            <div class="info-box bg-info">
+              <span class="info-box-icon"><i class="far fa-bookmark"></i></span>
+
+              <div class="info-box-content">
+
+                <span class="info-box-number">Task</span>
+
+                <div class="progress">
+                  <div class="progress-bar" style="width: 70%"></div>
+                </div>
+                    <span class="progress-description">
+                    30
+                </span>
+              </div>
+              <!-- /.info-box-content -->
+            </div>
+            <!-- /.info-box -->
+          </div>
+        </div>
+    <div class="row">
+    <div class="col-lg-3 col-md-6">
+
+      <div class="card bg-info text-white shadow">
+        <div class="card-body">Total Employees: 30</div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+      <div class="card bg-success text-white shadow">
+        <div class="card-body">Total Leave: 30</div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+      <div class="card bg-warning text-dark shadow">
+        <div class="card-body">Total Projects: 30</div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+      <div class="card bg-danger text-white shadow">
+        <div class="card-body">Total Requests: 30</div>
+      </div>
+    </div>
+  </div>
+  <!-- Department Wise Task and Leave Request -->
+  <div class="row mt-4">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">Department Wise Task/Leave Request</div>
+        <div class="card-body">
+          <div class="row text-center">
+            <div class="col-md-3"><strong>IT Department</strong><br>Pending Tasks: 10 | Leave Requests: 30</div>
+            <div class="col-md-3"><strong>HR Department</strong><br>Pending Tasks: 10 | Leave Requests: 40</div>
+            <div class="col-md-3"><strong>Marketing Department</strong><br>Pending Tasks: 10 | Leave Requests: 40</div>
+            <div class="col-md-3"><strong>Finance Department</strong><br>Pending Tasks: 10 | Leave Requests: 30</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Section -->
+  <div class="row mt-4">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">Task Statistics</div>
+        <div class="card-body">
+          <canvas id="taskChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">Leave Statistics</div>
+        <div class="card-body">
+          <canvas id="leaveChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js Integration -->
+
+
+    <section class="content">
+      <div class="container-fluid">
+        <!-- Small boxes (Stat box) -->
+
+        <!-- /.row -->
+        <!-- Main row -->
+        <div class="row">
+          <!-- Left col -->
+          <!-- right col -->
+        </div>
+        <!-- /.row (main row) -->
+      </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+  {% include 'footer.html' %}
+</div>
+{% endblock %}

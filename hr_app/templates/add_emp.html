@@ -1,0 +1,179 @@
+{% extends "main1.html" %}
+{% load static %}
+
+{% block title %}Apply Leave{% endblock %}
+{% block content %}
+<div class="wrapper">
+  <!-- Navbar -->
+  {% include 'navbar.html' %}
+  <!-- /.navbar -->
+    <!-- Sidebar -->
+
+  {% include 'sidebar.html' %}
+
+
+
+  <!-- Content Wrapper -->
+  <div class="content-wrapper d-flex align-items-center justify-content-center" style="background: #f4f6f9;">
+    <section class="content w-100">
+      <div class="container-fluid h-100 d-flex align-items-center justify-content-center">
+
+          <div class="container">
+              <section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-header">
+            <h3>{% if employee and employee.id %} Update Employee {% else %} Add Employee {% endif %}</h3>
+          </div>
+          <div class="card-body">
+            {% if messages %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        {% for message in messages %}
+            Swal.fire({
+                title: "{% if message.tags == 'success' %}Success{% else %}Error{% endif %}",
+                text: "{{ message }}",
+                icon: "{% if message.tags == 'success' %}success{% else %}error{% endif %}",
+                confirmButtonText: "OK"
+            });
+        {% endfor %}
+    });
+</script>
+{% endif %}
+
+
+               <form action="{% if employee and employee.id %} {% url 'update_employee' employee.id %} {% else %} {% url 'add-emp' %} {% endif %}"
+          method="POST" enctype="multipart/form-data">
+  {% csrf_token %}
+              <div class="row">
+
+                <!-- Left Side: Personal Details -->
+                <div class="col-md-6">
+                  <h4>Personal Details</h4>
+
+                  <div class="form-group">
+                    <label>Full Name <span class="text-danger">*</span></label>
+                    <input type="text" name="full_name" class="form-control" value="{{ employee.full_name|default:'' }}" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Email <span class="text-danger">*</span></label>
+                    <input type="email" name="email" class="form-control" value="{{ employee.email|default:'' }}" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Phone Number <span class="text-danger">*</span></label>
+                    <input type="tel" name="phone" class="form-control" value="{{ employee.phone|default:'' }}" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Date of Birth <span class="text-danger">*</span></label>
+                        <input type="date" name="dob" class="form-control"
+       value="{{ employee.dob|date:'Y-m-d' }}" required>
+</div>
+
+                  <div class="form-group">
+                    <label>Gender <span class="text-danger">*</span></label>
+                    <select name="gender" class="form-control" required>
+    <option value="">Select Gender</option>
+    <option value="Male" {% if employee.gender == "Male" %}selected{% endif %}>Male</option>
+    <option value="Female" {% if employee.gender == "Female" %}selected{% endif %}>Female</option>
+    <option value="Other" {% if employee.gender == "Other" %}selected{% endif %}>Other</option>
+</select>
+
+                  </div>
+
+                  <div class="form-group">
+                    <label>Address <span class="text-danger">*</span></label>
+                    <textarea name="address" class="form-control" rows="3" required>{{ employee.address|default:'' }}</textarea>
+                  </div>
+                </div>
+
+                <!-- Right Side: Job Details -->
+                <div class="col-md-6">
+                  <h4>Job Details</h4>
+
+                  <div class="form-group">
+                    <label>Password <span class="text-danger">*</span></label>
+                    <input type="text" name="password" class="form-control" value="{{ employee.employee_id}}" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Department <span class="text-danger">*</span></label>
+                    <select name="department" class="form-control" required>
+                      <option value="">Select Department</option>
+                      <option value="IT"  {% if employee.department == "IT" %}selected{% endif %}>IT</option>
+                      <option value="HR" {% if employee.department == "HR" %}selected{% endif %}>HR</option>
+                      <option value="Marketing" {% if employee.department == "Marketing" %}selected{% endif %}>Marketing</option>
+                      <option value="Finance" {% if employee.department == "Finance" %}selected{% endif %}>Finance</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Designation <span class="text-danger">*</span></label>
+                    <input type="text" name="designation" class="form-control" value="{{employee.designation}}" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Date of Joining <span class="text-danger">*</span></label>
+                    <input type="date" name="joining_date" class="form-control" value="{{ employee.joining_date|date:'Y-m-d' }}" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Salary <span class="text-danger">*</span></label>
+                    <input type="number" name="salary" class="form-control" value="{{employee.salary}}" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Employment Type <span class="text-danger">*</span></label>
+                    <select name="employment_type" class="form-control" required>
+                      <option value="">Select Type</option>
+                      <option value="Full-Time" {% if employee.employment_type == "Full-Time" %}selected{% endif %}>Full-Time</option>
+                      <option value="Part-Time" {% if employee.employment_type == "Part-Time" %}selected{% endif %}>Part-Time</option>
+                      <option value="Contract" {% if employee.employment_type == "Contract" %}selected{% endif %}>Contract</option>
+                    </select>
+<!--                    <p>Employment Type: "{{ employee.employment_type }}"</p>--> <!--here we have checked the value.-->
+                  </div>
+                   <div class="form-group">
+                    <label for="attachment">Upload Attachment</label>
+                    <input type="file" name="attachment" class="form-control" accept=".pdf,.doc,.docx,.jpg,.png">
+
+                    {% if employee and employee.attachment %}
+                        <p>Current Attachment:</p>
+                        <img src="{{ employee.attachment.url }}" alt="Attachment" class="img-thumbnail" width="100">
+                    {% endif %}
+                   </div>
+                    <div class="form-group">
+                    <label for="role"> Role:<span class="text-danger">*</span></label>
+                    <select name="role" class="form-control" required>
+                       <option value="">-- Select Role --</option>
+                        {% for role in roles %}
+                      <option value="{{role.id}}"> {{role.name}}</option>
+                         {% endfor %}
+                    </select>
+<!--                    <p>Employment Type: "{{ employee.employment_type }}"</p>--> <!--here we have checked the value.-->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Submit Button -->
+              <div class="text-center mt-4">
+                <button type="submit" class="btn btn-primary">{% if employee and employee.id %} Update Employee {% else %} Add Employee {% endif %}</button>
+                {% if employee and employee.id %} <button type="reset" class="btn btn-secondary">Reset</button> {% endif %}
+              </div>
+
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+          </div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

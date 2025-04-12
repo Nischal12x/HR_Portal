@@ -1,0 +1,166 @@
+{% extends "main1.html" %}
+{% load static %}
+{% block title %}leave_apply_record{% endblock %}
+{% block content %}
+<div class="wrapper">
+  <!-- Navbar -->
+  {% include 'navbar.html' %}
+  <!-- /.navbar -->
+    <!-- Sidebar -->
+
+  {% include 'sidebar.html' %}
+ <!-- Content Header (Page header) -->
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Database</a></li>
+              <li class="breadcrumb-item active">Leave Record</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title"><b>Leave-</b>{{ applicants|length }} Record</h3>
+              </div>
+              <!-- /.card-header -->
+              <div class="card-body">
+               <table id="example2" class="table table-bordered table-hover dataTable no-footer dtr-inline" role="grid" aria-describedby="example2_info">
+                  <thead>
+    <tr>
+      <th><i class="fa fa-calendar"></i> Leave ID </th>
+      <th><i class="fa fa-user"></i> Employee Name</th>
+      <th><i class="fa fa-calendar-day"></i> Leave Type</th>
+      <th><i class="fa fa-calendar-check"></i> Leave Start Date</th>
+      <th><i class="fa fa-info-circle"></i> Leave End Date</th>
+      <th><i class="fa fa-comment"></i> Reasons</th>
+      <th><i class="fa fa-check-circle"></i> Status</th>
+      {% if val == 0 %}<th><i class="fa fa-cog"></i> Actions</th> {% endif %}
+
+      <th><i class="fa fa-pencil-alt"></i> Approved by {{request.session.role_id}}</th>
+    </tr>
+ </thead>
+                 <tbody>
+                 {% for applicant in applicants %}
+                    {% if val == 0 and applicant.employee.full_name == request.session.name %}
+                 <td>{{ forloop.counter }}</td>
+                 <td>{{ applicant.employee.full_name }}</td>
+                 <td>{{ applicant.leave_type }}</td>
+                 <td>{{ applicant.from_date }}</td>
+                 <td>{{ applicant.till_date }}</td>
+                 <td>{{ applicant.reason }}</td>
+                 <td>
+  <div class="status-container">
+    <i class="fas status-icon
+      {% if applicant.status == "Cancelled" %}fa-times Cancelled
+      {% elif applicant.status == "Approved" %}fa-check Approved
+      {% elif applicant.status == "Withdrawn" %}fa-ban Withdrawn
+      {% else %}fa-clock Pending{% endif %}">
+    </i>
+
+    <select class="statusSelect" onchange="updateStatus(this)">
+      {% if applicant.status == "Withdrawn" %}
+        <option value="Withdrawn" selected>Withdrawn</option>
+      {% else %}
+        <option value="Pending"
+          {% if applicant.status == "Pending" or applicant.status == None %}selected {% else %} hidden {% endif %}>
+          Pending
+        </option>
+
+        <option value="Cancelled"
+          {% if applicant.status == "Cancelled" %}selected{% endif %}
+          {% if request.session.role != 'HR' or request.session.name == applicant.employee.full_name %}hidden{% endif %}>
+          Cancelled
+        </option>
+
+        <option value="Approved"
+          {% if applicant.status == "Approved" %}selected{% endif %}
+          {% if request.session.role != 'HR' or request.session.name == applicant.employee.full_name %}hidden{% endif %}>
+          Approved
+        </option>
+      {% endif %}
+    </select>
+  </div>
+</td>
+
+                 <td>
+  {% if applicant.status == "Pending" %}
+    <a href="{% url 'withdraw_leave' applicant.id %}"
+       class="btn btn-warning btn-sm"
+       onclick="return confirm('Are you sure you want to withdraw this leave?');">
+      <i class="fa fa-undo"></i> Withdraw
+    </a>
+  {% else %}
+    <button class="btn btn-secondary btn-sm" disabled>
+      <i class="fa fa-ban"></i> Withdraw
+    </button>
+  {% endif %}
+</td>
+                 <td>{{ applicant.approved_by }} </td>
+                 </tbody>
+                 {% elif val == 1 and applicant.employee.full_name != request.session.name %}
+                 <td>{{ forloop.counter }}</td>
+                 <td>{{ applicant.employee.full_name }}</td>
+                 <td>{{ applicant.leave_type }}</td>
+                 <td>{{ applicant.from_date }}</td>
+                 <td>{{ applicant.till_date }}</td>
+                 <td>{{ applicant.reason }}</td>
+                <td>
+  <div class="status-container">
+     <i class="fas status-icon
+      {% if applicant.status == 'Approved' %}fa-check approved
+      {% elif applicant.status == 'Cancelled' %}fa-times cancelled
+      {% elif applicant.status == 'Withdrawn' %}fa-ban withdrawn
+      {% else %}fa-clock pending
+      {% endif %}">
+    </i>
+    <form method="POST" action="{% url 'update_leave_status' applicant.id %}">
+        {% csrf_token %}
+        <select class="statusSelect" name="status" onchange="updateStatus(this); this.form.submit()">
+            {% if applicant.status == "Withdrawn" %}
+                <option value="Withdrawn" selected>Withdrawn</option>
+            {% else %}
+                <option value="Pending" {% if applicant.status == "Pending" %}selected {% else %} hidden {% endif %}>Pending</option>
+                <option value="Cancelled"
+                    {% if request.session.role != 'HR' or request.session.name == applicant.employee.full_name %}
+                        hidden
+                    {% endif %}
+                    {% if applicant.status == "Cancelled" %}selected{% endif %}>Cancelled</option>
+                <option value="Approved"
+                    {% if request.session.role != 'HR' or request.session.name == applicant.employee.full_name %}
+                        hidden
+                    {% endif %}
+                    {% if applicant.status == "Approved" %}selected{% endif %}>Approved</option>
+            {% endif %}
+        </select>
+    </form>
+  </div>
+</td>
+                 <td>{{ applicant.approved_by|default:"" }}</td>
+                 </tbody>
+                   {% endif %}
+                 {% endfor %}
+                </table></div>
+              <!-- /.card-body -->
+            </div>
+          </div>
+        <!-- /.col -->
+      </div>
+      <!-- /.row -->
+    </div>
+    <!-- /.container-fluid -->
+  </section>    <!-- /.content -->
+  </div>
+{% endblock %}
