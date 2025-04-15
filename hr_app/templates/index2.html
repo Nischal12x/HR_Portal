@@ -31,38 +31,56 @@
                 <thead class="bg-light">
                     <tr>
                         <th>Type</th>
-                        <th>SL <i class="fas fa-briefcase-medical"></i></th>
-                        <th>CL <i class="fas fa-umbrella-beach"></i></th>
-                        <th>LWP <i class="fas fa-hand-paper"></i></th>
-                        <th>Special <i class="fas fa-star"></i></th>
+                        {% for item in leave_details %}
+                        {% if item.leave_type.applied_to == 'All' or item.leave_type.applied_to == request.session.employee_id|stringformat:"s" %}
+                        <th>{{item.leave_type.leave_code}} <i class="fas fa-briefcase-medical"></i></th>
+<!--                        <th>CL <i class="fas fa-umbrella-beach"></i></th>-->
+<!--                        <th>LWP <i class="fas fa-hand-paper"></i></th>-->
+<!--                        <th>Special <i class="fas fa-star"></i></th>-->
+                        {% endif %}
+                        {% endfor %}
                     </tr>
                 </thead>
                 <tbody>
                     <tr class="bg-light">
                         <td><strong>Total</strong></td>
-                        <td>{{ total_sick_leave }}</td>
-                        <td>{{ total_casual_leave }}</td>
-                        <td>{{ total_lwp }}</td>
-                        <td>{{ total_special_leave }}</td>
+
+                        {% for item in leave_details %}
+                        {% if item.leave_type.applied_to == 'All' or item.leave_type.applied_to == request.session.employee_id|stringformat:"s" %}
+                        <td>{{ item.leave_type.leave_time }}</td>
+<!--                        <td>{{ total_casual_leave }}</td>-->
+<!--                        <td>{{ total_lwp }}</td>-->
+<!--                        <td>{{ total_special_leave }}</td>-->
+                        {% endif %}
+                        {% endfor %}
 
                     </tr>
                     <tr>
                         <td><strong>Availed</strong></td>
-                        <td> {{ availed_sick_leave }}</td>
-                        <td>{{ availed_casual_leave }}</td>
-                        <td>{{ availed_lwp }}</td>
-                        <td>{{ availed_special_leave }}</td>
+                        {% for item in leave_details %}
+                        {% if item.leave_type.applied_to == 'All' or item.leave_type.applied_to == request.session.employee_id|stringformat:"s" %}
+                        <td> {{ item.total_consumed_leave }}</td>
+<!--                        <td>{{ availed_casual_leave }}</td>-->
+<!--                        <td>{{ availed_lwp }}</td>-->
+<!--                        <td>{{ availed_special_leave }}</td>-->
+                        {% endif %}
+                        {% endfor %}
                     </tr>
                     <tr class="bg-light">
                         <td><strong>Balance</strong></td>
+
+                        {% for item in leave_details %}
+                        {% if item.leave_type.applied_to == 'All' or item.leave_type.applied_to == request.session.employee_id|stringformat:"s" %}
                         <td class="{% if balance_sick_leave < 5 %}text-danger{% endif %}">
-                            {{ balance_sick_leave }}
+                            {{ item.remaining_leave }}
                         </td>
-                        <td class="{% if balance_casual_leave < 5 %}text-danger{% endif %}">
-                            {{ balance_casual_leave }}
-                        </td>
-                        <td>{{ balance_lwp }}</td>
-                        <td>{{ balance_special_leave }}</td>
+<!--                        <td class="{% if balance_casual_leave < 5 %}text-danger{% endif %}">-->
+<!--                            {{ balance_casual_leave }}-->
+<!--                        </td>-->
+<!--                        <td>{{ balance_lwp }}</td>-->
+<!--                        <td>{{ balance_special_leave }}</td>-->
+                        {% endif %}
+                        {% endfor %}
                     </tr>
                 </tbody>
             </table>
@@ -87,8 +105,11 @@
             <label for="leave_type">Leave Type:</label>
             <select id="leave_type" name="leave_type" class="form-control" required>
                 <option value="" disabled selected>-- Select Leave Type --</option>
-                {% for leave in leaves %}
-                <option value="{{ leave.id }}">{{ leave.leavetype }}</option>
+                {% for item in leave_details %}
+                     {{item.leave_type.id}}
+                    {% if item.leave_type.applied_to == 'All' or item.leave_type.applied_to == request.session.employee_id|stringformat:"s" %}
+                <option value="{{ item.leave_type.id }}">{{ item.leave_type.leavetype }}</option>
+                    {% endif %}
                 {% endfor %}
             </select>
             <small class="text-danger d-none" id="leaveTypeError">⚠ Please select a leave type.</small>

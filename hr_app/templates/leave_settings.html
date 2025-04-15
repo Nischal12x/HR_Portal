@@ -1,0 +1,241 @@
+{% extends "main1.html" %}
+{% load static %}
+
+{% block title %}AdminLTE3 | Dashboard{% endblock %}
+{% block content %}
+<div class="wrapper">
+
+  <!-- Preloader -->
+  <div class="preloader flex-column justify-content-center align-items-center">
+    <img class="animation__shake" src="{% static 'img/AdminLTELogo.png' %}" alt="AdminLTELogo" height="60" width="60">
+  </div>
+
+  {% include 'navbar.html' %}
+  {% include 'sidebar.html' %}
+
+  <div class="content-wrapper">
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Add Leave</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+              <li class="breadcrumb-item active">Add Leave</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Add Leave</h3>
+          </div>
+          <div class="card-body">
+            <form method="POST" action="{% url 'add_leave' %}">
+              {% csrf_token %}
+              <div class="form-row">
+                <div class="form-group col-md-6">
+                  <label for="leaveName">Leave Name<span class="text-danger">*</span></label>
+                  <input type="text"  name="leaveName"  class="form-control" id="leaveName" placeholder="Leave Name">
+                </div>
+                <div class="form-group col-md-6">
+                  <label for="code">Code<span class="text-danger">*</span></label>
+                  <input type="text" name="code" class="form-control" id="code" placeholder="Code">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="leaveType">Leave Type<span class="text-danger">*</span></label>
+                <select class="form-control" name="leaveType" id="leaveType">
+                  <option>Paid</option>
+                  <option>Unpaid</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="employeeType" id="allEmployees" value="All">
+                  <label class="form-check-label" for="allEmployees">All Employee</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="employeeType" id="individualEmployee" value="individual" checked>
+                  <label class="form-check-label" for="individualEmployee">Individual Employee</label>
+                </div>
+              </div>
+
+              <ul class="nav nav-tabs" id="leaveTab" role="tablist">
+                <li class="nav-item">
+                  <a class="nav-link active" id="applicable-tab" data-toggle="tab" href="#applicable" role="tab">Applicable</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" id="entitlement-tab" data-toggle="tab" href="#entitlement" role="tab">Entitlement</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" id="restrictions-tab" data-toggle="tab" href="#restrictions" role="tab">Restrictions</a>
+                </li>
+              </ul>
+
+              <div class="tab-content p-3 border border-top-0" id="leaveTabContent">
+                <div class="tab-pane fade show active" id="applicable" role="tabpanel">
+                  <div class="form-row">
+                    <div class="form-group col-md-6">
+                      <label>Gender</label><br>
+                      <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="gender" id="male" value="male">
+                        <label class="form-check-label" for="male" checked>Male</label>
+                      </div>
+                      <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="gender" id="female" value="female">
+                        <label class="form-check-label" for="female">Female</label>
+                      </div>
+                    </div>
+                    <div class="form-group col-md-6">
+                      <label>Marital Status</label><br>
+                      <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="maritalStatus" id="single" value="single" checked>
+                        <label class="form-check-label" for="single">Single</label>
+                      </div>
+                      <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="maritalStatus" id="married" value="married">
+                        <label class="form-check-label" for="married">Married</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-row">
+                    <div class="form-group col-md-6">
+                      <label for="department">Department</label>
+                      <select name="department" id="department" class="form-control" required>
+                        <option value="" selected>Select Department</option>
+                        {% for dept in departments %}
+                          <option value="{{ dept }}">{{ dept }}</option>
+                        {% endfor %}
+                      </select>
+
+
+                    </div>
+                    <div class="form-group col-md-6">
+                      <label>Employee <span class="text-danger">*</span></label>
+                        <select name="employee" id="employee" class="form-control" required>
+                          <option value="">Select Employee</option>
+                        </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Entitlement Tab -->
+              <div class="tab-pane fade" id="entitlement" role="tabpanel">
+                <div class="row mb-3">
+                  <div class="col-md-4">
+                    <label for="effective_after" class="form-label">Effective After</label>
+                    <input type="number" id="effective_after" name="effective_after" class="form-control" min="1">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="time_unit" class="form-label">Time Unit</label></br>
+                    <select id="time_unit" name="time_unit" class="form-select">
+                      <option value="Year">Year</option>
+                      <option value="Month">Month</option>
+                      <option value="Day">Day</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">From</label><br>
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="from_field" id="joining" value="date_of_joining" onclick="toggleCustomDate(false)">
+<label class="form-check-label" for="joining">Date of Joining</label>
+
+                    </div><div class="form-check form-check-inline">
+  <input class="form-check-input" type="radio" name="from_field" id="custom" value="custom_date" onclick="toggleCustomDate(true)">
+  <label class="form-check-label" for="custom">Custom Date</label>
+</div>
+
+<!-- Custom Date Input (Initially hidden) -->
+<div class="mt-2" id="customDateInput" style="display: none;">
+  <label for="custom_date" class="form-label">Select Custom Date<span class="text-danger">*</span></label>
+  <input type="date" id="custom_date" name="custom_date" class="form-control" min="2000-01-01" max="2099-12-31">
+</div>
+
+                  </div>
+                </div>
+
+                <div class="row mb-3">
+                  <div class="col-md-4">
+                    <label class="form-label">Accrual Enabled</label><br>
+                    <input type="checkbox" id="accrual_enabled" name="accrual_enabled">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="leave_time" class="form-label">Leave Time</label>
+                    <input type="number" id="leave_time" name="leave_time" class="form-control" min="1">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="leave_time_unit" class="form-label">Leave Time Unit</label><br>
+                    <select id="leave_time_unit" name="leave_time_unit" class="form-select">
+                      <option value="Days">Days</option>
+                      <option value="Hours">Hours</option>
+                    </select>
+                    <select id="accrual_frequency" name="accrual_frequency" class="form-select">
+                      <option value="Yearly">Yearly</option>
+                      <option value="Monthly">Monthly</option>
+                    </select>
+                  </div>
+                </div>
+                  </div>
+                <div class="tab-pane fade" id="restrictions" role="tabpanel">
+                  <!-- Restrictions fields go here -->
+                  <div class="card mt-4">
+  <div class="card-header bg-light">
+    <h5 class="mb-0"><strong>Restriction</strong></h5>
+  </div>
+  <div class="card-body">
+    <!-- Weekends Between Leave Period -->
+    <div class="form-group row">
+      <label class="col-sm-5 col-form-label">Weekends Between Leave Period:</label>
+      <div class="col-sm-7">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="count_weekends" id="count_weekends_yes" value="True" checked>
+          <label class="form-check-label" for="count_weekends_yes">Count as Leave</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="count_weekends" id="count_weekends_no" value="False">
+          <label class="form-check-label" for="count_weekends_no">Don't Count as Leave</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Holidays Between Leave Period -->
+    <div class="form-group row mt-3">
+      <label class="col-sm-5 col-form-label">Holidays Between Leave Period:</label>
+      <div class="col-sm-7">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="count_holidays" id="count_holidays_yes" value="True" checked>
+          <label class="form-check-label" for="count_holidays_yes">Count as Leave</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="count_holidays" id="count_holidays_no" value="False">
+          <label class="form-check-label" for="count_holidays_no">Don't Count as Leave</label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+              </div>
+
+              <button type="submit" class="btn btn-primary float-right mt-3">Submit</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  {% include 'footer.html' %}
+</div>
+{% endblock %}

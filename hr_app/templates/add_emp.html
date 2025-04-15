@@ -70,25 +70,33 @@
 
                   <div class="form-group">
                     <label>Date of Birth <span class="text-danger">*</span></label>
-                        <input type="date" name="dob" class="form-control"
-       value="{{ employee.dob|date:'Y-m-d' }}" required>
-</div>
+                        <input type="date" name="dob" class="form-control" value="{{ employee.dob|date:'Y-m-d' }}" required>
+                  </div>
 
                   <div class="form-group">
                     <label>Gender <span class="text-danger">*</span></label>
                     <select name="gender" class="form-control" required>
-    <option value="">Select Gender</option>
-    <option value="Male" {% if employee.gender == "Male" %}selected{% endif %}>Male</option>
-    <option value="Female" {% if employee.gender == "Female" %}selected{% endif %}>Female</option>
-    <option value="Other" {% if employee.gender == "Other" %}selected{% endif %}>Other</option>
-</select>
-
+                        <option value="">Select Gender</option>
+                        <option value="Male" {% if employee.gender == "Male" %}selected{% endif %}>Male</option>
+                        <option value="Female" {% if employee.gender == "Female" %}selected{% endif %}>Female</option>
+                        <option value="Other" {% if employee.gender == "Other" %}selected{% endif %}>Other</option>
+                    </select>
                   </div>
 
                   <div class="form-group">
                     <label>Address <span class="text-danger">*</span></label>
                     <textarea name="address" class="form-control" rows="3" required>{{ employee.address|default:'' }}</textarea>
                   </div>
+
+                    <div class="form-group">
+                        <label for="marital_status">Marital Status</label>
+                        <select class="form-control" id="marital_status" name="marital_status" required>
+                            <option value="">-- Select --</option>
+                            <option value="Single">Single</option>
+                            <option value="Married">Married</option>
+                        </select>
+                    </div>
+
                 </div>
 
                 <!-- Right Side: Job Details -->
@@ -134,7 +142,7 @@
                       <option value="Part-Time" {% if employee.employment_type == "Part-Time" %}selected{% endif %}>Part-Time</option>
                       <option value="Contract" {% if employee.employment_type == "Contract" %}selected{% endif %}>Contract</option>
                     </select>
-<!--                    <p>Employment Type: "{{ employee.employment_type }}"</p>--> <!--here we have checked the value.-->
+<!--                   <p>Employment Type: "{{ employee.employment_type }}"</p>--> <!--here we have checked the value.-->
                   </div>
                    <div class="form-group">
                     <label for="attachment">Upload Attachment</label>

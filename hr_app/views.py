@@ -71,13 +71,6 @@ def apply_leave(request):
         messages.success(request, "Leave applied successfully!")
         return redirect('index')
 
-    # If GET request, show form
-    return render(request, 'index2.html', {
-        'employee': employee,
-        'leaves': leaves,
-        'available_leaves': employee.available_leaves
-    })
-
 
 def add_employee(request):
     if request.method == "POST":
@@ -208,6 +201,7 @@ def update_employee(request, id):
         employee.joining_date = request.POST.get('joining_date', '').strip()
         employee.salary = request.POST.get('salary', '').strip()
         employee.employment_type = request.POST.get('employment_type', '').strip()
+        employee.marital_status = request.POST.get('marital_status')
         # Handle file upload
         if 'attachment' in request.FILES:
             attachment = request.FILES['attachment']
@@ -264,7 +258,7 @@ def check_cred(request):
             employee = AddEmployee.objects.get(email=email)
 
             # Validate the password (replace with check_password if hashed)
-            if password == employee.phone:  # Replace 'employee.phone' with 'employee.password' for real passwords
+            if password == employee.employee_id:  # Replace 'employee.phone' with 'employee.password' for real passwords
                 # Set session variables
                 request.session['employee_id'] = employee.id
                 request.session['employee_email'] = employee.email
@@ -273,7 +267,7 @@ def check_cred(request):
                 request.session['designation'] = employee.designation
                 request.session['department'] = employee.department
                 request.session['role'] = employee.role.name if employee.role else 'No Role Assigned'
-                if employee.attachment == 1:
+                if employee.attachment:
                     request.session['attachment'] = employee.attachment.url
                 # Redirect to the home page or dashboard
                 return render(request, "index.html", {"employee": employee})
@@ -321,48 +315,149 @@ def update_leave_status(request, applicant_id):
             return redirect("index")
         return redirect("leave_dashboard")
 
+def get_filtered_employees(request):
+    gender = request.GET.get('gender')
+    marital_status = request.GET.get('marital_status')
+    department = request.GET.get('department')
+
+    employees = AddEmployee.objects.all()
+
+    if gender:
+        employees = employees.filter(gender=gender.capitalize())
+    if marital_status:
+        employees = employees.filter(marital_status=marital_status.capitalize())
+    if department:
+        employees = employees.filter(department=department)
+
+    employee_data = [{'id': emp.id, 'name': emp.full_name} for emp in employees]
+    return JsonResponse({'employees': employee_data})
+
+def leave_settings_view(request):
+    departments = AddEmployee.objects.values_list('department', flat=True).distinct()
+    return render(request, 'leave_settings.html', {'departments': departments})
+# Create your views here. # Adjust as per your actual model names
 
 
-# Create your views here.
+def add_leave(request):
+    if request.method == 'POST':
+        # Extract fields from the POST data
+        leave_name = request.POST.get('leaveName')
+        leave_code = request.POST.get('code')
+        leave_type = request.POST.get('leaveType')
+
+        # Handle entitlement and restriction logic here
+        effective_after = request.POST.get('effective_after')
+        time_unit = request.POST.get('time_unit')
+        accrual_enabled = request.POST.get('accrual_enabled') == 'on'  # Convert checkbox value
+        leave_time = request.POST.get('leave_time')
+        leave_time_unit = request.POST.get('leave_time_unit')
+        accrual_frequency = request.POST.get('accrual_frequency')
+
+        # Handle applicable users and restrictions
+        gender = request.POST.get('gender')
+        marital_status = request.POST.get('maritalStatus')
+        department = request.POST.get('department')
+        employee_id = request.POST.get('employee')
+        from_field = request.POST.get('from_field')
+        custom_date = request.POST.get('custom_date')
+        employeeType = request.POST.get('employeeType')
+
+        # You might also need to check for custom_date and convert it if necessary
+        if from_field == "custom_date" and custom_date:
+            # Do something with the custom date
+            pass
+
+        if employee_id:
+            employee = AddEmployee.objects.get(id=employee_id)
+
+        # Create a new Leave_Type object
+        leave_type_instance = Leave_Type.objects.create(
+
+            leavetype=leave_name,
+            leave_code=leave_code,
+            leave_privilege=leave_type,
+            effective_after=effective_after,
+            time_unit=time_unit,
+            accrual_enabled=accrual_enabled,
+            leave_time=leave_time,
+            leave_time_unit=leave_time_unit,
+            accrual_frequency=accrual_frequency,
+            count_weekends=True,  # or based on your logic
+            count_holidays=True,  # or based on your logic
+            applied_to = employee.id if employeeType == 'individual' and employee_id else 'All'
+        )
+        # If you're associating this leave type with an employee, you'd likely do something like:
+
+
+        # After saving, you can redirect to a success page
+        return redirect('leave_settings')  # Replace with the actual redirect URL
+
+    return render(request, 'index.html', {'form': LeaveTypeForm()})
 
 
 def admins(request) :
     return render(request, 'index.html')
-def dash_v2(request) :
-    # Total Leave Allocation
-    total_sick_leave = 20
-    total_casual_leave = 12
-    total_lwp = 12
-    total_special_leave = 12
-    user_leaves = LeaveApplication.objects.filter(employee__full_name=request.session['name'])
 
-    # Total leave_days for sick leaves (leave_type=1) that are approved
-    availed_sick_leave = user_leaves.filter(leave_type=1, status="Approved").aggregate(total_days=Sum('leave_days'))['total_days'] or 0
-    availed_lwp = user_leaves.filter(leave_type=4, status="Approved").aggregate(total_days=Sum('leave_days'))['total_days'] or 0
-    availed_special_leave = user_leaves.filter(leave_type=3, status="Approved").aggregate(total_days=Sum('leave_days'))['total_days'] or 0
-    availed_casual_leave = user_leaves.filter(leave_type=2, status="Approved").aggregate(total_days=Sum('leave_days'))['total_days'] or 0
-    # Balance Calculation
-    balance_casual_leave = total_casual_leave - availed_casual_leave
-    balance_sick_leave = total_sick_leave - availed_sick_leave
-    balance_lwp = total_lwp - availed_lwp
-    balance_special_leave = total_special_leave - availed_special_leave
+# from .utils import calculate_remaining_leave  # Assuming the function is in utils.py
+from django.db.models import F
+
+from django.db.models import Sum
+def calculate_leave_details(request, leave):
+    # Get the employee's session ID
+    employee_id = request.session.get('employee_id')
+
+    if not employee_id:
+        return "Employee ID not found in session."
+
+    # Get the leave type from the provided leave row (Leave_Type object)
+    leave_type = leave # Leave_Type row is passed as an argument to the function
+
+    # Get all approved leave applications for the employee for this leave type
+    approved_leaves = LeaveApplication.objects.filter(
+        employee_id=employee_id,
+        leave_type=leave.id,
+        status="Approved"
+    )
+
+    # Calculate total consumed leave days by summing up leave_days from approved leave applications
+    total_consumed_leave = approved_leaves.aggregate(Sum('leave_days'))['leave_days__sum'] or 0
+
+    # Initialize the remaining leave to the total leave_time for this leave type
+    remaining_leave = leave_type.leave_time - total_consumed_leave
+
+    # Convert remaining leave based on the time unit (Days or Months)
+    if leave_type.leave_time_unit == 'Months':
+        # If the time unit is Months, we may need to convert it to days (e.g., assuming 30 days per month)
+        remaining_leave *= 30  # Assuming 30 days in a month for simplicity
+        total_consumed_leave *= 30  # Also convert consumed leave days to days
+
+    return total_consumed_leave, remaining_leave
+
+from django.shortcuts import render
+from .models import Leave_Type
+# from .utils import calculate_leave_details  # Assuming the function is in utils.py
+
+def index2(request):
+    # Get all leave types from the Leave_Type model
     leaves = Leave_Type.objects.all()
-    context = {
-        "total_sick_leave": total_sick_leave,
-        "total_lwp": total_lwp,
-        "total_special_leave": total_special_leave,
-        "availed_sick_leave": availed_sick_leave,
-        "availed_lwp": availed_lwp,
-        "availed_special_leave": availed_special_leave,
-        "balance_sick_leave": balance_sick_leave,
-        "balance_lwp": balance_lwp,
-        "balance_special_leave": balance_special_leave,
-        "leaves": leaves,
-        "total_casual_leave": total_casual_leave,
-        "availed_casual_leave": availed_casual_leave,
-        "balance_casual_leave": balance_casual_leave
-    }
-    return render(request, 'index2.html', context)
+
+    # Initialize a list to store the leave details (consumed and remaining)
+    leave_details = []
+
+    # Iterate over each leave type and calculate consumed and remaining leave
+    for leave in leaves:
+        total_consumed_leave, remaining_leave = calculate_leave_details(request, leave)
+        leave_details.append({
+            'leave_type': leave,
+            'total_consumed_leave': total_consumed_leave,
+            'remaining_leave': remaining_leave
+        })
+
+    # Pass the leave details to the template
+    return render(request, 'index2.html', {'leave_details': leave_details})
+
+
+
 def dash_v3(request) :
     return render(request, 'index3.html')
 def widgets(request) :
@@ -390,7 +485,7 @@ def add_employees(request):
     return render(request, 'configuration/add_employees.html')
 
 def leave_settings(request):
-    return render(request, 'configuration/leave_settings.html')
+    return render(request, 'leave_settings.html')
 
 def holiday_list(request):
     return render(request, 'configuration/holiday_list.html')

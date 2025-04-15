@@ -138,10 +138,106 @@
     }
   }
 </script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const allEmployeeRadio = document.getElementById('allEmployees');
+    const individualEmployeeRadio = document.getElementById('individualEmployee');
+
+    const applicableTab = document.querySelector('a[href="#applicable"]');
+    const applicableContent = document.getElementById('applicable');
+
+    const entitlementContent = document.getElementById('entitlement');
+    const allEntitlementChildren = entitlementContent.querySelectorAll('.row');
+
+    function toggleTabs() {
+      if (allEmployeeRadio.checked) {
+        // Hide applicable tab and content without taking space
+        applicableTab.style.visibility = 'hidden';
+        applicableContent.style.visibility = 'hidden';
+        applicableContent.style.position = 'absolute';
+        applicableTab.style.position = 'absolute';
+
+        // Show only the last row (accrual, leave time, leave time unit)
+        allEntitlementChildren.forEach((row, index) => {
+          row.style.display = (index === 1) ? 'flex' : 'none';
+        });
+
+        // Automatically switch to Entitlement tab
+        document.querySelector('a[href="#entitlement"]').click();
+      } else {
+        // Show applicable tab and content again
+        applicableTab.style.visibility = 'visible';
+        applicableContent.style.visibility = 'visible';
+        applicableContent.style.position = 'static';
+        applicableTab.style.position = 'static';
+
+        // Show all entitlement rows
+        allEntitlementChildren.forEach(row => {
+          row.style.display = 'flex';
+        });
+      }
+    }
+
+    // Run on page load
+    toggleTabs();
+
+    // Attach events
+    allEmployeeRadio.addEventListener('change', toggleTabs);
+    individualEmployeeRadio.addEventListener('change', toggleTabs);
+  });
+</script>
+<script>
+  function toggleCustomDate(show) {
+    const customDateInput = document.getElementById('customDateInput');
+    const customRadio = document.getElementById('custom');
+    if (customRadio.checked && show) {
+      customDateInput.style.display = 'block';
+      document.getElementById('custom_date').setAttribute('required', 'required');
+    } else {
+      customDateInput.style.display = 'none';
+      document.getElementById('custom_date').removeAttribute('required');
+    }
+  }
+
+  // Optional: Trigger on page load if "Custom Date" is already selected
+  window.addEventListener('DOMContentLoaded', () => {
+    toggleCustomDate(document.getElementById('custom').checked);
+  });
+</script>
+
+
 
 
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  function fetchEmployees() {
+    const gender = document.querySelector('input[name="gender"]:checked')?.value || "";
+    const maritalStatus = document.querySelector('input[name="maritalStatus"]:checked')?.value || "";
+    const department = document.getElementById('department')?.value || "";
+
+    fetch(`/get-employees/?gender=${gender}&marital_status=${maritalStatus}&department=${department}`)
+      .then(response => response.json())
+      .then(data => {
+        const employeeSelect = document.getElementById('employee');
+        employeeSelect.innerHTML = '<option value="">Select Employee</option>';
+        data.employees.forEach(emp => {
+          const option = document.createElement('option');
+          option.value = emp.id;
+          option.text = emp.name;
+          employeeSelect.appendChild(option);
+        });
+      }).catch(error => console.error("Fetch error:", error));
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('input[name="gender"], input[name="maritalStatus"]').forEach(el => {
+      el.addEventListener('change', fetchEmployees);
+    });
+    document.getElementById('department').addEventListener('change', fetchEmployees);
+  });
+</script>
+
 
 
 </body>
