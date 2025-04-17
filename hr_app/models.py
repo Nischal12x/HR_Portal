@@ -90,14 +90,24 @@ class LeaveApplication(models.Model):
         if self.till_date < self.from_date:
             raise ValidationError({"till_date": "Till date cannot be earlier than from date."})
 
-    def calculate_total_leave_days(self, half_day_map=None):
+    def calculate_total_leave_days(self, half_day_map=None, exclude_sandwich_sundays=False):
         total_days = (self.till_date - self.from_date).days + 1
         leave_count = 0.0
 
         for i in range(total_days):
             current_date = self.from_date + timedelta(days=i)
             date_str = current_date.strftime("%Y-%m-%d")
+            is_sunday = current_date.weekday() == 6  # Sunday is 6
 
+            # Always exclude if from_date or till_date is Sunday
+            if (i == 0 or i == total_days - 1) and is_sunday:
+                continue
+
+            # Exclude in-between Sundays only if the flag is True
+            if is_sunday and exclude_sandwich_sundays:
+                continue
+
+            # Handle half-day logic
             if half_day_map and date_str in half_day_map:
                 if half_day_map[date_str] in ['first_half', 'second_half']:
                     leave_count += 0.5
@@ -109,9 +119,10 @@ class LeaveApplication(models.Model):
         return leave_count
 
     def save(self, *args, **kwargs):
-        # Optional: receive half-day info from kwargs
         half_day_map = kwargs.pop('half_day_map', None)
-        leave_days = self.calculate_total_leave_days(half_day_map)
+        sandwich = kwargs.pop('sandwich', False)  # fallback to False if not provided
+
+        leave_days = self.calculate_total_leave_days(half_day_map=half_day_map, exclude_sandwich_sundays=not sandwich)
 
         super().save(*args, **kwargs)
 

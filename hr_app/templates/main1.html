@@ -137,8 +137,7 @@
         break;
     }
   }
-</script>
-<script>
+</script><script>
   document.addEventListener('DOMContentLoaded', function () {
     const allEmployeeRadio = document.getElementById('allEmployees');
     const individualEmployeeRadio = document.getElementById('individualEmployee');
@@ -149,23 +148,51 @@
     const entitlementContent = document.getElementById('entitlement');
     const allEntitlementChildren = entitlementContent.querySelectorAll('.row');
 
+    // Fields to toggle required status
+    const department = document.getElementById('department');
+    const employee = document.getElementById('employee');
+    const genderRadios = document.querySelectorAll('input[name="gender"]');
+    const maritalRadios = document.querySelectorAll('input[name="maritalStatus"]');
+    const effectiveAfter = document.getElementById('effective_after');
+    const timeUnit = document.getElementById('time_unit');
+    const fromFieldRadios = document.querySelectorAll('input[name="from_field"]');
+
+    function getSelectedFromFieldValue() {
+      const checkedRadio = [...fromFieldRadios].find(r => r.checked);
+      return checkedRadio ? checkedRadio.value : null;
+    }
+
     function toggleTabs() {
+      const fromFieldValue = getSelectedFromFieldValue();
+
       if (allEmployeeRadio.checked) {
-        // Hide applicable tab and content without taking space
+        // Hide applicable tab
         applicableTab.style.visibility = 'hidden';
         applicableContent.style.visibility = 'hidden';
         applicableContent.style.position = 'absolute';
         applicableTab.style.position = 'absolute';
 
-        // Show only the last row (accrual, leave time, leave time unit)
+        // Show only specific row in entitlement
         allEntitlementChildren.forEach((row, index) => {
           row.style.display = (index === 1) ? 'flex' : 'none';
         });
 
-        // Automatically switch to Entitlement tab
+        // Remove required from applicable tab fields
+        department.removeAttribute('required');
+        employee.removeAttribute('required');
+        genderRadios.forEach(r => r.required = false);
+        maritalRadios.forEach(r => r.required = false);
+
+        // Remove required from entitlement fields if not custom_date
+        if (fromFieldValue !== 'custom_date') {
+          effectiveAfter.removeAttribute('required');
+          timeUnit.removeAttribute('required');
+        }
+
         document.querySelector('a[href="#entitlement"]').click();
+
       } else {
-        // Show applicable tab and content again
+        // Show applicable tab
         applicableTab.style.visibility = 'visible';
         applicableContent.style.visibility = 'visible';
         applicableContent.style.position = 'static';
@@ -175,17 +202,25 @@
         allEntitlementChildren.forEach(row => {
           row.style.display = 'flex';
         });
+
       }
     }
 
-    // Run on page load
+    // Run on load
     toggleTabs();
 
-    // Attach events
+    // Re-evaluate when from_field changes too
+    fromFieldRadios.forEach(radio => {
+      radio.addEventListener('change', toggleTabs);
+    });
+
+    // Attach change events
     allEmployeeRadio.addEventListener('change', toggleTabs);
     individualEmployeeRadio.addEventListener('change', toggleTabs);
   });
 </script>
+
+
 <script>
   function toggleCustomDate(show) {
     const customDateInput = document.getElementById('customDateInput');
@@ -213,6 +248,7 @@
 
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!--this is for fetching Employees depending on gender , marital status, department-->
 <script>
   function fetchEmployees() {
     const gender = document.querySelector('input[name="gender"]:checked')?.value || "";
@@ -240,142 +276,7 @@
     document.getElementById('department').addEventListener('change', fetchEmployees);
   });
 </script>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const form = document.querySelector('form');
-    const employeeTypeIndividual = document.getElementById('individualEmployee');
-
-    const leaveName = document.getElementById('leaveName');
-    const code = document.getElementById('code');
-    const leaveType = document.getElementById('leaveType');
-
-    const effectiveAfter = document.getElementById('effective_after');
-    const timeUnit = document.getElementById('time_unit');
-    const fromFieldRadios = document.querySelectorAll('input[name="from_field"]');
-    const leaveTime = document.getElementById('leave_time');
-    const leaveTimeUnit = document.getElementById('leave_time_unit');
-
-    const genderRadios = document.querySelectorAll('input[name="gender"]');
-    const maritalRadios = document.querySelectorAll('input[name="maritalStatus"]');
-    const department = document.getElementById('department');
-    const employee = document.getElementById('employee');
-
-    function switchToTab(tabId) {
-      console.log('Switching to tab:', tabId); // Check which tab is being activated
-      const tabLink = document.querySelector(`a[href="${tabId}"]`);
-      if (tabLink) {
-        $(tabLink).tab('show');
-      }
-    }
-
-    form.addEventListener('submit', function (e) {
-      // Reset all custom validity
-      form.querySelectorAll('[required]').forEach(field => field.setCustomValidity(''));
-
-      // --- Common Fields ---
-      if (!leaveName.value.trim()) {
-        leaveName.setCustomValidity('Leave Name is required.');
-        leaveName.reportValidity();
-        e.preventDefault();
-        switchToTab('#applicable');  // Switch to applicable tab
-        return leaveName.focus();
-      }
-
-      if (!code.value.trim()) {
-        code.setCustomValidity('Code is required.');
-        code.reportValidity();
-        e.preventDefault();
-        switchToTab('#applicable');
-        return code.focus();
-      }
-
-      if (!leaveType.value) {
-        leaveType.setCustomValidity('Leave Type is required.');
-        leaveType.reportValidity();
-        e.preventDefault();
-        switchToTab('#applicable');
-        return leaveType.focus();
-      }
-
-      // --- Entitlement Tab ---
-      if (!effectiveAfter.value) {
-        effectiveAfter.setCustomValidity('Effective After is required.');
-        effectiveAfter.reportValidity();
-        e.preventDefault();
-        switchToTab('#entitlement');
-        return effectiveAfter.focus();
-      }
-
-      if (!timeUnit.value) {
-        timeUnit.setCustomValidity('Time Unit is required.');
-        timeUnit.reportValidity();
-        e.preventDefault();
-        switchToTab('#entitlement');
-        return timeUnit.focus();
-      }
-
-      if (![...fromFieldRadios].some(r => r.checked)) {
-        alert("Please select the 'From' field.");
-        e.preventDefault();
-        switchToTab('#entitlement');
-        return;
-      }
-
-      if (!leaveTime.value) {
-        leaveTime.setCustomValidity('Leave Time is required.');
-        leaveTime.reportValidity();
-        e.preventDefault();
-        switchToTab('#entitlement');
-        return leaveTime.focus();
-      }
-
-      if (!leaveTimeUnit.value) {
-        leaveTimeUnit.setCustomValidity('Leave Time Unit is required.');
-        leaveTimeUnit.reportValidity();
-        e.preventDefault();
-        switchToTab('#entitlement');
-        return leaveTimeUnit.focus();
-      }
-
-      // --- Applicable Tab (If Individual Employee Selected) ---
-      if (employeeTypeIndividual.checked) {
-        if (![...genderRadios].some(r => r.checked)) {
-          alert("Please select Gender.");
-          e.preventDefault();
-          switchToTab('#applicable');
-          return;
-        }
-
-        if (![...maritalRadios].some(r => r.checked)) {
-          alert("Please select Marital Status.");
-          e.preventDefault();
-          switchToTab('#applicable');
-          return;
-        }
-
-        if (!department.value) {
-          department.setCustomValidity('Please select a Department.');
-          department.reportValidity();
-          e.preventDefault();
-          switchToTab('#applicable');
-          return department.focus();
-        }
-
-        if (!employee.value) {
-          employee.setCustomValidity('Please select an Employee.');
-          employee.reportValidity();
-          e.preventDefault();
-          switchToTab('#applicable');
-          return employee.focus();
-        }
-      }
-
-      // If all validation passes, allow form submission
-      alert('Form is valid! Submitting now...');
-      // form.submit();
-    });
-  });
-</script>
+<!--this is for showing employees who have applied in specific leave basically (+) expand and (-) colapse -->
 <script>
     // Expand/collapse toggle
     document.addEventListener('DOMContentLoaded', function () {
@@ -391,6 +292,7 @@
         });
     });
 </script>
+<!--this is for dob validation -->
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const dobInput = document.getElementById('dob');
@@ -404,6 +306,7 @@
     dobInput.max = maxDate.toISOString().split('T')[0];
   });
 </script>
+<!--this is for date of joining validations-->
 <script
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -420,62 +323,6 @@
     joinDate.min = fourMonthsAgo.toISOString().split('T')[0];
     joinDate.max = fourMonthsLater.toISOString().split('T')[0];
   });
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  const individualRadio = document.getElementById("individualEmployee");
-  const allRadio = document.getElementById("allEmployees");
-
-  function toggleFieldRequirements(isIndividual) {
-    const fieldIDs = [
-      "department",
-      "employee",
-      "effective_after",
-      "joining",
-      "custom_date"
-    ];
-
-    const genderRadios = ["male", "female"];
-    const maritalRadios = ["single", "married"];
-
-    fieldIDs.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.required = isIndividual;
-      }
-    });
-
-    genderRadios.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.required = isIndividual;
-      }
-    });
-
-    maritalRadios.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.required = isIndividual;
-      }
-    });
-
-    // Also toggle visibility (optional)
-    document.getElementById("applicable").style.display = isIndividual ? "block" : "none";
-    document.getElementById("entitlement").style.display = isIndividual ? "block" : "none";
-  }
-
-  // Initial state
-  toggleFieldRequirements(individualRadio.checked);
-
-  // Event listeners
-  individualRadio.addEventListener("change", function () {
-    toggleFieldRequirements(true);
-  });
-
-  allRadio.addEventListener("change", function () {
-    toggleFieldRequirements(false);
-  });
-});
 </script>
 
 

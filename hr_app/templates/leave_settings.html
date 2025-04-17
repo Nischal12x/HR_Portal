@@ -150,10 +150,10 @@
                     <label class="form-label">From</label><br>
                     <div class="form-check form-check-inline">
                       <input class="form-check-input" type="radio" name="from_field" id="joining" value="date_of_joining" onclick="toggleCustomDate(false)">
-<label class="form-check-label" for="joining"{% if leave.applied_to != 'All' and leave.from_date_reference == "date_of_joining" %} checked {% endif %} >Date of Joining</label>
+<label class="form-check-label" for="joining"{% if leave.applied_to != 'All' and leave.from_date_reference == "date_of_joining" %} checked {% elif not leave %}  {% endif %} >Date of Joining</label>
 
                     </div><div class="form-check form-check-inline">
-  <input class="form-check-input" type="radio" name="from_field" id="custom" value="custom_date" {% if leave.applied_to != 'All' and leave.from_date_reference != "date_of_joining" %} checked {% endif %} onclick="toggleCustomDate(true)">
+  <input class="form-check-input" type="radio" name="from_field" id="custom" value="custom_date" {% if leave.applied_to != 'All' and leave.from_date_reference != "date_of_joining" and leave %} checked {% endif %} onclick="toggleCustomDate(true)">
   <label class="form-check-label" for="custom">Custom Date</label>
 </div>
 

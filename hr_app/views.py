@@ -83,7 +83,8 @@ def apply_leave(request):
             reason=reason,
             attachment=attachment
         )
-        leave_days = leave.save(half_day_map=half_day_map)
+        lt = Leave_Type.objects.get(id=leave_type)
+        leave_days = leave.save(half_day_map=half_day_map, sandwich=lt.count_weekends)
         leave.leave_days = leave_days
         leave.save()
         messages.success(request, "Leave applied successfully!")
@@ -413,7 +414,8 @@ def add_leave(request):
         from_field = request.POST.get('from_field')
         custom_date = request.POST.get('custom_date')
         employeeType = request.POST.get('employeeType')
-
+        if not effective_after:
+            effective_after = None
         # You might also need to check for custom_date and convert it if necessary
         if from_field == "custom_date" and custom_date:
             # Do something with the custom date
