@@ -1,0 +1,114 @@
+{% extends "main1.html" %}
+{% load static %}
+
+{% block title %}AdminLTE3 | Dashboard{% endblock %}
+{% block content %}
+<div class="wrapper">
+
+  <!-- Preloader -->
+  <div class="preloader flex-column justify-content-center align-items-center">
+    <img class="animation__shake" src="{% static 'img/AdminLTELogo.png' %}" alt="AdminLTELogo" height="60" width="60">
+  </div>
+
+  {% include 'navbar.html' %}
+  {% include 'sidebar.html' %}
+
+  <div class="content-wrapper">
+
+    <section class="content">
+      <div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Leave Detail</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5>Leave - {{ leaves.count }} Record</h5>
+        <a href="{% url 'leave_settings' %}" class="btn btn-primary">Add Leave</a>
+    </div>
+
+    <!-- Leave Type Table -->
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Leave</th>
+                    <th>Code</th>
+                    <th>Leave Type</th>
+                    <th>Status</th>
+                    <th style="width: 50px;">...</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for leave in leaves %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td><a href="{% url 'edit_leave' leave.id %}">{{ leave.leavetype }}</a></td>
+                    <td>{{ leave.leave_code }}</td>
+                    <td>{{ leave.leave_privilege }}</td>
+                    <td>
+                        <span class="badge bg-success">● Active</span>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-secondary toggle-btn" data-id="{{ leave.id }}">+</button>
+                    </td>
+                </tr>
+
+                <!-- Expandable Row -->
+                <tr class="details-row" id="details-{{ leave.id }}" style="display: none;">
+                    <td colspan="6">
+                        <div class="table-responsive">
+                            <table class="table table-bordered mb-0">
+                                <thead class="table-secondary">
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Accrual</th>
+                                        <th>Effective</th>
+                                        <th>Effective From</th>
+                                        <th>Weekend Leave</th>
+                                        <th>Holiday Leave</th>
+                                        <th>Leave Balance</th>
+                                        <th>Leave Availed</th>
+                                        <th>Uploaded On</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for record in employee_leave_data %}
+                                        {% if record.leave_type_id == leave.id %}
+                                        <tr>
+                                            <td>{{ record.employee_name }}</td>
+                                            <td>{{ record.accrual }}</td>
+                                            <td>{{ record.effective }}</td>
+                                            <td>{{ record.effective_from }}</td>
+                                            <td>{{ record.weekend_leave }}</td>
+                                            <td>{{ record.holiday_leave }}</td>
+                                            <td>{{ record.leave_balance }}</td>
+                                            <td>{{ record.leave_availed }}</td>
+                                            <td>{{ record.uploaded_on|date:"M d, Y, P" }}</td>
+                                        </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    </div>
+
+    </section>
+
+    <!-- Main content -->
+  </div>
+
+  {% include 'footer.html' %}
+</div>
+{% endblock %}

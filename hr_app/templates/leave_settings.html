@@ -43,29 +43,30 @@
               <div class="form-row">
                 <div class="form-group col-md-6">
                   <label for="leaveName">Leave Name<span class="text-danger">*</span></label>
-                  <input type="text"  name="leaveName"  class="form-control" id="leaveName" placeholder="Leave Name">
+                  <input type="text" name="leaveName" class="form-control" id="leaveName" {% if leave %} value="{{ leave.leavetype|default:'' }}"{% else %} placeholder="Leave Name"{% endif %} required>
                 </div>
                 <div class="form-group col-md-6">
                   <label for="code">Code<span class="text-danger">*</span></label>
-                  <input type="text" name="code" class="form-control" id="code" placeholder="Code">
+                  <input type="text" name="code" class="form-control" id="code"{% if leave %} value="{{ leave.leave_code|default:'' }}" {% else %} placeholder="Code" {% endif %} required>
                 </div>
               </div>
 
               <div class="form-group">
                 <label for="leaveType">Leave Type<span class="text-danger">*</span></label>
-                <select class="form-control" name="leaveType" id="leaveType">
-                  <option>Paid</option>
-                  <option>Unpaid</option>
-                </select>
+                  <select class="form-control" name="leaveType" id="leaveType" required>
+                    <option value="" disabled selected>Select Leave Type</option>
+                    <option value="Paid" {% if leave.leave_privilege == "Paid" %}selected{% endif %}> Paid </option>
+                    <option value="Unpaid" {% if leave.leave_privilege == "Unpaid" %}selected{% endif %}> Unpaid </option>
+                  </select>
               </div>
 
               <div class="form-group">
                 <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" name="employeeType" id="allEmployees" value="All">
+                  <input class="form-check-input" type="radio" name="employeeType" id="allEmployees" value="All" {% if leave.applied_to == 'All' %} checked {% endif %}>
                   <label class="form-check-label" for="allEmployees">All Employee</label>
                 </div>
                 <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" name="employeeType" id="individualEmployee" value="individual" checked>
+                  <input class="form-check-input" type="radio" name="employeeType" id="individualEmployee" value="individual" {% if leave.applied_to == "All" %} {% else %} checked {% endif %}>
                   <label class="form-check-label" for="individualEmployee">Individual Employee</label>
                 </div>
               </div>
@@ -88,22 +89,22 @@
                     <div class="form-group col-md-6">
                       <label>Gender</label><br>
                       <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="gender" id="male" value="male">
-                        <label class="form-check-label" for="male" checked>Male</label>
+                        <input class="form-check-input" type="radio" name="gender" id="male" value="male" {% if employee.gender == "Male" or not leave %} checked {% endif %} >
+                        <label class="form-check-label" for="male" >Male</label>
                       </div>
                       <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="gender" id="female" value="female">
+                        <input class="form-check-input" type="radio" name="gender" id="female" value="female" {% if employee.gender == "Female" %} checked {% endif %}>
                         <label class="form-check-label" for="female">Female</label>
                       </div>
                     </div>
                     <div class="form-group col-md-6">
                       <label>Marital Status</label><br>
                       <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="maritalStatus" id="single" value="single" checked>
+                        <input class="form-check-input" type="radio" name="maritalStatus" id="single" value="single" {% if employee.marital_status == 'Single' or not employee%}checked {% endif %}>
                         <label class="form-check-label" for="single">Single</label>
                       </div>
                       <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="maritalStatus" id="married" value="married">
+                        <input class="form-check-input" type="radio" name="maritalStatus" id="married" value="married" {% if employee.marital_status == 'Married' %} checked {% endif %}>
                         <label class="form-check-label" for="married">Married</label>
                       </div>
                     </div>
@@ -113,9 +114,9 @@
                     <div class="form-group col-md-6">
                       <label for="department">Department</label>
                       <select name="department" id="department" class="form-control" required>
-                        <option value="" selected>Select Department</option>
+                        <option value="" {% if not employee %} selected {% endif %}>Select Department</option>
                         {% for dept in departments %}
-                          <option value="{{ dept }}">{{ dept }}</option>
+                          <option value="{{ dept }}"{% if employee and employee.department == dept %} selected {% endif %}>{{ dept }}</option>
                         {% endfor %}
                       </select>
 
@@ -124,7 +125,7 @@
                     <div class="form-group col-md-6">
                       <label>Employee <span class="text-danger">*</span></label>
                         <select name="employee" id="employee" class="form-control" required>
-                          <option value="">Select Employee</option>
+                          <option value="">{% if employee %} {{ employee.full_name }} {% else %}Select Employee {% endif %}</option>
                         </select>
                     </div>
                   </div>
@@ -135,31 +136,31 @@
                 <div class="row mb-3">
                   <div class="col-md-4">
                     <label for="effective_after" class="form-label">Effective After</label>
-                    <input type="number" id="effective_after" name="effective_after" class="form-control" min="1">
+                    <input type="number" id="effective_after" name="effective_after" class="form-control" {% if leave and leave.effective_after %} value="{{leave.effective_after}}" {% endif %} required>
                   </div>
                   <div class="col-md-4">
                     <label for="time_unit" class="form-label">Time Unit</label></br>
                     <select id="time_unit" name="time_unit" class="form-select">
-                      <option value="Year">Year</option>
-                      <option value="Month">Month</option>
-                      <option value="Day">Day</option>
+                      <option value="Year" {% if leave and leave.time_unit == 'Year' %} selected {% endif %}>Year</option>
+                      <option value="Month" {% if leave and leave.time_unit == 'Month' %} selected {% endif %}>Month</option>
+                      <option value="Day" {% if leave and leave.time_unit == 'Day' %} selected {% endif %}>Day</option>
                     </select>
                   </div>
                   <div class="col-md-4">
                     <label class="form-label">From</label><br>
                     <div class="form-check form-check-inline">
                       <input class="form-check-input" type="radio" name="from_field" id="joining" value="date_of_joining" onclick="toggleCustomDate(false)">
-<label class="form-check-label" for="joining">Date of Joining</label>
+<label class="form-check-label" for="joining"{% if leave.applied_to != 'All' and leave.from_date_reference == "date_of_joining" %} checked {% endif %} >Date of Joining</label>
 
                     </div><div class="form-check form-check-inline">
-  <input class="form-check-input" type="radio" name="from_field" id="custom" value="custom_date" onclick="toggleCustomDate(true)">
+  <input class="form-check-input" type="radio" name="from_field" id="custom" value="custom_date" {% if leave.applied_to != 'All' and leave.from_date_reference != "date_of_joining" %} checked {% endif %} onclick="toggleCustomDate(true)">
   <label class="form-check-label" for="custom">Custom Date</label>
 </div>
 
 <!-- Custom Date Input (Initially hidden) -->
-<div class="mt-2" id="customDateInput" style="display: none;">
+<div class="mt-2" id="customDateInput" style="{% if leave.applied_to != 'All' and leave.from_date_reference != 'date_of_joining' %} {% else %}display: none;{% endif %}">
   <label for="custom_date" class="form-label">Select Custom Date<span class="text-danger">*</span></label>
-  <input type="date" id="custom_date" name="custom_date" class="form-control" min="2000-01-01" max="2099-12-31">
+  <input type="date" id="custom_date" name="custom_date" class="form-control" min="2000-01-01" max="2099-12-31" {% if leave.applied_to != 'All' and leave.from_date_reference != 'date_of_joining' %} value="{{ leave.from_date_reference }}" {% endif %}">
 </div>
 
                   </div>
@@ -168,21 +169,21 @@
                 <div class="row mb-3">
                   <div class="col-md-4">
                     <label class="form-label">Accrual Enabled</label><br>
-                    <input type="checkbox" id="accrual_enabled" name="accrual_enabled">
+                    <input type="checkbox" id="accrual_enabled" name="accrual_enabled" {% if leave.accrual_enabled == 1 %} checked {% endif %} >
                   </div>
                   <div class="col-md-4">
                     <label for="leave_time" class="form-label">Leave Time</label>
-                    <input type="number" id="leave_time" name="leave_time" class="form-control" min="1">
+                    <input type="number" id="leave_time" name="leave_time"  {% if leave %} value= "{{ leave.leave_time }}" {% endif %} class="form-control" min="1">
                   </div>
                   <div class="col-md-4">
                     <label for="leave_time_unit" class="form-label">Leave Time Unit</label><br>
                     <select id="leave_time_unit" name="leave_time_unit" class="form-select">
-                      <option value="Days">Days</option>
-                      <option value="Hours">Hours</option>
+                      <option value="Days" {% if leave.leave_time_unit == "Days" %} selected {% endif %} >Days</option>
+                      <option value="Hours" {% if leave.leave_time_unit == "Hours" %} selected {% endif %} >Hours</option>
                     </select>
                     <select id="accrual_frequency" name="accrual_frequency" class="form-select">
-                      <option value="Yearly">Yearly</option>
-                      <option value="Monthly">Monthly</option>
+                      <option value="Yearly" {% if leave.accrual_frequency == "Yearly" %} selected {% endif %} >Yearly</option>
+                      <option value="Monthly" {% if leave.accrual_frequency == "Monthly" %} selected {% endif %}>Monthly</option>
                     </select>
                   </div>
                 </div>
@@ -199,11 +200,11 @@
       <label class="col-sm-5 col-form-label">Weekends Between Leave Period:</label>
       <div class="col-sm-7">
         <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="count_weekends" id="count_weekends_yes" value="True" checked>
-          <label class="form-check-label" for="count_weekends_yes">Count as Leave</label>
+          <input class="form-check-input" type="radio" name="count_weekends" id="count_weekends_yes" value="True" {% if leave.count_weekends == 1 or not leave %} checked {% endif %}>
+          <label class="form-check-label" for="count_weekends_yes" >Count as Leave</label>
         </div>
         <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="count_weekends" id="count_weekends_no" value="False">
+          <input class="form-check-input" type="radio" name="count_weekends" id="count_weekends_no" value="False" {% if leave.count_weekends == 0 %} checked {% endif %}>
           <label class="form-check-label" for="count_weekends_no">Don't Count as Leave</label>
         </div>
       </div>
@@ -214,11 +215,11 @@
       <label class="col-sm-5 col-form-label">Holidays Between Leave Period:</label>
       <div class="col-sm-7">
         <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="count_holidays" id="count_holidays_yes" value="True" checked>
+          <input class="form-check-input" type="radio" name="count_holidays" id="count_holidays_yes" value="True"{% if leave.count_holidays == 1 %} checked {% endif %}>
           <label class="form-check-label" for="count_holidays_yes">Count as Leave</label>
         </div>
         <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="count_holidays" id="count_holidays_no" value="False">
+          <input class="form-check-input" type="radio" name="count_holidays" id="count_holidays_no" value="False" {% if leave.count_holidays == 0 or not leave %} checked {% endif %}>
           <label class="form-check-label" for="count_holidays_no">Don't Count as Leave</label>
         </div>
       </div>

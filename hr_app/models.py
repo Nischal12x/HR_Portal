@@ -30,6 +30,7 @@ class Leave_Type(models.Model):
     # Entitlement settings
     effective_after = models.PositiveIntegerField(null=True, blank=True)
     time_unit = models.CharField(max_length=10, choices=TIME_UNIT_CHOICES, null=True, blank=True)
+    from_date_reference = models.CharField(max_length=50, null=True, blank=True)
     accrual_enabled = models.BooleanField(default=False)
     leave_time = models.PositiveIntegerField(null=True, blank=True)
     leave_time_unit = models.CharField(max_length=10, choices=LEAVE_TIME_UNIT_CHOICES, null=True, blank=True)
@@ -142,7 +143,7 @@ class AddEmployee(models.Model):
     address = models.TextField()
 
     # Job Details
-    employee_id = models.CharField(max_length=20, unique=True)
+    employee_id = models.CharField(max_length=100, unique=True)
 
     DEPARTMENT_CHOICES = [
         ('IT', 'IT'),

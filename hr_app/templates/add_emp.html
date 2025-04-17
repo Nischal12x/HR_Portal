@@ -68,10 +68,14 @@
                     <input type="tel" name="phone" class="form-control" value="{{ employee.phone|default:'' }}" required>
                   </div>
 
-                  <div class="form-group">
-                    <label>Date of Birth <span class="text-danger">*</span></label>
-                        <input type="date" name="dob" class="form-control" value="{{ employee.dob|date:'Y-m-d' }}" required>
-                  </div>
+
+                    <div class="form-group">
+                      <label>Date of Birth <span class="text-danger">*</span></label>
+                      <input type="date" name="dob" class="form-control"
+                             id="dob"
+                             value="{% if request.POST.dob %}{{ request.POST.dob }}{% elif employee and employee.dob %}{{ employee.dob|date:'Y-m-d' }}{% endif %}"
+                             required>
+                    </div>
 
                   <div class="form-group">
                     <label>Gender <span class="text-danger">*</span></label>
@@ -89,13 +93,19 @@
                   </div>
 
                     <div class="form-group">
-                        <label for="marital_status">Marital Status</label>
-                        <select class="form-control" id="marital_status" name="marital_status" required>
-                            <option value="">-- Select --</option>
-                            <option value="Single">Single</option>
-                            <option value="Married">Married</option>
-                        </select>
-                    </div>
+    <label for="marital_status">Marital Status</label>
+    <select class="form-control" id="marital_status" name="marital_status" required>
+        <option value="">-- Select --</option>
+        <option value="Single"
+            {% if request.POST.marital_status == "Single" or employee.marital_status == "Single" %}selected{% endif %}>
+            Single
+        </option>
+        <option value="Married"
+            {% if request.POST.marital_status == "Married" or employee.marital_status == "Married" %}selected{% endif %}>
+            Married
+        </option>
+    </select>
+</div>
 
                 </div>
 
@@ -104,9 +114,10 @@
                   <h4>Job Details</h4>
 
                   <div class="form-group">
-                    <label>Password <span class="text-danger">*</span></label>
-                    <input type="text" name="password" class="form-control" value="{{ employee.employee_id}}" required>
-                  </div>
+    <label>Password <span class="text-danger">*</span></label>
+    <input type="text" name="password" class="form-control"
+           value="{% if request.POST.password %}{{ request.POST.password }}{% elif employee %}{{ employee.employee_id }}{% endif %}" required>
+</div>
 
                   <div class="form-group">
                     <label>Department <span class="text-danger">*</span></label>
@@ -125,9 +136,12 @@
                   </div>
 
                   <div class="form-group">
-                    <label>Date of Joining <span class="text-danger">*</span></label>
-                    <input type="date" name="joining_date" class="form-control" value="{{ employee.joining_date|date:'Y-m-d' }}" required>
-                  </div>
+                  <label>Date of Joining <span class="text-danger">*</span></label>
+                  <input type="date" name="joining_date" class="form-control"
+                         id="joining_date"
+                         value="{% if request.POST.joining_date %}{{ request.POST.joining_date }}{% elif employee and employee.joining_date %}{{ employee.joining_date|date:'Y-m-d' }}{% endif %}"
+                         required>
+                </div>
 
                   <div class="form-group">
                     <label>Salary <span class="text-danger">*</span></label>
@@ -154,15 +168,18 @@
                     {% endif %}
                    </div>
                     <div class="form-group">
-                    <label for="role"> Role:<span class="text-danger">*</span></label>
-                    <select name="role" class="form-control" required>
-                       <option value="">-- Select Role --</option>
-                        {% for role in roles %}
-                      <option value="{{role.id}}"> {{role.name}}</option>
-                         {% endfor %}
-                    </select>
-<!--                    <p>Employment Type: "{{ employee.employment_type }}"</p>--> <!--here we have checked the value.-->
-                  </div>
+                        <label for="role"> Role:<span class="text-danger">*</span></label>
+                        <select name="role" class="form-control" required>
+                            <option value="">-- Select Role --</option>
+                            {% for role in roles %}
+                                <option value="{{ role.id }}"
+                                    {% if request.POST.role == role.id|stringformat:"s" or employee.role.id == role.id %}selected{% endif %}>
+                                    {{ role.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
                 </div>
               </div>
 

@@ -40,5 +40,8 @@ urlpatterns = [
     path('leave-settings/', views.leave_settings_view, name='leave_settings'),
     path('assets/', views.assets, name='assets'),
     path('add-leave/', views.add_leave, name='add_leave'),
+    path('leaves_sys/', views.leaves_sys, name='leaves_sys'),
+    path('edit/<int:leave_id>/', views.edit_leave, name='edit_leave'),
+
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

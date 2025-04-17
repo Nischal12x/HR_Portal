@@ -1,7 +1,6 @@
 import re
-from datetime import datetime
-
-
+from datetime import datetime, timezone, date
+from django.utils import timezone
 
 from django.core.files.storage import FileSystemStorage
 from django.db.models import Sum
@@ -12,6 +11,25 @@ from django.shortcuts import render, redirect
 from .models import Role, AddEmployee, LeaveApplication, Leave_Type
 
 from .models import LeaveApplication
+
+
+def edit_leave(request, leave_id):
+    leave = get_object_or_404(Leave_Type, id=leave_id)
+    departments = AddEmployee.objects.values_list('department', flat=True).distinct()
+    employee = None
+    if leave.applied_to != 'All':
+        try:
+            employee = AddEmployee.objects.get(id=leave.applied_to)
+        except AddEmployee.DoesNotExist:
+            pass
+
+    context = {
+        'leave': leave,
+        'employee': employee,
+        'departments': departments
+    }
+    return render(request, 'leave_settings.html', context)
+
 
 def leave_dashboard(request, val=0):
     applicants = LeaveApplication.objects.all()
@@ -159,7 +177,9 @@ def add_employee(request):
         if errors:
             for field, error in errors.items():
                 messages.error(request, f"{field.capitalize()}: {error}")
-            return render(request, "add_emp.html", {"employee": form_data, "roles": roles,})
+                today = timezone.now()  # Get today's date and time
+                today = today.date()  # Keep only the date part (year-month-day)
+            return render(request, "add_emp.html", {"employee": form_data, "roles": roles,'today': today,})
 
         # Save Employee if no errors
         emp = AddEmployee(
@@ -279,6 +299,38 @@ def check_cred(request):
     # Render login page with error messages
     return render(request, "login.html")
 
+
+def leaves_sys(request):
+    leaves = Leave_Type.objects.all()
+    employee_data = []
+    for leave in leaves:
+        applications = LeaveApplication.objects.filter(
+            leave_type=leave.id,
+            status='Approved'
+        )
+        employees = AddEmployee.objects.filter(id__in=applications.values_list('employee_id', flat=True))
+
+        for emp in employees:
+            total_availed = applications.filter(employee=emp).aggregate(total=Sum('leave_days'))['total'] or 0
+            leave_balance = float(leave.leave_time) - total_availed
+
+            employee_data.append({
+                "employee_name": emp.full_name,
+                "accrual": f"{leave.leave_time} {leave.leave_time_unit}/ Yearly",
+                "effective": leave.effective_after,
+                "effective_from": "Yes",  # placeholder
+                "weekend_leave": leave.count_weekends,
+                "holiday_leave": leave.count_holidays,
+                "leave_balance": leave_balance,
+                "leave_availed": total_availed,
+                "uploaded_on": emp.created_at if hasattr(emp, 'created_at') else timezone.now(),
+                "leave_type_id": leave.id,
+            })
+
+    return render(request, 'leaves_sys.html', {
+        'leaves': leaves,
+        'employee_leave_data': employee_data,
+    })
 def logout_view(request):
     request.session.flush()  # Clears all session data
     messages.success(request, "You have been logged out successfully!")
@@ -366,7 +418,7 @@ def add_leave(request):
         if from_field == "custom_date" and custom_date:
             # Do something with the custom date
             pass
-
+        from_value = from_field if from_field == "date_of_joining" else custom_date
         if employee_id:
             employee = AddEmployee.objects.get(id=employee_id)
 
@@ -378,6 +430,7 @@ def add_leave(request):
             leave_privilege=leave_type,
             effective_after=effective_after,
             time_unit=time_unit,
+            from_date_reference=from_value,
             accrual_enabled=accrual_enabled,
             leave_time=leave_time,
             leave_time_unit=leave_time_unit,
@@ -392,7 +445,7 @@ def add_leave(request):
         # After saving, you can redirect to a success page
         return redirect('leave_settings')  # Replace with the actual redirect URL
 
-    return render(request, 'index.html', {'form': LeaveTypeForm()})
+    return render(request, 'index.html')
 
 
 def admins(request) :
