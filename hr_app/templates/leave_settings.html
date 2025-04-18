@@ -38,7 +38,7 @@
             <h3 class="card-title">Add Leave</h3>
           </div>
           <div class="card-body">
-            <form method="POST" action="{% url 'add_leave' %}">
+            <form method="POST" action="{% if leave %} {% url 'editing_leaves' %} {% else %} {% url 'add_leave' %} {% endif %}">
               {% csrf_token %}
               <div class="form-row">
                 <div class="form-group col-md-6">

@@ -30,6 +30,64 @@ def edit_leave(request, leave_id):
     }
     return render(request, 'leave_settings.html', context)
 
+def editing_leaves(request):
+    if request.method == 'POST':
+        leave_name = request.POST.get('leaveName')
+        leave_code = request.POST.get('code')
+        code = leave_code
+        leave_type_val = request.POST.get('leaveType')
+        applied_to = request.POST.get('employeeType')
+
+        gender = request.POST.get('gender') if applied_to == 'individual' else None
+        marital_status = request.POST.get('maritalStatus') if applied_to == 'individual' else None
+        department = request.POST.get('department') if applied_to == 'individual' else None
+        employee_id = request.POST.get('employee') if applied_to == 'individual' else None
+
+        effective_after = request.POST.get('effective_after') or 0
+        time_unit = request.POST.get('time_unit')
+        from_field = request.POST.get('from_field')
+        custom_date = request.POST.get('custom_date')
+
+        from_date_reference = custom_date if from_field == "custom_date" else "date_of_joining"
+        accrual_enabled = True if request.POST.get('accrual_enabled') == 'on' else False
+        leave_time = request.POST.get('leave_time') or 0
+        leave_time_unit = request.POST.get('leave_time_unit')
+        accrual_frequency = request.POST.get('accrual_frequency')
+
+        count_weekends = True if request.POST.get('count_weekends') == 'True' else False
+        count_holidays = True if request.POST.get('count_holidays') == 'True' else False
+
+        # Fetch existing leave by code or name (choose based on your model)
+        leave_obj = Leave_Type.objects.get(leave_code=leave_code)
+
+        if not leave_obj:
+            messages.error(request, "Leave entry not found.")
+            return redirect('leave_settings')
+
+        leave_obj.leavetype = leave_name
+        leave_obj.leave_code = code
+        leave_obj.leave_privilege = leave_type_val
+        leave_obj.applied_to = applied_to
+        leave_obj.gender = gender
+        leave_obj.marital_status = marital_status
+        leave_obj.department = department
+        leave_obj.employee = AddEmployee.objects.filter(id=employee_id).first() if employee_id else None
+
+        leave_obj.effective_after = effective_after
+        leave_obj.time_unit = time_unit
+        leave_obj.from_date_reference = from_date_reference
+        leave_obj.accrual_enabled = accrual_enabled
+        leave_obj.leave_time = leave_time
+        leave_obj.leave_time_unit = leave_time_unit
+        leave_obj.accrual_frequency = accrual_frequency
+        leave_obj.count_weekends = count_weekends
+        leave_obj.count_holidays = count_holidays
+
+        leave_obj.save()
+        messages.success(request, "Changes applied successfully.")
+        return redirect('leaves_sys')
+
+    return redirect('leave_settings')
 
 def leave_dashboard(request, val=0):
     applicants = LeaveApplication.objects.all()
@@ -63,7 +121,7 @@ def apply_leave(request):
         reason = request.POST.get('reason', '').strip()
         leave_type = request.POST.get("leave_type", '').strip()
         attachment = request.FILES.get('attachment')
-
+        compensation = request.POST.get("Compensatory")
         # Half-day data
         half_day_map = {}
         for key, value in request.POST.items():
@@ -85,7 +143,8 @@ def apply_leave(request):
         )
         lt = Leave_Type.objects.get(id=leave_type)
         leave_days = leave.save(half_day_map=half_day_map, sandwich=lt.count_weekends)
-        leave.leave_days = leave_days
+        if compensation == 0:
+            leave.leave_days = leave_days
         leave.save()
         messages.success(request, "Leave applied successfully!")
         return redirect('index')

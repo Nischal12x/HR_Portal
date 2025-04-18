@@ -129,6 +129,10 @@
     <label>
         <input type="checkbox" id="halfDayToggle" name="half_day_enabled">
         Apply for Half Day Leave?
+    </label> <br>
+                <label>
+        <input type="checkbox" id="Compensation" name="Compensatory">
+        Compenasatory Leave
     </label>
 </div>
 
@@ -136,6 +140,7 @@
     <label>Select Half Day for Each Date (if any):</label>
     <div id="halfDayContainer"></div>
 </div>
+
         <div class="form-group">
             <label for="reason">Reason:</label>
             <textarea id="reason" name="reason" class="form-control" required minlength="10" maxlength="500"></textarea>
@@ -155,89 +160,7 @@
 
 <!-- Error Alert Box -->
 <div id="errorAlert" class="alert alert-danger d-none mt-3"></div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        let today = new Date().toISOString().split("T")[0];
-        let fromDate = document.getElementById("from_date");
-        let tillDate = document.getElementById("till_date");
-        let errorAlert = document.getElementById("errorAlert");
-
-        // Restrict past dates
-        fromDate.setAttribute("min", today);
-        tillDate.setAttribute("min", today);
-
-        // Ensure Till Date is not before From Date
-        fromDate.addEventListener("change", function () {
-            tillDate.setAttribute("min", this.value);
-        });
-
-        // File Size Validation
-        document.getElementById("attachment").addEventListener("change", function () {
-            let file = this.files[0];
-            if (file && file.size > 2 * 1024 * 1024) {
-                document.getElementById("fileError").classList.remove("d-none");
-                this.value = "";
-            } else {
-                document.getElementById("fileError").classList.add("d-none");
-            }
-        });
-
-        // Form Validation Before Submission
-        document.getElementById("leaveForm").addEventListener("submit", function (event) {
-            let name = document.getElementById("name").value.trim();
-            let leaveType = document.getElementById("leave_type").value;
-            let reason = document.getElementById("reason").value.trim();
-            let isValid = true;
-            let errorMessages = [];
-
-            // Name Validation
-            if (name.length < 2 || !/^[A-Za-z ]+$/.test(name)) {
-                document.getElementById("nameError").classList.remove("d-none");
-                isValid = false;
-                errorMessages.push("Name must be at least 2 characters and contain only alphabets.");
-            } else {
-                document.getElementById("nameError").classList.add("d-none");
-            }
-
-            // Leave Type Validation
-            if (!leaveType) {
-                document.getElementById("leaveTypeError").classList.remove("d-none");
-                isValid = false;
-                errorMessages.push("Please select a leave type.");
-            } else {
-                document.getElementById("leaveTypeError").classList.add("d-none");
-            }
-
-            // Date Validation
-            if (tillDate.value < fromDate.value) {
-                document.getElementById("dateError").classList.remove("d-none");
-                isValid = false;
-                errorMessages.push("Till Date must be the same or after From Date.");
-            } else {
-                document.getElementById("dateError").classList.add("d-none");
-            }
-
-            // Reason Validation
-            if (reason.length < 10 || reason.length > 500) {
-                document.getElementById("reasonError").classList.remove("d-none");
-                isValid = false;
-                errorMessages.push("Reason must be between 10 and 500 characters.");
-            } else {
-                document.getElementById("reasonError").classList.add("d-none");
-            }
-
-            // Show Error Alert if Invalid
-            if (!isValid) {
-                event.preventDefault();
-                errorAlert.innerHTML = "<strong>Error!</strong> Please fix the following issues:<ul><li>" + errorMessages.join("</li><li>") + "</li></ul>";
-                errorAlert.classList.remove("d-none");
-            } else {
-                errorAlert.classList.add("d-none");
-            }
-        });
-    });
-</script>
+<!--for validations on form-->
 <script>
     const fromDateInput = document.getElementById("from_date");
     const tillDateInput = document.getElementById("till_date");
@@ -256,6 +179,9 @@
         }
 
         for (let d = new Date(fromDate); d <= tillDate; d.setDate(d.getDate() + 1)) {
+             if (d.getDay() === 0) {
+            continue; // Skip Sunday (0 = Sunday)
+            }
             const dateStr = d.toISOString().split('T')[0];
             const label = document.createElement("label");
             label.innerHTML = `
