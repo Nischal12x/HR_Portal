@@ -56,16 +56,23 @@
                   <div class="form-group">
                     <label>Full Name <span class="text-danger">*</span></label>
                     <input type="text" name="full_name" class="form-control" value="{{ employee.full_name|default:'' }}" required>
+                      {% if errors.full_name %}
+                        <small class="text-danger">{{ errors.full_name }}</small>
+                      {% endif %}
                   </div>
 
                   <div class="form-group">
                     <label>Email <span class="text-danger">*</span></label>
                     <input type="email" name="email" class="form-control" value="{{ employee.email|default:'' }}" required>
+                      {% if errors.email %}
+        <small class="text-danger">{{ errors.email }}</small>
+    {% endif %}
                   </div>
 
                   <div class="form-group">
                     <label>Phone Number <span class="text-danger">*</span></label>
                     <input type="tel" name="phone" class="form-control" value="{{ employee.phone|default:'' }}" required>
+                      {% if errors.phone %}<small class="text-danger">{{ errors.phone }}</small>{% endif %}
                   </div>
 
 
@@ -75,6 +82,9 @@
                              id="dob"
                              value="{% if request.POST.dob %}{{ request.POST.dob }}{% elif employee and employee.dob %}{{ employee.dob|date:'Y-m-d' }}{% endif %}"
                              required>
+                         {% if errors.dob %}
+                            <small class="text-danger">{{ errors.dob }}</small>
+                        {% endif %}
                     </div>
 
                   <div class="form-group">
@@ -85,11 +95,15 @@
                         <option value="Female" {% if employee.gender == "Female" %}selected{% endif %}>Female</option>
                         <option value="Other" {% if employee.gender == "Other" %}selected{% endif %}>Other</option>
                     </select>
+                      {% if errors.gender %}
+                        <small class="text-danger">{{ errors.gender }}</small>
+                    {% endif %}
                   </div>
 
                   <div class="form-group">
                     <label>Address <span class="text-danger">*</span></label>
                     <textarea name="address" class="form-control" rows="3" required>{{ employee.address|default:'' }}</textarea>
+
                   </div>
 
                     <div class="form-group">
@@ -117,6 +131,7 @@
     <label>Password <span class="text-danger">*</span></label>
     <input type="text" name="password" class="form-control"
            value="{% if request.POST.password %}{{ request.POST.password }}{% elif employee %}{{ employee.employee_id }}{% endif %}" required>
+        {% if errors.password %}<small class="text-danger">{{ errors.password }}</small>{% endif %}
 </div>
 
                   <div class="form-group">
@@ -128,11 +143,17 @@
                       <option value="Marketing" {% if employee.department == "Marketing" %}selected{% endif %}>Marketing</option>
                       <option value="Finance" {% if employee.department == "Finance" %}selected{% endif %}>Finance</option>
                     </select>
+                      {% if errors.department %}
+                        <small class="text-danger">{{ errors.department }}</small>
+                    {% endif %}
                   </div>
 
                   <div class="form-group">
                     <label>Designation <span class="text-danger">*</span></label>
                     <input type="text" name="designation" class="form-control" value="{{employee.designation}}" required>
+                      {% if errors.designation %}
+                        <small class="text-danger">{{ errors.designation }}</small>
+                    {% endif %}
                   </div>
 
                   <div class="form-group">
@@ -141,11 +162,17 @@
                          id="joining_date"
                          value="{% if request.POST.joining_date %}{{ request.POST.joining_date }}{% elif employee and employee.joining_date %}{{ employee.joining_date|date:'Y-m-d' }}{% endif %}"
                          required>
+                      {% if errors.joining_date %}
+                        <small class="text-danger">{{ errors.joining_date }}</small>
+                    {% endif %}
                 </div>
 
                   <div class="form-group">
                     <label>Salary <span class="text-danger">*</span></label>
                     <input type="number" name="salary" class="form-control" value="{{employee.salary}}" required>
+                       {% if errors.salary %}
+                        <small class="text-danger">{{ errors.salary }}</small>
+                    {% endif %}
                   </div>
 
                   <div class="form-group">
@@ -156,6 +183,10 @@
                       <option value="Part-Time" {% if employee.employment_type == "Part-Time" %}selected{% endif %}>Part-Time</option>
                       <option value="Contract" {% if employee.employment_type == "Contract" %}selected{% endif %}>Contract</option>
                     </select>
+                      {% if errors.employment_type %}
+                        <small class="text-danger">{{ errors.employment_type }}</small>
+                    {% endif %}
+
 <!--                   <p>Employment Type: "{{ employee.employment_type }}"</p>--> <!--here we have checked the value.-->
                   </div>
                    <div class="form-group">

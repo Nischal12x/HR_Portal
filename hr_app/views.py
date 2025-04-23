@@ -246,8 +246,9 @@ def add_employee(request):
 
         if not form_data["email"]:
             errors["email"] = "Email is required."
-        elif not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', form_data["email"]):
-            errors["email"] = "Invalid email format."
+        elif not re.match(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.(com|org|net|edu|gov|mil|biz|info|co|in|us|uk|io|me)$',
+                          form_data["email"]):
+            errors["email"] = "Invalid email format. Please enter a valid email like example@domain.com."
         elif AddEmployee.objects.filter(email=form_data["email"]).exists():
             errors["email"] = "Email already exists."
 
@@ -291,17 +292,23 @@ def add_employee(request):
             errors["salary"] = "Salary is required."
         elif not form_data["salary"].isdigit():
             errors["salary"] = "Salary must be a valid number."
+        else:
+            salary_value = int(form_data["salary"])
+            if salary_value < 10000 or salary_value > 100000:
+                errors["salary"] = "Salary must be between 10,000 and 100,000."
 
         if not form_data["employment_type"]:
             errors["employment_type"] = "Employment type is required."
 
         # If errors exist, return with messages & form data
         if errors:
-            for field, error in errors.items():
-                messages.error(request, f"{field.capitalize()}: {error}")
-                today = timezone.now()  # Get today's date and time
-                today = today.date()  # Keep only the date part (year-month-day)
-            return render(request, "add_emp.html", {"employee": form_data, "roles": roles,'today': today,})
+            today = timezone.now().date()
+            return render(request, "add_emp.html", {
+                "employee": form_data,
+                "roles": roles,
+                "today": today,
+                "errors": errors  # ✅ send field-wise errors
+            })
 
         # Save Employee if no errors
         emp = AddEmployee(
