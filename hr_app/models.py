@@ -23,6 +23,7 @@ class Leave_Type(models.Model):
     LEAVE_TIME_UNIT_CHOICES = [('Days', 'Days'), ('Hours', 'Hours')]
     ACCRUAL_FREQUENCY_CHOICES = [('Monthly', 'Monthly'), ('Yearly', 'Yearly')]
 
+    is_active = models.BooleanField(default=True)
     leavetype = models.CharField(max_length=50, unique=True)
     leave_code = models.CharField(max_length=50, unique=True, default=None)
     leave_privilege = models.CharField(max_length=20, choices=LEAVE_CHOICES, default='Paid')
@@ -54,7 +55,7 @@ def validate_file_size(value):
 
 class LeaveApplication(models.Model):
     employee = models.ForeignKey('AddEmployee', on_delete=models.CASCADE, to_field='id', null=False)
-    leave_type = models.CharField(max_length=50)
+    leave_type = models.ForeignKey(Leave_Type, on_delete=models.CASCADE)  # ✅ this is the goal
     from_date = models.DateField()
     till_date = models.DateField()
     reason = models.TextField(
@@ -133,6 +134,7 @@ class AddEmployee(models.Model):
     full_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=15)
+    nationality = models.CharField(max_length=50)
     dob = models.DateField()
     role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True)
     MARITAL_CHOICES = [
@@ -154,7 +156,7 @@ class AddEmployee(models.Model):
     address = models.TextField()
 
     # Job Details
-    employee_id = models.CharField(max_length=100, unique=True)
+    employee_id = models.CharField(max_length=50, unique=True)
 
     DEPARTMENT_CHOICES = [
         ('IT', 'IT'),

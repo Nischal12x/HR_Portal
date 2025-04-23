@@ -1,0 +1,68 @@
+{% extends 'main1.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h4>{{ leave.leavetype }} - All Approved Applications</h4>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Employee</th>
+                <th>Accrual</th>
+                <th>Effective</th>
+                <th>Effective From</th>
+                <th>Weekend Leave</th>
+                <th>Holiday Leave</th>
+                <th>Leave Balance</th>
+                <th>Leave Availed</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in page_obj %}
+            <tr>
+                <td>{{ record.employee_name }}</td>
+                <td>{{ record.accrual }}</td>
+                <td>{{ record.effective }}</td>
+                <td>{{ record.effective_from }}</td>
+                <td>{{ record.weekend_leave }}</td>
+                <td>{{ record.holiday_leave }}</td>
+                <td>{{ record.leave_balance }}</td>
+                <td>{{ record.leave_availed }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" class="text-center">No data available</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Pagination controls -->
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">Previous</span></li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% else %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">Next</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endblock %}

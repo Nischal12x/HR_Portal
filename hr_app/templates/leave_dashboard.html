@@ -1,5 +1,6 @@
 {% extends "main1.html" %}
 {% load static %}
+{% load custom_tags %}
 {% block title %}leave_apply_record{% endblock %}
 {% block content %}
 <div class="wrapper">
@@ -40,24 +41,33 @@
                <table id="example2" class="table table-bordered table-hover dataTable no-footer dtr-inline" role="grid" aria-describedby="example2_info">
                   <thead>
     <tr>
-      <th><i class="fa fa-calendar"></i> Leave ID </th>
-      <th><i class="fa fa-user"></i> Employee Name</th>
+      <th><i class="fa fa-calendar"></i> {% if val == 1 %}Leave Days{% else %}#{% endif %} </th>
+      <th><i class="fa fa-user"></i> {% if val == 1 %}Employee{% else %}Leave Days{% endif %}</th>
+
       <th><i class="fa fa-calendar-day"></i> Leave Type</th>
       <th><i class="fa fa-calendar-check"></i> Leave Start Date</th>
       <th><i class="fa fa-info-circle"></i> Leave End Date</th>
       <th><i class="fa fa-comment"></i> Reasons</th>
       <th><i class="fa fa-check-circle"></i> Status</th>
-      {% if val == 0 %}<th><i class="fa fa-cog"></i> Actions</th> {% endif %}
+<!--below is the table coloum previously required for actions implementation user side-->
+<!--      {% if val == 0 %}<th><i class="fa fa-cog"></i> Actions</th> {% endif %}-->
 
       <th><i class="fa fa-pencil-alt"></i> Approved by {{request.session.role_id}}</th>
     </tr>
  </thead>
                  <tbody>
+
+                {% with 0 as counter %}
                  {% for applicant in applicants %}
                     {% if val == 0 and applicant.employee.full_name == request.session.name %}
-                 <td>{{ forloop.counter }}</td>
-                 <td>{{ applicant.employee.full_name }}</td>
-                 <td>{{ applicant.leave_type }}</td>
+                        {% increment counter as counter %}
+                 <td>{{ counter }}</td>
+                 <td>{{ applicant.leave_days }}</td>
+                {% for leave in leave_type %}
+                    {% if leave.id == applicant.leave_type_id %}
+                 <td>{{ leave.leavetype }}</td>
+                    {% endif %}
+                {% endfor %}
                  <td>{{ applicant.from_date }}</td>
                  <td>{{ applicant.till_date }}</td>
                  <td>{{ applicant.reason }}</td>
@@ -69,8 +79,9 @@
       {% elif applicant.status == "Withdrawn" %}fa-ban Withdrawn
       {% else %}fa-clock Pending{% endif %}">
     </i>
-
-    <select class="statusSelect" onchange="updateStatus(this)">
+    <form method="POST" action="{% url 'update_leave_status' applicant.id %}">
+        {% csrf_token %}
+        <select class="statusSelect" name="status" onchange="updateStatus(this); this.form.submit()">
       {% if applicant.status == "Withdrawn" %}
         <option value="Withdrawn" selected>Withdrawn</option>
       {% else %}
@@ -78,7 +89,6 @@
           {% if applicant.status == "Pending" or applicant.status == None %}selected {% else %} hidden {% endif %}>
           Pending
         </option>
-
         <option value="Cancelled"
           {% if applicant.status == "Cancelled" %}selected{% endif %}
           {% if request.session.role != 'HR' or request.session.name == applicant.employee.full_name %}hidden{% endif %}>
@@ -90,30 +100,35 @@
           {% if request.session.role != 'HR' or request.session.name == applicant.employee.full_name %}hidden{% endif %}>
           Approved
         </option>
-      {% endif %}
+
+       {% if request.session.name == applicant.employee.full_name %}
+            <option value="Withdrawn">Withdraw</option>
+        {% endif %}
+            {% endif %}
     </select>
+    </form>
   </div>
 </td>
-
-                 <td>
-  {% if applicant.status == "Pending" %}
-    <a href="{% url 'withdraw_leave' applicant.id %}"
-       class="btn btn-warning btn-sm"
-       onclick="return confirm('Are you sure you want to withdraw this leave?');">
-      <i class="fa fa-undo"></i> Withdraw
-    </a>
-  {% else %}
-    <button class="btn btn-secondary btn-sm" disabled>
-      <i class="fa fa-ban"></i> Withdraw
-    </button>
-  {% endif %}
-</td>
+<!--this is button for actions not needed now as we added it in select -->
+<!--                 <td>-->
+<!--  {% if applicant.status == "Pending" %}-->
+<!--    <a href="{% url 'withdraw_leave' applicant.id %}"-->
+<!--       class="btn btn-warning btn-sm"-->
+<!--       onclick="return confirm('Are you sure you want to withdraw this leave?');">-->
+<!--      <i class="fa fa-undo"></i> Withdraw-->
+<!--    </a>-->
+<!--  {% else %}-->
+<!--    <button class="btn btn-secondary btn-sm" disabled>-->
+<!--      <i class="fa fa-ban"></i> Withdraw-->
+<!--    </button>-->
+<!--  {% endif %}-->
+<!--</td>-->
                  <td>{{ applicant.approved_by }} </td>
                  </tbody>
                  {% elif val == 1 and applicant.employee.full_name != request.session.name %}
-                 <td>{{ forloop.counter }}</td>
+                   <td>{{ applicant.leave_days }}</td>
                  <td>{{ applicant.employee.full_name }}</td>
-                 <td>{{ applicant.leave_type }}</td>
+                 <td>{{ applicant.leave_type.leavetype }}</td>
                  <td>{{ applicant.from_date }}</td>
                  <td>{{ applicant.till_date }}</td>
                  <td>{{ applicant.reason }}</td>
@@ -128,9 +143,11 @@
     </i>
     <form method="POST" action="{% url 'update_leave_status' applicant.id %}">
         {% csrf_token %}
-        <select class="statusSelect" name="status" onchange="updateStatus(this); this.form.submit()">
+        <select class="statusSelect" name="status" id="status-select-{{ applicant.id }}" >
             {% if applicant.status == "Withdrawn" %}
                 <option value="Withdrawn" selected>Withdrawn</option>
+            {% elif applicant.status == "Approved" %}
+                <option value="Approved" > Approved </option>
             {% else %}
                 <option value="Pending" {% if applicant.status == "Pending" %}selected {% else %} hidden {% endif %}>Pending</option>
                 <option value="Cancelled"
@@ -145,6 +162,12 @@
                     {% if applicant.status == "Approved" %}selected{% endif %}>Approved</option>
             {% endif %}
         </select>
+        <div id="cancel-reason-container" style="display: none; margin-top: 10px;">
+        <label for="cancel-reason">Reason for Cancellation:</label>
+        <textarea name="cancel_reason" id="cancel-reason" rows="3" class="form-control"
+                  placeholder="Explain why this leave was cancelled"></textarea>
+        <button type="submit" class="btn btn-danger mt-2">Submit Cancellation</button>
+    </div>
     </form>
   </div>
 </td>
@@ -152,6 +175,7 @@
                  </tbody>
                    {% endif %}
                  {% endfor %}
+                   {% endwith %}
                 </table></div>
               <!-- /.card-body -->
             </div>

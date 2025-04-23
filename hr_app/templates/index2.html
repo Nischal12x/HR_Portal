@@ -6,7 +6,7 @@
 
 <div class="wrapper d-flex flex-column min-vh-100">
 
-  <!-- Navbar -->b
+  <!-- Navbar -->
   {% include 'navbar.html' %}
   <!-- /.navbar -->
 
@@ -131,7 +131,7 @@
         Apply for Half Day Leave?
     </label> <br>
                 <label>
-        <input type="checkbox" id="Compensation" name="Compensatory">
+        <input type="checkbox" id="Compensation"  value="1" name="Compensatory">
         Compenasatory Leave
     </label>
 </div>
@@ -178,24 +178,46 @@
             return;
         }
 
+        // Create the table
+        const table = document.createElement("table");
+        table.className = "table table-bordered table-sm mt-3";
+
+        const thead = document.createElement("thead");
+        thead.innerHTML = `
+            <tr>
+                <th>Date</th>
+                <th>Day</th>
+                <th>Leave Option</th>
+            </tr>
+        `;
+        table.appendChild(thead);
+
+        const tbody = document.createElement("tbody");
+
         for (let d = new Date(fromDate); d <= tillDate; d.setDate(d.getDate() + 1)) {
-             if (d.getDay() === 0) {
-            continue; // Skip Sunday (0 = Sunday)
-            }
+            if (d.getDay() === 0) continue; // Skip Sundays
+
             const dateStr = d.toISOString().split('T')[0];
-            const label = document.createElement("label");
-            label.innerHTML = `
-                <div class="mb-2">
-                    <strong>${dateStr}</strong>:
-                    <select name="half_day_status_${dateStr}" class="form-control d-inline-block w-auto">
+            const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td><strong>${dateStr}</strong></td>
+                <td>${dayName}</td>
+                <td>
+                    <select name="half_day_status_${dateStr}" class="form-control">
                         <option value="none">Full Day</option>
                         <option value="first_half">First Half</option>
                         <option value="second_half">Second Half</option>
                     </select>
-                </div>
+                </td>
             `;
-            container.appendChild(label);
+
+            tbody.appendChild(row);
         }
+
+        table.appendChild(tbody);
+        container.appendChild(table);
     }
 
     toggle.addEventListener("change", function () {
@@ -214,6 +236,7 @@
         if (toggle.checked) renderHalfDaySelectors();
     });
 </script>
+
               </div>
             </div>
           </div>

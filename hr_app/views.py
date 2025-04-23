@@ -1,16 +1,66 @@
 import re
 from datetime import datetime, timezone, date
 from django.utils import timezone
-
+from collections import defaultdict
+from django.core.paginator import Paginator
 from django.core.files.storage import FileSystemStorage
 from django.db.models import Sum
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.shortcuts import render, redirect
+
+from .forms import EmployeeForm
 from .models import Role, AddEmployee, LeaveApplication, Leave_Type
 
-from .models import LeaveApplication
+def toggle_leave_status(request, leave_id):
+    if request.method == "POST":
+        leave = get_object_or_404(Leave_Type, id=leave_id)
+        leave.is_active = not leave.is_active
+        leave.save()
+        messages.success(request, f"{leave.leavetype} has been {'activated' if leave.is_active else 'deactivated'}.")
+    return redirect('leaves_sys')
+
+def leave_details(request, leave_id):
+    leave = get_object_or_404(Leave_Type, id=leave_id)
+
+    applications = LeaveApplication.objects.filter(
+        leave_type=leave.id,
+        status='Approved'
+    ).select_related('employee').order_by('-id')
+
+    # Prepare the data for display
+    data = []
+    for app in applications:
+        employee = app.employee
+        total_availed = LeaveApplication.objects.filter(
+            employee=employee,
+            leave_type=leave,
+            status='Approved'
+        ).aggregate(total=Sum('leave_days'))['total'] or 0
+
+        leave_balance = float(leave.leave_time) - total_availed
+
+        data.append({
+            "employee_name": employee.full_name,
+            "accrual": f"{leave.leave_time} {leave.leave_time_unit}/ Yearly",
+            "effective": leave.effective_after,
+            "effective_from": leave.from_date_reference,
+            "weekend_leave": leave.count_weekends,
+            "holiday_leave": leave.count_holidays,
+            "leave_balance": leave_balance,
+            "leave_availed": app.leave_days,
+        })
+
+    # Pagination
+    paginator = Paginator(data, 10)  # 10 records per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'leave_details.html', {
+        'leave': leave,
+        'page_obj': page_obj,
+    })
 
 
 def edit_leave(request, leave_id):
@@ -91,7 +141,9 @@ def editing_leaves(request):
 
 def leave_dashboard(request, val=0):
     applicants = LeaveApplication.objects.all()
-    return render(request,"leave_dashboard.html", {"applicants" : applicants, "val": val})  # Adjust for actual user system
+    applicants = applicants.order_by('-id')  # to reverse the order
+    leave_type = Leave_Type.objects.all()
+    return render(request,"leave_dashboard.html", {"applicants" : applicants, "val": val, "leave_type" : leave_type})  # Adjust for actual user system
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -135,7 +187,7 @@ def apply_leave(request):
 
         leave = LeaveApplication(
             employee=employee,
-            leave_type=leave_type,
+            leave_type_id=leave_type,
             from_date=from_date,
             till_date=till_date,
             reason=reason,
@@ -143,12 +195,22 @@ def apply_leave(request):
         )
         lt = Leave_Type.objects.get(id=leave_type)
         leave_days = leave.save(half_day_map=half_day_map, sandwich=lt.count_weekends)
-        if compensation == 0:
+        if compensation == '1' :
+            pass
+        else :
             leave.leave_days = leave_days
         leave.save()
         messages.success(request, "Leave applied successfully!")
         return redirect('index')
 
+import re
+from datetime import datetime
+from django.http import JsonResponse
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.utils import timezone
+from .models import AddEmployee, Role
+from .forms import EmployeeForm
 
 def add_employee(request):
     if request.method == "POST":
@@ -260,6 +322,9 @@ def add_employee(request):
 
 
 
+
+
+
 def employee_list(request):
     employees = AddEmployee.objects.all()  # Fetch all employees
     return render(request, "data.html", {"employees": employees})
@@ -360,37 +425,54 @@ def check_cred(request):
     return render(request, "login.html")
 
 
+
+from collections import defaultdict
+from django.db.models import Sum
+from django.utils import timezone
 def leaves_sys(request):
     leaves = Leave_Type.objects.all()
-    employee_data = []
+    employee_leave_data = defaultdict(list)
+    leave_specific_data = {}
+
     for leave in leaves:
         applications = LeaveApplication.objects.filter(
             leave_type=leave.id,
             status='Approved'
-        )
-        employees = AddEmployee.objects.filter(id__in=applications.values_list('employee_id', flat=True))
+        ).select_related('employee')
 
-        for emp in employees:
-            total_availed = applications.filter(employee=emp).aggregate(total=Sum('leave_days'))['total'] or 0
+        for app in applications:
+            employee = app.employee  # thanks to select_related
+            total_availed = LeaveApplication.objects.filter(
+                employee=employee,
+                leave_type=leave,
+                status='Approved'
+            ).aggregate(total=Sum('leave_days'))['total'] or 0
+
             leave_balance = float(leave.leave_time) - total_availed
 
-            employee_data.append({
-                "employee_name": emp.full_name,
+            employee_leave_data[leave.id].append({
+                "employee_name": employee.full_name,
                 "accrual": f"{leave.leave_time} {leave.leave_time_unit}/ Yearly",
                 "effective": leave.effective_after,
-                "effective_from": "Yes",  # placeholder
+                "effective_from": leave.from_date_reference,
                 "weekend_leave": leave.count_weekends,
                 "holiday_leave": leave.count_holidays,
                 "leave_balance": leave_balance,
-                "leave_availed": total_availed,
-                "uploaded_on": emp.created_at if hasattr(emp, 'created_at') else timezone.now(),
-                "leave_type_id": leave.id,
+                "leave_availed": app.leave_days,
+                "uploaded_on": employee.created_at if hasattr(employee, 'created_at') else timezone.now(),
+                "application_date": app.created_at if hasattr(app, 'created_at') else timezone.now(),
+                "leave_from": app.from_date,
+                "leave_to": app.till_date,
             })
+
+        leave_specific_data[leave.id] = applications
 
     return render(request, 'leaves_sys.html', {
         'leaves': leaves,
-        'employee_leave_data': employee_data,
+        'employee_leave_data': dict(employee_leave_data),
+        'leave_specific_data': leave_specific_data
     })
+
 def logout_view(request):
     request.session.flush()  # Clears all session data
     messages.success(request, "You have been logged out successfully!")
@@ -553,7 +635,7 @@ from .models import Leave_Type
 
 def index2(request):
     # Get all leave types from the Leave_Type model
-    leaves = Leave_Type.objects.all()
+    leaves = Leave_Type.objects.filter(is_active=True)
 
     # Initialize a list to store the leave details (consumed and remaining)
     leave_details = []

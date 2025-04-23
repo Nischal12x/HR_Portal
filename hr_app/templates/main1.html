@@ -87,6 +87,11 @@
 .status-icon.Cancelled { color: #dc3545; }   /* red */
 .status-icon.Withdrawn { color: #6c757d; }   /* gray */
 
+.error-message {
+    font-size: 0.85em;
+    color: red;
+}
+
     </style>
 </head>
 <body>
@@ -137,7 +142,9 @@
         break;
     }
   }
-</script><script>
+</script>
+<!--this is for add leave to hide and show applicable and entitlement sections based upon some conditions-->
+<script>
   document.addEventListener('DOMContentLoaded', function () {
     const allEmployeeRadio = document.getElementById('allEmployees');
     const individualEmployeeRadio = document.getElementById('individualEmployee');
@@ -307,9 +314,8 @@
   });
 </script>
 <!--this is for date of joining validations-->
-<script
-
-  document.addEventListener("DOMContentLoaded", function () {
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
     const joinDate = document.getElementById('joining_date');
     const today = new Date();
 
@@ -324,8 +330,61 @@
     joinDate.max = fourMonthsLater.toISOString().split('T')[0];
   });
 </script>
+<!-- for view more logic to enable -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const buttons = document.querySelectorAll(".toggle-more");
 
+    buttons.forEach(button => {
+        button.addEventListener("click", function () {
+            const leaveId = this.getAttribute("data-leave-id");
+            const rows = document.querySelectorAll(`.leave-row-${leaveId}.extra-row`);
 
+            rows.forEach(row => {
+                row.classList.toggle("d-none");
+            });
+
+            this.textContent = this.textContent === "View More" ? "View Less" : "View More";
+        });
+    });
+});
+</script>
+<!--here this is a script file for in add employees json error message -->
+<!--applying validations using json ajax 2-->
+
+<!--this is for message box for reason while rejecting leave by hr i have removed onchange="updateStatus(this); this.form.submit()" from select which auto submit the form-->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const forms = document.querySelectorAll('form');
+
+        forms.forEach(function (form) {
+            const select = form.querySelector('.statusSelect');
+            const reasonContainer = form.querySelector('#cancel-reason-container');
+            const reasonInput = form.querySelector('#cancel-reason');
+
+            if (!select) return;
+
+            select.addEventListener('change', function () {
+                const selectedValue = select.value;
+
+                if (selectedValue === 'Cancelled') {
+                    reasonContainer.style.display = 'block'; // show reason + button
+                } else {
+                    reasonContainer.style.display = 'none';  // hide reason box
+                    form.submit(); // auto-submit for other statuses
+                }
+            });
+
+            form.addEventListener('submit', function (e) {
+                if (select.value === 'Cancelled' && reasonInput.value.trim() === '') {
+                    e.preventDefault();
+                    alert("Please provide a reason for cancellation.");
+                    reasonInput.focus();
+                }
+            });
+        });
+    });
+</script>
 
 </body>
 </html>

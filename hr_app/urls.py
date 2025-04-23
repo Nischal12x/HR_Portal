@@ -43,6 +43,8 @@ urlpatterns = [
     path('leaves_sys/', views.leaves_sys, name='leaves_sys'),
     path('edit/<int:leave_id>/', views.edit_leave, name='edit_leave'),
     path('edit-leave/', views.editing_leaves, name='editing_leaves'),
+    path('leave-details/<int:leave_id>/', views.leave_details, name='leave_details'),
+    path('toggle-leave-status/<int:leave_id>/', views.toggle_leave_status, name='toggle_leave_status'),
 
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
