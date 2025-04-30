@@ -1,14 +1,14 @@
 {% extends "main1.html" %}
 {% load static %}
 
-{% block title %}Apply Leave{% endblock %}
+{% block title %}Employees{% endblock %}
+
 {% block content %}
 <div class="wrapper">
   <!-- Navbar -->
   {% include 'navbar.html' %}
   <!-- /.navbar -->
-    <!-- Sidebar -->
-
+  <!-- Sidebar -->
   {% include 'sidebar.html' %}
 
   <!-- Content Wrapper. Contains page content -->
@@ -22,7 +22,7 @@
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
               <li class="breadcrumb-item"><a href="#">Home</a></li>
-              <li class="breadcrumb-item active">DataTables</li>
+              <li class="breadcrumb-item active">Employee List</li>
             </ol>
           </div>
         </div>
@@ -36,75 +36,181 @@
           <div class="col-12">
             <div class="card">
               <div class="card-header">
-                 <h2><i class="fas fa-users icon"></i> Employee List</h2>
-                  <a href="{% url 'add_employees' %}" class="btn btn-success">
-    <i class="fas fa-user-plus"></i> Add Employee
-</a>
-                  {% if messages %}
-              {% for message in messages %}
-                   <div class="alert alert-danger">{{ message }}</div>
-              {% endfor %}
-            {% endif %}
-              </div>
-              <!-- /.card-header -->
+                <h2><i class="fas fa-users icon"></i> Employee List</h2>
+                <a href="{% url 'add_employees' %}" class="btn btn-success">
+                  <i class="fas fa-user-plus"></i> Add Employee
+                </a>
+                {% if messages %}
+                  {% for message in messages %}
+                    <div class="alert alert-danger">{{ message }}</div>
+                  {% endfor %}
+                {% endif %}
+              </div><!-- /.card-header -->
               <div class="card-body">
                 <table id="example2" class="table table-bordered table-hover">
-                  <thead>
-                   <tr>
-                <th>#</th>
-                <th><i class="fas fa-user-tie"></i> Name</th>
-                <th><i class="fas fa-envelope"></i> Email</th>
-                <th><i class="fas fa-phone"></i> Phone</th>
-                <th><i class="fas fa-building"></i> Department</th>
-                <th><i class="fas fa-briefcase"></i> Designation</th>
-                <th><i class="fas fa-calendar-alt"></i> Joining Date</th>
-                <th><i class="fas fa-dollar-sign"></i> Salary</th>
-                       <th><i class="fas fa-redo-alt"></i> Actions</th>
-            </tr>
+                  <thead class="thead-dark">
+                    <tr>
+                      <th>#</th>
+                      <th><i class="fas fa-user-tie"></i> Name</th>
+                      <th><i class="fas fa-envelope"></i> Email</th>
+                      <th><i class="fas fa-phone"></i> Phone</th>
+                      <th><i class="fas fa-building"></i> Department</th>
+                      <th><i class="fas fa-briefcase"></i> Designation</th>
+                      <th><i class="fas fa-calendar-alt"></i> Joining Date</th>
+                      <th><i class="fas fa-dollar-sign"></i> Salary</th>
+                      <th><i class="fas fa-redo-alt"></i> Actions</th>
+                    </tr>
                   </thead>
-                 <tbody>
-            {% for emp in employees %}
-            <tr>
-                <td>{{ forloop.counter }}</td>
-                <td>{{ emp.full_name }}</td>
-                <td>{{ emp.email }}</td>
-                <td>{{ emp.phone }}</td>
-                <td>{{ emp.department }}</td>
-                <td>{{ emp.designation }}</td>
-                <td>{{ emp.joining_date }}</td>
-                <td>${{ emp.salary }}</td>
-                 <td>
-                <!-- Edit Button -->
-                <a href="{% url 'update_employee1' emp.id %}" class="btn btn-warning btn-sm">
-                    <i class="fas fa-edit"></i> Edit
-                </a>
+                  <tbody>
+                    {% for emp in employees %}
+                    {% if emp.id != request.session.employee_id %}
+                    <tr>
+                      <td>{{ forloop.counter }}</td>
+                      <td>{{ emp.full_name }}</td>
+                      <td>{{ emp.email }}</td>
+                      <td>{{ emp.phone }}</td>
+                      <td>{{ emp.department }}</td>
+                      <td>{{ emp.designation }}</td>
+                      <td>{{ emp.joining_date }}</td>
+                      <td>${{ emp.salary }}</td>
+                      <td>
+                        <!-- Quick Update Button -->
+                        <button class="btn btn-info btn-sm quick-update-btn"
+                                data-id="{{ emp.id }}"
+                                data-name="{{ emp.full_name }}"
+                                data-url="{% url 'update_employee1' 0 %}"
+                                data-toggle="tooltip"
+                                title="Quick Update">
+                          <i class="fas fa-edit"></i> Update
+                        </button>
 
-                <!-- Delete Button -->
-                <a href="{% url 'delete_employee' emp.id %}" class="btn btn-danger btn-sm"
-                   onclick="return confirm('Are you sure you want to delete this employee?');">
-                    <i class="fas fa-trash"></i> Delete
-                </a>
-            </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="8" style="text-align:center;">No Employees Found</td>
-            </tr>
-            {% endfor %}
-        </tbody>
+                        <!-- Edit Full Details Button -->
+                        <a href="{% url 'update_employee1' emp.id %}" class="btn btn-warning btn-sm" data-toggle="tooltip" title="Edit Full Details">
+                          <i class="fas fa-user-edit"></i>
+                        </a>
+
+                        <!-- Delete Button -->
+                        <a href="{% url 'delete_employee' emp.id %}" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Delete Employee" onclick="return confirm('Are you sure you want to delete this employee?');">
+                          <i class="fas fa-trash-alt"></i>
+                        </a>
+                      </td>
+
+                    </tr>
+                    {% endif %}
+                    {% empty %}
+                    <tr>
+                      <td colspan="8" style="text-align:center;">No Employees Found</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
                 </table>
-              </div>
-              <!-- /.card-body -->
-            </div>
-            <!-- /.card -->
-            <!-- /.card -->
-          </div>
-          <!-- /.col -->
+              </div><!-- /.card-body -->
+            </div><!-- /.card -->
+          </div><!-- /.col -->
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </section><!-- /.content -->
+  </div><!-- /.content-wrapper -->
+</div><!-- /.wrapper -->
+
+<!-- Quick Update Modal -->
+<div class="modal fade" id="quickUpdateModal" tabindex="-1" role="dialog" aria-labelledby="quickUpdateModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <form method="POST" id="quickUpdateForm" action="">
+      {% csrf_token %}
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="quickUpdateModalLabel">Quick Update - <span id="employeeName"></span></h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
-        <!-- /.row -->
+
+        <div class="modal-body">
+          <input type="hidden" name="employee_id" id="employeeIdField">
+
+          <div class="form-group">
+            <label for="fieldSelect">Select Field to Update:</label>
+            <select class="form-control" id="fieldSelect" name="action" required>
+              <option value="" disabled selected>Select field</option>
+              <option value="department">Department</option>
+              <option value="designation">Designation</option>
+              <option value="salary">Salary</option>
+            </select>
+          </div>
+
+          <div id="newValueInput" class="form-group d-none">
+            <label id="newValueLabel"></label>
+            <div id="inputArea"></div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Update</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        </div>
       </div>
-      <!-- /.container-fluid -->
-    </section>
-    <!-- /.content -->
+    </form>
   </div>
-  {% endblock %}
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  $('[data-toggle="tooltip"]').tooltip();
+
+  // When Quick Update button is clicked
+  document.querySelectorAll('.quick-update-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      const empId = this.getAttribute('data-id');
+      const empName = this.getAttribute('data-name');
+      const urlTemplate = this.getAttribute('data-url'); // e.g., /update1/0/
+
+      document.getElementById('employeeName').textContent = empName;
+      document.getElementById('employeeIdField').value = empId;
+
+      // Replace dummy ID with actual employee ID
+      const updateUrl = urlTemplate.replace('0', empId);
+      document.getElementById('quickUpdateForm').setAttribute('action', updateUrl);
+
+      // Reset form field area
+      document.getElementById('fieldSelect').value = '';
+      document.getElementById('newValueInput').classList.add('d-none');
+      document.getElementById('inputArea').innerHTML = '';
+
+      $('#quickUpdateModal').modal('show');
+    });
+  });
+
+  // When Field is selected
+  document.getElementById('fieldSelect').addEventListener('change', function() {
+    const selectedField = this.value;
+    const inputArea = document.getElementById('inputArea');
+    const newValueLabel = document.getElementById('newValueLabel');
+    const newValueInput = document.getElementById('newValueInput');
+
+    inputArea.innerHTML = '';
+    newValueInput.classList.remove('d-none');
+
+    if (selectedField === 'department') {
+      newValueLabel.innerText = 'New Department';
+      inputArea.innerHTML = `
+        <select name="new_department" class="form-control" required>
+          <option value="" disabled selected>Select Department</option>
+          <option value="IT">IT</option>
+          <option value="HR">HR</option>
+          <option value="Finance">Finance</option>
+          <option value="Marketing">Marketing</option>
+        </select>`;
+    } else if (selectedField === 'designation') {
+      newValueLabel.innerText = 'New Designation';
+      inputArea.innerHTML = `<input type="text" name="new_designation" class="form-control" placeholder="Enter new designation" required>`;
+    } else if (selectedField === 'salary') {
+      newValueLabel.innerText = 'New Salary';
+      inputArea.innerHTML = `<input type="number" name="new_salary" step="0.01" class="form-control" placeholder="Enter new salary" required>`;
+    }
+  });
+});
+</script>
+
+{% endblock %}

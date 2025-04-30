@@ -1,0 +1,158 @@
+{% extends "main1.html" %}
+{% load static %}
+
+{% block title %}Add Task{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+  {% include 'navbar.html' %}
+  {% include 'sidebar.html' %}
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6"><h1>{% if task %}Update{% else %}Add{% endif %} Task</h1></div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="{% url 'widgets' %}">Home</a></li>
+              <li class="breadcrumb-item active">{% if task %}Update{% else %}Add{% endif %} Task</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <form id="taskForm" method="post" enctype="multipart/form-data" action="{% if task %}{% url 'task' task.id %}{% else %}{% url 'task' 0 %}{% endif %}">
+          {% csrf_token %}
+          <div class="card">
+            <div class="card-header bg-info text-white">
+              <h5 class="mb-0">{% if task %}Update{% else %}Add{% endif %} Task</h5>
+            </div>
+
+            <div class="card-body">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label>Task Name *</label>
+                  <input type="text" class="form-control" name="task_name" value="{{ task.name|default_if_none:'' }}" required>
+                </div>
+
+                <div class="col-md-6">
+                  <label>Project *</label>
+                  <select class="form-control" name="project_id" id="projectSelect" required>
+                    {% for project in projects %}
+                      <option value="{{ project.id }}" {% if task.project.id == project.id %}selected{% endif %}>{{ project.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label>Assignee *</label>
+                  <select class="form-control" name="assignee" id="assigneeSelect" required>
+                    {% if task %}
+                      <option value="{{ task.assignee.id }}">{{ task.assignee.full_name }}</option>
+                    {% endif %}
+                  </select>
+                </div>
+
+                <div class="col-md-6">
+                  <label>Priority *</label>
+                  <select class="form-control" name="priority" required>
+                    <option value="Low" {% if task.priority == "Low" %} selected {% endif %}>Low</option>
+                    <option value="Medium" {% if task.priority == "Medium" %} selected {% endif %}>Medium</option>
+                    <option value="High" {% if task.priority == "High" %} selected {% endif %}>High</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label>Start Date *</label>
+                  <input type="date" class="form-control" name="start_date" value="{% if task %}{{ task.start_date|date:'Y-m-d' }}{% endif %}" required>
+                </div>
+                <div class="col-md-6">
+                  <label>End Date *</label>
+                  <input type="date" class="form-control" name="end_date" value="{% if task %}{{ task.end_date|date:'Y-m-d' }}{% endif %}" required>
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <label>Status *</label>
+                  <select class="form-control" name="status" required>
+                    <option value="Pending" {% if task.status == "Pending" %} selected {% endif %}>Pending</option>
+                    <option value="Claimed Completed" {% if task.status == "Claimed Completed" %} selected {% endif %}>Claimed</option>
+                    <option value="Completed" {% if task.status == "Completed" %} selected {% endif %}>Completed</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <label>Description</label>
+                  <textarea class="form-control" name="description" rows="4">{{ task.description|default_if_none:'' }}</textarea>
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <label>Upload File</label>
+                  <input type="file" class="form-control" name="file_upload">
+                  {% if task and task.document %}
+                    <p>Current file: <a href="{{ task.document.url }}" target="_blank">{{ task.document.name }}</a></p>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="card-footer text-right">
+                <button type="submit" class="btn btn-success">{% if task %} Update {% else %} Save {% endif %}</button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  $('#projectSelect').on('change', function () {
+    const projectId = $(this).val();
+    const assigneeSelect = $('#assigneeSelect');
+
+    if (!projectId) return;
+
+    $.ajax({
+      url: '/get_team_members/' + projectId + '/',
+      type: 'GET',
+      success: function (response) {
+        assigneeSelect.empty();
+        if (response.members.length > 0) {
+          response.members.forEach(member => {
+            assigneeSelect.append(
+              $('<option>', { value: member.id, text: member.name })
+            );
+          });
+        } else {
+          assigneeSelect.append($('<option>', { value: '', text: 'No team members available' }));
+        }
+      },
+      error: function () {
+        assigneeSelect.empty().append($('<option>', { value: '', text: 'Error loading members' }));
+      }
+    });
+  });
+
+  // Trigger change once on load if task exists
+  {% if task %}
+  $(document).ready(function () {
+    $('#projectSelect').trigger('change');
+  });
+  {% endif %}
+</script>
+
+{% endblock %}

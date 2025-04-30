@@ -1,12 +1,13 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}AdminLTE 3 | Dashboard{% endblock %}</title>
+  <title>{% block title %}BISP Solutions{% endblock %}</title>
 
 
+<link rel="stylesheet" href="{% static 'plugins/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
     <!-- Font Awesome -->
@@ -37,6 +38,70 @@
   <link rel="stylesheet" href="{% static 'plugins/daterangepicker/daterangepicker.css' %}">
   <!-- Summernote -->
   <link rel="stylesheet" href="{% static 'plugins/summernote/summernote-bs4.min.css' %}">
+
+  <link rel="stylesheet" href="{% static 'plugins/overlayScrollbars/css/OverlayScrollbars.min.css' %}">
+<!--  style for leave table -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.min.css">
+  <!-- DataTables JS -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+  <style>
+    /* Pagination Styling */
+.dataTables_paginate .paginate_button {
+  border-radius: 5px;
+  margin: 0 5px;
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+}
+
+.dataTables_paginate .paginate_button:hover {
+  background-color: #0056b3;
+}
+
+.dataTables_paginate .paginate_button.current {
+  background-color: #0056b3;
+  cursor: default;
+}
+
+.dataTables_filter input {
+  border-radius: 5px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  margin-left: 20px;
+}
+
+  /* Styling for table headers */
+thead {
+  background-color: #f8f9fa;
+}
+
+/* Status icon styling */
+.status-icon {
+  font-size: 18px;
+  margin-right: 10px;
+}
+
+/* Hover effect on table rows */
+table tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* Styling for dropdown in status column */
+.statusSelect {
+  width: 100%;
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+/* Additional customization for form control inside table */
+.form-control {
+  padding: 0.5rem 1rem;
+}
+</style>
+
   <style>
 
     .status-container {
@@ -93,14 +158,238 @@
 }
 
     </style>
+<!--  for project task panel-->
+<style>
+/* Card hover effect */
+.card.task-card {
+    transition: 0.3s ease;
+}
+
+/* Status Badge Position */
+.status-badge-wrapper {
+    top: 10px;
+    left: 10px;
+}
+
+/* Task Content spacing */
+
+.task-content {
+    margin-top: 2.5rem; /* little more gap after badge */
+}
+
+
+
+/* Badge Menu Styles (already you had it, slightly improved) */
+.status-menu {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 5px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    animation: zoomIn 0.2s ease;
+    z-index: 100;
+    position: absolute;
+    top: 30px;
+    left: 0;
+    min-width: 120px;
+}
+
+.status-menu div {
+    cursor: pointer;
+    padding: 5px 8px;
+    font-size: 0.85rem;
+}
+
+.status-menu div:hover {
+    background-color: #f0f0f0;
+    border-radius: 4px;
+}
+</style>
+<!--  for projcet details task -->
+<!-- Custom Design CSS -->
+<style>
+/* ========== Animations ========== */
+
+/* ========== Layout Cards ========== */
+.main-card {
+  background: #f7f9fc;
+  border: 1px solid #d3dce6;
+  border-radius: 12px;
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.section-card {
+  background: #ffffff;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #dbe2ef;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInUp 0.8s ease forwards;
+  animation-delay: 0.2s;
+  animation-fill-mode: forwards;
+}
+
+.section-heading {
+  font-size: 1.3rem;
+  color: #003566;
+  border-bottom: 2px solid #00b4d8;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+/* ========== Field Elements ========== */
+.field-label {
+  font-weight: 600;
+  color: #03045e;
+  margin-bottom: 5px;
+}
+
+.field-input {
+  background-color: #e0f7fa;
+  border: 1px solid #b2ebf2;
+}
+
+/* ========== Description & Team ========== */
+.description-box {
+  background: #e3f2fd;
+  border: 1px dashed #90caf9;
+  padding: 10px;
+  border-radius: 8px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.team-details li {
+  padding: 6px 0;
+  color: #555;
+}
+
+/* ========== Animations ========== */
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes zoomIn {
+  0% { opacity: 0; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* ========== Layout Cards ========== */
+.main-card {
+  background: #f7f9fc;
+  border: 1px solid #d3dce6;
+  border-radius: 12px;
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.section-card {
+  background: #ffffff;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #dbe2ef;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  animation: fadeInUp 0.8s ease forwards;
+  animation-delay: 0.2s;
+  animation-fill-mode: forwards;
+}
+
+/* ========== Headings ========== */
+.section-heading {
+  font-size: 1.3rem;
+  color: #003566;
+  border-bottom: 2px solid #00b4d8;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+/* ========== Form Fields ========== */
+.field-label {
+  font-weight: 600;
+  color: #03045e;
+  margin-bottom: 5px;
+}
+
+
+/* ========== Description & Team ========== */
+.description-box {
+  background: #e3f2fd;
+  border: 1px dashed #90caf9;
+  padding: 10px;
+  border-radius: 8px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.team-details li {
+  padding: 6px 0;
+  color: #555;
+}
+
+/* ========== Task Card ========== */
+/* Task card style */
+.task-card {
+  background: linear-gradient(135deg, #e0f7fa, #f1f8e9);
+  border-radius: 10px;
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Hover effect */
+
+
+/* Status badge style */
+.task-status {
+  transition: background-color 0.3s ease;
+  cursor: pointer;
+}
+
+/* Different color styles for statuses */
+.bg-pending {
+  background-color: #ffc107 !important;
+}
+
+.bg-completed {
+  background-color: #28a745 !important;
+}
+
+.bg-claimed {
+  background-color: #17a2b8 !important;
+}
+
+  td form .form-control {
+  border-radius: 5px;
+  font-size: 0.85rem;
+}
+
+td form .btn-sm {
+  padding: 4px 8px;
+  margin-top: 3px;
+}
+
+td form select.custom-select-sm {
+  font-size: 0.85rem;
+}
+
+td .btn + .btn {
+  margin-left: 5px;
+}
+
+</style>
 </head>
-<body>
+<body class="hold-transition sidebar-mini layout-fixed">
 
 {% block content %}{% endblock %}
+
 
 <!-- REQUIRED SCRIPTS -->
 <script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
 <script src="{% static 'plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
 <!-- DataTables & Plugins -->
 <script src="{% static 'plugins/datatables/jquery.dataTables.min.js' %}"></script>
 <script src="{% static 'plugins/datatables-bs4/js/dataTables.bootstrap4.min.js' %}"></script>
@@ -114,19 +403,57 @@
 <script src="{% static 'plugins/datatables-buttons/js/buttons.html5.min.js' %}"></script>
 <script src="{% static 'plugins/datatables-buttons/js/buttons.print.min.js' %}"></script>
 <script src="{% static 'plugins/datatables-buttons/js/buttons.colVis.min.js' %}"></script>
+
 <!-- AdminLTE App -->
 <script src="{% static 'js/adminlte.min.js' %}"></script>
-<!-- AdminLTE for demo purposes -->
 <script src="{% static 'js/demo.js' %}"></script>
-<!-- Page specific script -->
+
+<!-- Additional Plugins -->
+<script src="{% static 'plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- External CDN Scripts (if needed apart from static) -->
+
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.6.0/js/bootstrap.bundle.min.js"></script>
+
+<!-- PAGE-SPECIFIC SCRIPTS -->
+
+<!-- DataTable Initialization -->
+<script>
+  $(document).ready(function () {
+    // Table 1
+    if (!$.fn.dataTable.isDataTable('#example1')) {
+      $('#example1').DataTable({
+        "responsive": true,
+        "lengthChange": false,
+        "autoWidth": false,
+        "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+      }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
+    }
+
+    // Table 2
+    if (!$.fn.dataTable.isDataTable('#example2')) {
+      $('#example2').DataTable({
+        "paging": true,
+        "lengthChange": false,
+        "searching": true,
+        "ordering": true,
+        "info": true,
+        "autoWidth": false,
+        "responsive": true,
+        "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+      }).buttons().container().appendTo('#example2_wrapper .col-md-6:eq(0)');
+    }
+  });
+</script>
+
+
+<!-- Leave Status Update -->
 <script>
   function updateStatus(selectElement) {
     const statusIcon = selectElement.previousElementSibling;
-
-    // Remove all icon and status classes
     statusIcon.className = 'fas status-icon';
 
-    // Add appropriate icon class
     switch (selectElement.value) {
       case 'Pending':
         statusIcon.classList.add('fa-clock', 'Pending');
@@ -143,19 +470,16 @@
     }
   }
 </script>
-<!--this is for add leave to hide and show applicable and entitlement sections based upon some conditions-->
+
+<!-- Toggle Tabs in Leave Form -->
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const allEmployeeRadio = document.getElementById('allEmployees');
     const individualEmployeeRadio = document.getElementById('individualEmployee');
-
     const applicableTab = document.querySelector('a[href="#applicable"]');
     const applicableContent = document.getElementById('applicable');
-
     const entitlementContent = document.getElementById('entitlement');
     const allEntitlementChildren = entitlementContent.querySelectorAll('.row');
-
-    // Fields to toggle required status
     const department = document.getElementById('department');
     const employee = document.getElementById('employee');
     const genderRadios = document.querySelectorAll('input[name="gender"]');
@@ -173,61 +497,46 @@
       const fromFieldValue = getSelectedFromFieldValue();
 
       if (allEmployeeRadio.checked) {
-        // Hide applicable tab
         applicableTab.style.visibility = 'hidden';
         applicableContent.style.visibility = 'hidden';
         applicableContent.style.position = 'absolute';
         applicableTab.style.position = 'absolute';
 
-        // Show only specific row in entitlement
         allEntitlementChildren.forEach((row, index) => {
           row.style.display = (index === 1) ? 'flex' : 'none';
         });
 
-        // Remove required from applicable tab fields
         department.removeAttribute('required');
         employee.removeAttribute('required');
         genderRadios.forEach(r => r.required = false);
         maritalRadios.forEach(r => r.required = false);
 
-        // Remove required from entitlement fields if not custom_date
         if (fromFieldValue !== 'custom_date') {
           effectiveAfter.removeAttribute('required');
           timeUnit.removeAttribute('required');
         }
 
         document.querySelector('a[href="#entitlement"]').click();
-
       } else {
-        // Show applicable tab
         applicableTab.style.visibility = 'visible';
         applicableContent.style.visibility = 'visible';
         applicableContent.style.position = 'static';
         applicableTab.style.position = 'static';
 
-        // Show all entitlement rows
         allEntitlementChildren.forEach(row => {
           row.style.display = 'flex';
         });
-
       }
     }
 
-    // Run on load
     toggleTabs();
-
-    // Re-evaluate when from_field changes too
-    fromFieldRadios.forEach(radio => {
-      radio.addEventListener('change', toggleTabs);
-    });
-
-    // Attach change events
+    fromFieldRadios.forEach(radio => radio.addEventListener('change', toggleTabs));
     allEmployeeRadio.addEventListener('change', toggleTabs);
     individualEmployeeRadio.addEventListener('change', toggleTabs);
   });
 </script>
 
-
+<!-- Toggle Custom Date -->
 <script>
   function toggleCustomDate(show) {
     const customDateInput = document.getElementById('customDateInput');
@@ -241,21 +550,12 @@
     }
   }
 
-  // Optional: Trigger on page load if "Custom Date" is already selected
   window.addEventListener('DOMContentLoaded', () => {
     toggleCustomDate(document.getElementById('custom').checked);
   });
 </script>
 
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.6.0/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- SweetAlert2 -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<!--this is for fetching Employees depending on gender , marital status, department-->
+<!-- Fetch Employees by Filters -->
 <script>
   function fetchEmployees() {
     const gender = document.querySelector('input[name="gender"]:checked')?.value || "";
@@ -283,108 +583,195 @@
     document.getElementById('department').addEventListener('change', fetchEmployees);
   });
 </script>
-<!--this is for showing employees who have applied in specific leave basically (+) expand and (-) colapse -->
+
+<!-- Toggle Expanded Leave Details -->
 <script>
-    // Expand/collapse toggle
-    document.addEventListener('DOMContentLoaded', function () {
-        const buttons = document.querySelectorAll('.toggle-btn');
-        buttons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = btn.getAttribute('data-id');
-                const row = document.getElementById(`details-${id}`);
-                const isVisible = row.style.display === 'table-row';
-                row.style.display = isVisible ? 'none' : 'table-row';
-                btn.textContent = isVisible ? '+' : '-';
-            });
-        });
+  document.addEventListener('DOMContentLoaded', function () {
+    const buttons = document.querySelectorAll('.toggle-btn');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const row = document.getElementById(`details-${id}`);
+        const isVisible = row.style.display === 'table-row';
+        row.style.display = isVisible ? 'none' : 'table-row';
+        btn.textContent = isVisible ? '+' : '-';
+      });
     });
+  });
 </script>
-<!--this is for dob validation -->
+
+<!-- DOB Validation -->
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const dobInput = document.getElementById('dob');
     const today = new Date();
-
     const maxDate = new Date(today);
     const minDate = new Date(today);
     minDate.setFullYear(today.getFullYear() - 60);
-
     dobInput.min = minDate.toISOString().split('T')[0];
     dobInput.max = maxDate.toISOString().split('T')[0];
   });
 </script>
-<!--this is for date of joining validations-->
+
+<!-- Joining Date Validation -->
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
+  document.addEventListener("DOMContentLoaded", function () {
     const joinDate = document.getElementById('joining_date');
     const today = new Date();
-
     const fourMonthsAgo = new Date(today);
     fourMonthsAgo.setMonth(today.getMonth() - 4);
-
     const fourMonthsLater = new Date(today);
     fourMonthsLater.setMonth(today.getMonth() + 4);
-
-    // Set min and max attributes
     joinDate.min = fourMonthsAgo.toISOString().split('T')[0];
     joinDate.max = fourMonthsLater.toISOString().split('T')[0];
   });
 </script>
-<!-- for view more logic to enable -->
+
+<!-- View More/Less Toggle -->
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+  document.addEventListener("DOMContentLoaded", function () {
     const buttons = document.querySelectorAll(".toggle-more");
 
     buttons.forEach(button => {
-        button.addEventListener("click", function () {
-            const leaveId = this.getAttribute("data-leave-id");
-            const rows = document.querySelectorAll(`.leave-row-${leaveId}.extra-row`);
-
-            rows.forEach(row => {
-                row.classList.toggle("d-none");
-            });
-
-            this.textContent = this.textContent === "View More" ? "View Less" : "View More";
+      button.addEventListener("click", function () {
+        const leaveId = this.getAttribute("data-leave-id");
+        const rows = document.querySelectorAll(`.leave-row-${leaveId}.extra-row`);
+        rows.forEach(row => {
+          row.classList.toggle("d-none");
         });
+        this.textContent = this.textContent === "View More" ? "View Less" : "View More";
+      });
     });
+  });
+</script>
+
+<!-- Leave Cancel Reason Validation -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const forms = document.querySelectorAll('form');
+
+    forms.forEach(function (form) {
+      const select = form.querySelector('.statusSelect');
+      const reasonContainer = form.querySelector('#cancel-reason-container');
+      const reasonInput = form.querySelector('#cancel-reason');
+
+      if (!select) return;
+
+      select.addEventListener('change', function () {
+        const selectedValue = select.value;
+
+        if (selectedValue === 'Cancelled') {
+          reasonContainer.style.display = 'block';
+        } else {
+          reasonContainer.style.display = 'none';
+          form.submit();
+        }
+      });
+
+      form.addEventListener('submit', function (e) {
+        if (select.value === 'Cancelled' && reasonInput.value.trim() === '') {
+          e.preventDefault();
+          alert("Please provide a reason for cancellation.");
+          reasonInput.focus();
+        }
+      });
+    });
+  });
+</script>
+<!--scripts for project-->
+<script src="{% static 'plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js' %}"></script>
+<script src="{% static 'path/to/jquery.min.js' %}"></script>
+<!--for project module add_project-->
+<script>
+$(document).ready(function () {
+  $('#projectForm').on('submit', function(e) {
+    e.preventDefault();
+    let formData = new FormData(this);
+
+    $.ajax({
+      url: "{% if project %}{% url 'add_project' project.id %}{% else %}{% url 'add_project' 0 %}{% endif %}",
+      type: "POST",
+      data: formData,
+      processData: false,
+      contentType: false,
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+      success: function(response) {
+          if (response.success) {
+              alert(response.message);
+              location.reload();
+              window.location.href = "{% url 'widgets' %}";
+
+          }
+      },
+      error: function(xhr) {
+        $('.text-danger').text(""); // Clear errors
+        try {
+          const errors = xhr.responseJSON.errors;
+          Object.keys(errors).forEach(field => {
+            $(`#error-${field}`).text(errors[field]);
+          });
+        } catch (e) {
+          console.error("Unhandled error:", e);
+        }
+      }
+    });
+  });
 });
 </script>
-<!--here this is a script file for in add employees json error message -->
-<!--applying validations using json ajax 2-->
-
-<!--this is for message box for reason while rejecting leave by hr i have removed onchange="updateStatus(this); this.form.submit()" from select which auto submit the form-->
+<!--for projecet-details tasks-->
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const forms = document.querySelectorAll('form');
+function showStatusMenu(badge) {
+  const menu = badge.nextElementSibling;
+  menu.classList.toggle('d-none');
+}
 
-        forms.forEach(function (form) {
-            const select = form.querySelector('.statusSelect');
-            const reasonContainer = form.querySelector('#cancel-reason-container');
-            const reasonInput = form.querySelector('#cancel-reason');
+function setStatus(option, text, badgeClass) {
+  const statusBadge = option.parentElement.previousElementSibling;
 
-            if (!select) return;
+  statusBadge.textContent = text;
+  statusBadge.className = 'badge task-status ' + badgeClass;
 
-            select.addEventListener('change', function () {
-                const selectedValue = select.value;
-
-                if (selectedValue === 'Cancelled') {
-                    reasonContainer.style.display = 'block'; // show reason + button
-                } else {
-                    reasonContainer.style.display = 'none';  // hide reason box
-                    form.submit(); // auto-submit for other statuses
-                }
-            });
-
-            form.addEventListener('submit', function (e) {
-                if (select.value === 'Cancelled' && reasonInput.value.trim() === '') {
-                    e.preventDefault();
-                    alert("Please provide a reason for cancellation.");
-                    reasonInput.focus();
-                }
-            });
-        });
-    });
+  // Hide the menu again
+  option.parentElement.classList.add('d-none');
+}
 </script>
+<!--for update employee-->
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    $('[data-toggle="tooltip"]').tooltip();  // Enable Bootstrap tooltips
+
+    document.querySelectorAll('.action-select').forEach(select => {
+      select.addEventListener('change', function() {
+        const form = this.closest('form');
+        const field = form.querySelector('.new-value-field');
+        const submitBtn = form.querySelector('.submit-btn');
+        const selected = this.value;
+
+        field.innerHTML = '';
+        submitBtn.classList.remove('d-none');
+
+        let inputHTML = '';
+        if (selected === 'department') {
+          inputHTML = `
+            <select name="new_department" class="form-control form-control-sm" required>
+              <option value="" disabled selected>Select Dept</option>
+              <option value="IT">IT</option>
+              <option value="HR">HR</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Finance">Finance</option>
+            </select>`;
+        } else if (selected === 'designation') {
+          inputHTML = `<input type="text" name="new_designation" class="form-control form-control-sm" placeholder="New designation" required>`;
+        } else if (selected === 'salary') {
+          inputHTML = `<input type="number" name="new_salary" step="0.01" class="form-control form-control-sm" placeholder="New salary" required>`;
+        }
+
+        field.innerHTML = inputHTML;
+      });
+    });
+  });
+</script>
+
 
 </body>
 </html>

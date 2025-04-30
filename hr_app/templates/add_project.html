@@ -1,0 +1,152 @@
+{% extends "main1.html" %}
+{% load static %}
+
+{% block title %}Add Project{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+  <!-- Navbar -->
+  {% include 'navbar.html' %}
+  <!-- /.navbar -->
+
+  <!-- Main Sidebar Container -->
+  {% include 'sidebar.html' %}
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6"><h1>{% if project %} Update {% else %} Add {% endif %} Project</h1></div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{% url 'widgets' %}">Home</a></li>
+            <li class="breadcrumb-item active">{% if project %} Update {% else %} Add {% endif %} Project</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="container-fluid">
+      <form id="projectForm" method="post" enctype="multipart/form-data" action="{% if project %}{% url 'add_project' project.id %}{% else %}{% url 'add_project' 0 %}{% endif %}">
+        {% csrf_token %}
+        <div class="card">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">{% if project %} Update {% else %} Add {% endif %}  Project</h5>
+          </div>
+          <div class="card-body">
+            <div class="row mb-3">
+              <div class="col-md-6">
+              <label>Project Name *</label>
+              <input type="text" class="form-control" name="project_name" value="{{ project.name|default_if_none:'' }}" required>
+              <small id="error-project_name" class="text-danger"></small>
+            </div>
+
+              <div class="col-md-6">
+                <label>Client Name *</label>
+                <input type="text" class="form-control" name="client_name" value="{{ project.client|default_if_none:'' }}" required>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label>Start Date *</label>
+                <input type="date" class="form-control" name="start_date" value="{% if project %}{{ project.start_date|date:'Y-m-d' }}{% endif %}" required>
+                <small id="error-date" class="text-danger"></small>
+                <small id="error-start_date" class="text-danger"></small>
+              </div>
+              <div class="col-md-6">
+                <label>End Date *</label>
+               <input type="date" class="form-control" name="end_date" value="{% if project %}{{ project.end_date|date:'Y-m-d' }}{% endif %}" required>
+                <small id="error-end_date" class="text-danger"></small>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <label>Rate Status</label>
+                <select class="form-control" name="rate_status" >
+                  <option value="Non Billable" {% if project.rate_status == 'Non Billable' %} selected {% endif %}>Non Billable</option>
+                  <option value="Billable" {% if project.rate_status == "Billable" %} selected {% endif %}>Billable</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label>Rate</label>
+                <div class="input-group">
+                  <select class="form-select" name="currency" style="max-width: 80px;">
+                    <option value="rs" {% if project.currency == "rs" %} selected {% endif %}>Rs</option>
+                    <option value="usd" {% if project.currency == "usd" %} selected {% endif %}>$</option>
+                  </select>
+                  <input type="number" class="form-control" name="rate" placeholder="Rate" value="{% if project %}{{project.rate}}{% endif %}">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label>Priority *</label>
+                <select class="form-control" name="priority" required>
+                  <option {% if project.priority == "Low" %} selected {% endif %}>Low</option>
+                  <option {% if project.priority == "Medium" %} selected {% endif %}>Medium </option>
+                  <option {% if project.priority == "High" %} selected {% endif %}>High</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label>Project Leader *</label>
+                <select class="form-control" name="project_leader" required>
+                  {% for leader in leaders %}
+                  <option value="{{ leader.id }}" {% if project.project_leader.id == leader.id %} selected {% endif %}>{{ leader.full_name }}</option>
+                  {% endfor %}
+                </select>
+                <small id="error-leader" class="text-danger"></small>
+              </div>
+              <div class="col-md-6">
+                <label>Admin *</label>
+                <select class="form-control" name="admin" required>
+                 {% for admin in admins %}
+                    <option value="{{ admin.id }}" {% if project.admin.id == admin.id %} selected {% endif %}>{{ admin.full_name }}</option>{% endfor %}
+                </select>
+                <small id="error-admin" class="text-danger"></small>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-12">
+                <label>Team Members *</label>
+                <select class="form-control" name="team_members" multiple required>
+                  {% for member in team_members %}
+                  <option value="{{ member.id }}" {% if member.id in selected_team_member_ids %} selected {% endif %}>{{ member.full_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-12">
+                <label>Description</label>
+                <textarea class="form-control" name="description" rows="4">{% if project %}{{ project.description }}{% endif %}</textarea>
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-12">
+              <label>Upload File</label>
+                <input type="file" class="form-control" name="file_upload">
+                {% if project and project.document %}
+                  <p>Current file: <a href="{{ project.document.url }}" target="_blank">{{ project.document.name }}</a></p>
+                {% endif %}
+              </div>
+            </div>
+          <div class="card-footer text-right">
+            <button type="submit" class="btn btn-success">{% if project %} Update {% else %} Save {% endif %}</button>
+          </div>
+        </div>
+        </div>
+      </form>
+    </div>
+  </section>
+
+</div>
+
+{% endblock %}
+</div>

@@ -187,3 +187,70 @@ class AddEmployee(models.Model):
         return f"{self.full_name} - {self.employee_id}"
 
 
+
+class Project(models.Model):
+    RATE_STATUS = [
+        ('billable', 'Billable'),
+        ('non billable', 'Non Billable')
+    ]
+
+    CURRENCY_CHOICES = [
+        ('rs', 'Rs'),
+        ('usd', 'USD ($)'),
+    ]
+
+    PRIORITY_CHOICES = [
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+    ]
+    name = models.CharField(max_length=255)
+    client = models.CharField(max_length=255, blank=True, null=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='rs')
+    rate_status = models.CharField(max_length=50, choices=RATE_STATUS, default="non billable")
+    rate = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
+    leader = models.ForeignKey(AddEmployee, on_delete=models.SET_NULL, related_name='leading_projects', null=True)
+    admin = models.ForeignKey(AddEmployee, on_delete=models.SET_NULL, related_name='admin_projects', null=True)
+    team_members = models.ManyToManyField(AddEmployee, related_name='team_projects', blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    document = models.FileField(upload_to='project_docs/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+from django.db import models
+from django.utils import timezone
+
+class Task(models.Model):
+    PRIORITY_CHOICES = [
+        ('Low', 'Low'),
+        ('Medium', 'Medium'),
+        ('High', 'High'),
+    ]
+
+    STATUS_CHOICES = [
+        ('Not Started', 'Not Started'),
+        ('In Progress', 'In Progress'),
+        ('Completed', 'Completed'),
+        ('On Hold', 'On Hold'),
+    ]
+
+    name = models.CharField(max_length=255)
+    project = models.ForeignKey('Project', on_delete=models.CASCADE, related_name='tasks')
+    assignee = models.ForeignKey('AddEmployee', on_delete=models.SET_NULL, null=True, related_name='tasks')
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='Medium')
+    start_date = models.DateField(default=timezone.now)
+    end_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Not Started')
+    description = models.TextField(blank=True, null=True)
+    document = models.FileField(upload_to='tasks/documents/', null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name

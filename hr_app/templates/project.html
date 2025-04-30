@@ -1,0 +1,237 @@
+{% extends "main1.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}Project Detail{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+  {% include 'navbar.html' %}
+  {% include 'sidebar.html' %}
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="text-primary border-bottom pb-2">Project Detail</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="{% url 'widgets' %}">Project</a></li>
+              <li class="breadcrumb-item active">Project Detail</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <div class="card main-card p-4 mb-4">
+          <div class="row">
+            <div class="col-md-8">
+              <div class="section-card mb-4">
+                <h4 class="section-heading"><i class="fas fa-info-circle"></i> Project Information</h4>
+                <form>
+                  <div class="row mb-3">
+                    <div class="col-md-4">
+                      <label class="field-label"><i class="fas fa-calendar-day"></i> Start Date</label>
+                      <input type="text" class="form-control field-input" readonly value="{{proj.start_date}}">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="field-label"><i class="fas fa-calendar-check"></i> End Date</label>
+                      <input type="text" class="form-control field-input" readonly value="{{proj.end_date}}">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="field-label"><i class="fas fa-upload"></i> Uploaded On</label>
+                      <input type="text" class="form-control field-input" readonly value="{{proj.created_at.date}}">
+                    </div>
+                  </div>
+
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="field-label"><i class="fas fa-building"></i> Client Company</label>
+                      <input type="text" class="form-control field-input" readonly value="{{proj.client}}">
+                    </div>
+                    <div class="col-md-3">
+                      <label class="field-label"><i class="fas fa-star"></i> Priority</label>
+                      <input type="text" class="form-control field-input" readonly value="Low" value="{{proj.priority}}">
+                    </div>
+                  </div>
+
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="field-label"><i class="fas fa-rupee-sign"></i> Rate</label>
+                      <input type="text" class="form-control field-input" readonly value="{{ proj.rate}} {{proj.currency}}"
+>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="field-label"><i class="fas fa-receipt"></i> Rate Status</label>
+                      <input type="text" class="form-control field-input" readonly value="{{proj.rate_status}}">
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-12">
+                      <label class="field-label"><i class="fas fa-align-left"></i> Project Description</label>
+                      <div class="description-box">
+                        <p>{{proj.description}}.</p>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+              <div class="section-card">
+  <h4 class="section-heading"><i class="fas fa-tasks"></i> Tasks</h4>
+
+  <div class="d-flex flex-wrap gap-3 pb-2">
+    {% for task in tasks %}
+    <div class="card task-card p-3 shadow-sm position-relative"
+     style="min-width:240px; max-width:260px; flex: 1 1 auto;"
+     data-task-id="{{ task.id }}">
+
+      <div class="card-body position-relative">
+
+        <!-- Status Badge -->
+<div class="status-badge-wrapper position-absolute top-0 end-0 m-2">
+  <!-- Hidden input for form submission -->
+  <span class="badge task-status mb-1 px-2 py-1 {{ task.status|get_badge_class }}"
+        onclick="showStatusMenu(this)"
+        style="cursor: pointer;">
+    {{ task.status }}
+  </span>
+
+  <!-- Dropdown Menu -->
+  <div class="status-menu d-none mt-2 p-2 bg-white shadow rounded position-absolute" style="z-index: 100;">
+    <div class="badge bg-success text-white mb-1" onclick="setStatus(this, 'Completed', 'bg-success text-white')">✅ Completed</div>
+    <div class="badge bg-warning text-dark mb-1" onclick="setStatus(this, 'Pending', 'bg-warning text-dark')">🕑 Pending</div>
+    <div class="badge bg-info text-dark mb-1" onclick="setStatus(this, 'Claimed Completed', 'bg-info text-dark')">🏁 Claimed</div>
+  </div>
+</div>
+
+        <!-- Task Content -->
+        <div class="task-content mt-4">
+          <h6 class="text-primary fw-bold">{{ task.name }}</h6>
+          <p class="mb-1"><i class="fas fa-user"></i> Assignee: {{ task.assignee.full_name }}</p>
+          <p class="mb-1"><i class="fas fa-calendar-day"></i> Start: {{ task.start_date }}</p>
+          <p class="mb-1"><i class="fas fa-calendar-check"></i> End: {{ task.end_date }}</p>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <p>No tasks assigned to this project.</p>
+    {% endfor %}
+  </div>
+</div>
+
+
+            </div>
+
+            <div class="col-md-4">
+              <div class="section-card">
+                <h5 class="section-heading"><i class="fas fa-user-tie"></i> Team Details</h5>
+                <ul class="list-unstyled team-details">
+                  <li><b>Project:</b> {{proj.name}}</li>
+                  <li><b>Admin:</b> {{proj.admin}}</li>
+                  <li><b>Leader:</b> {{proj.leader}}</li>
+                  <li><b>Team Members:</b>
+                    <ul>{% for member in proj.team_members.all %}
+                      <li>{{member.full_name }}{% if not forloop.last %} {% endif %}</li>
+                    {% empty %}
+                      <li>No team members assigned</li>
+                    {% endfor %}
+                    </ul>
+                  </li>
+                  <li><b>Docs:</b> {{proj.document}}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="main-footer">
+    <div class="float-right d-none d-sm-block">
+      <b>Version</b> 3.1.0
+    </div>
+    <strong>Copyright &copy; 2014-2021 <a href="https://adminlte.io">AdminLTE.io</a>.</strong> All rights reserved.
+  </footer>
+
+  <aside class="control-sidebar control-sidebar-dark">
+  </aside>
+</div>
+
+<script>
+function showStatusMenu(el) {
+  // Hide other menus
+  document.querySelectorAll('.status-menu').forEach(m => m.classList.add('d-none'));
+  const menu = el.nextElementSibling;
+  if (menu) menu.classList.toggle('d-none');
+}
+
+function setStatus(el, newStatus, newClass) {
+  const card = el.closest('.card');
+  const badge = card.querySelector('.task-status');
+  const hiddenInput = card.querySelector('.selected-status');
+
+  // Update badge text and class
+  badge.textContent = newStatus;
+  badge.className = 'badge task-status mb-1 px-2 py-1 ' + newClass;
+
+  // Update hidden input
+  if (hiddenInput) hiddenInput.value = newStatus;
+
+  // Hide menu
+  const menu = el.closest('.status-menu');
+  menu.classList.add('d-none');
+
+  // ✅ Automatically submit
+  const taskId = card.getAttribute('data-task-id');
+  if (taskId) {
+    submitStatusUpdate(taskId, card);
+  }
+}
+
+function getCSRFToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+function submitStatusUpdate(taskId, card) {
+  const status = card.querySelector('input.selected-status').value;
+
+  fetch("{% url 'update_task_status' %}", {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCSRFToken()
+    },
+    body: JSON.stringify({
+      task_id: taskId,
+      status: status
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      console.log('Status updated!');
+    } else {
+      alert('Failed to update.');
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    alert('Error updating status');
+  });
+}
+
+
+</script>
+
+
+
+
+{% endblock %}

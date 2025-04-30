@@ -45,6 +45,16 @@ urlpatterns = [
     path('edit-leave/', views.editing_leaves, name='editing_leaves'),
     path('leave-details/<int:leave_id>/', views.leave_details, name='leave_details'),
     path('toggle-leave-status/<int:leave_id>/', views.toggle_leave_status, name='toggle_leave_status'),
+    path('add-project/', views.add_project, name='add_project'),
+    path('project/<int:project_id>/', views.project, name='project'),
+    path('update-project/<int:project_id>/', views.update_project, name='update_project'),
+    path('add_project/<int:p_id>/', views.add_project, name='add_project'),
+    path('task/', views.task, name='task'),
+    path('task/<int:task_id>/', views.task, name='task'),
+    path('tasks/', views.task_list, name='task_list'),
+    path('get_team_members/<int:project_id>/', views.get_team_members, name='get_team_members'),
+    path('tasks/update-status/', views.update_task_status, name='update_task_status'),
+
 
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

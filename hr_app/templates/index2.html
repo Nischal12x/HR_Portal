@@ -19,74 +19,60 @@
 
         <div class="row w-100">
           <!-- Leave Detail Section -->
-          <div class="col-lg-4 col-md-5 col-sm-12 mb-3">
+          <div class="col-xl-4 col-lg-5 col-md-6 col-sm-12 mb-3">
     <div class="card shadow-lg border-0 rounded-3">
         <div class="card-header bg-primary text-white text-center">
             <h5 class="card-title mb-0">
                 <i class="fas fa-calendar-alt"></i> Leave Details
             </h5>
         </div>
-        <div class="card-body">
-            <table class="table table-hover table-bordered text-center">
-                <thead class="bg-light">
-                    <tr>
-                        <th>Type</th>
-                        {% for item in leave_details %}
-                        {% if item.leave_type.applied_to == 'All' or item.leave_type.applied_to == request.session.employee_id|stringformat:"s" %}
-                        <th>{{item.leave_type.leave_code}} <i class="fas fa-briefcase-medical"></i></th>
-<!--                        <th>CL <i class="fas fa-umbrella-beach"></i></th>-->
-<!--                        <th>LWP <i class="fas fa-hand-paper"></i></th>-->
-<!--                        <th>Special <i class="fas fa-star"></i></th>-->
-                        {% endif %}
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="bg-light">
-                        <td><strong>Total</strong></td>
-
-                        {% for item in leave_details %}
-                        {% if item.leave_type.applied_to == 'All' or item.leave_type.applied_to == request.session.employee_id|stringformat:"s" %}
-                        <td>{{ item.leave_type.leave_time }}</td>
-<!--                        <td>{{ total_casual_leave }}</td>-->
-<!--                        <td>{{ total_lwp }}</td>-->
-<!--                        <td>{{ total_special_leave }}</td>-->
-                        {% endif %}
-                        {% endfor %}
-
-                    </tr>
-                    <tr>
-                        <td><strong>Availed</strong></td>
-                        {% for item in leave_details %}
-                        {% if item.leave_type.applied_to == 'All' or item.leave_type.applied_to == request.session.employee_id|stringformat:"s" %}
-                        <td> {{ item.total_consumed_leave }}</td>
-<!--                        <td>{{ availed_casual_leave }}</td>-->
-<!--                        <td>{{ availed_lwp }}</td>-->
-<!--                        <td>{{ availed_special_leave }}</td>-->
-                        {% endif %}
-                        {% endfor %}
-                    </tr>
-                    <tr class="bg-light">
-                        <td><strong>Balance</strong></td>
-
-                        {% for item in leave_details %}
-                        {% if item.leave_type.applied_to == 'All' or item.leave_type.applied_to == request.session.employee_id|stringformat:"s" %}
-                        <td class="{% if balance_sick_leave < 5 %}text-danger{% endif %}">
-                            {{ item.remaining_leave }}
-                        </td>
-<!--                        <td class="{% if balance_casual_leave < 5 %}text-danger{% endif %}">-->
-<!--                            {{ balance_casual_leave }}-->
-<!--                        </td>-->
-<!--                        <td>{{ balance_lwp }}</td>-->
-<!--                        <td>{{ balance_special_leave }}</td>-->
-                        {% endif %}
-                        {% endfor %}
-                    </tr>
-                </tbody>
-            </table>
+        <div class="card-body p-2">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered text-center mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Type</th>
+                            {% for item in leave_details %}
+                            {% if item.leave_type.applied_to == 'All' or item.leave_type.applied_to == request.session.employee_id|stringformat:"s" %}
+                            <th>{{ item.leave_type.leave_code }} <i class="fas fa-briefcase-medical"></i></th>
+                            {% endif %}
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="bg-light">
+                            <td><strong>Total</strong></td>
+                            {% for item in leave_details %}
+                            {% if item.leave_type.applied_to == 'All' or item.leave_type.applied_to == request.session.employee_id|stringformat:"s" %}
+                            <td>{{ item.leave_type.leave_time }}</td>
+                            {% endif %}
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td><strong>Availed</strong></td>
+                            {% for item in leave_details %}
+                            {% if item.leave_type.applied_to == 'All' or item.leave_type.applied_to == request.session.employee_id|stringformat:"s" %}
+                            <td>{{ item.total_consumed_leave }}</td>
+                            {% endif %}
+                            {% endfor %}
+                        </tr>
+                        <tr class="bg-light">
+                            <td><strong>Balance</strong></td>
+                            {% for item in leave_details %}
+                            {% if item.leave_type.applied_to == 'All' or item.leave_type.applied_to == request.session.employee_id|stringformat:"s" %}
+                            <td class="{% if item.remaining_leave|floatformat:1 < 5 %}text-danger{% endif %}">
+                                {{ item.remaining_leave }}
+                            </td>
+                            {% endif %}
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
+
 
 
           <!-- Leave Form Section -->

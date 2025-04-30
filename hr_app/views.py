@@ -1,17 +1,145 @@
 import re
 from datetime import datetime, timezone, date
+
+from django.db import models
 from django.utils import timezone
 from collections import defaultdict
 from django.core.paginator import Paginator
 from django.core.files.storage import FileSystemStorage
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.shortcuts import render, redirect
 
+from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
+from django.utils.dateparse import parse_date
+from .models import Project, AddEmployee  # Ensure these models are imported
 from .forms import EmployeeForm
-from .models import Role, AddEmployee, LeaveApplication, Leave_Type
+from .models import Role, AddEmployee, LeaveApplication, Leave_Type, Task
+from django.views.decorators.csrf import csrf_exempt
+from .models import Project
+from django.utils.dateparse import parse_date
+
+def update_project(request, project_id):
+    project = get_object_or_404(Project, id=project_id)
+    selected_team_member_ids = list(project.team_members.values_list('id', flat=True))
+    context = {
+        'leaders': AddEmployee.objects.filter(role_id=2),
+        'admins': AddEmployee.objects.filter(role_id=1),
+        'team_members': AddEmployee.objects.filter(role_id=3),
+        'project': project,
+        'selected_team_member_ids': selected_team_member_ids
+    }
+    return render(request, 'add_project.html', context)
+
+from .models import Project, Task  # adjust import if needed
+
+def project(request, project_id):
+    proj = get_object_or_404(Project, id=project_id)
+
+    # Fetch only tasks associated with this project
+    tasks = Task.objects.filter(project=proj)
+
+    return render(request, 'project.html', {
+        'proj': proj,
+        'tasks': tasks
+    })
+
+@csrf_exempt
+
+@csrf_exempt
+@csrf_exempt
+def add_project(request, p_id=0):
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        # Get form data
+        project_name = request.POST.get('project_name')
+        client = request.POST.get('client_name')
+        start_date = parse_date(request.POST.get('start_date'))
+        end_date = parse_date(request.POST.get('end_date'))
+        currency = request.POST.get('currency')
+        rate_status = request.POST.get('rate_status')
+        rate = request.POST.get('rate')
+        priority = request.POST.get('priority')
+        leader_id = request.POST.get('project_leader')
+        admin_id = request.POST.get('admin')
+        team_ids = request.POST.getlist('team_members')
+        description = request.POST.get('description')
+        document = request.FILES.get('file_upload')
+
+        errors = {}
+        # Validation
+        if not project_name:
+            errors['project_name'] = "Project name is required."
+        if not client:
+            errors['client'] = "Client name is required."
+        if not start_date:
+            errors['start_date'] = "Start date is required."
+        if not end_date:
+            errors['end_date'] = "End date is required."
+        if start_date and end_date and start_date > end_date:
+            errors['date'] = "Start date cannot be after end date."
+        if not leader_id:
+            errors['leader'] = "Project leader is required."
+        if not admin_id:
+            errors['admin'] = "Project admin is required."
+
+        if project_name and Project.objects.filter(name__iexact=project_name).exists() and p_id == 0:
+            errors['project_name'] = "A project with this name already exists."
+
+        # Rate validation
+        if rate:
+            try:
+                rate = float(rate)
+            except ValueError:
+                errors['rate'] = "Rate must be a valid number."
+
+        if errors:
+            return JsonResponse({'success': False, 'errors': errors}, status=400)
+
+        # Create or update project
+        if p_id:
+            project = get_object_or_404(Project, id=p_id)
+            print("I AM Executed " , project)
+        else:
+            project = Project()
+
+        # Save the project data (must be saved before setting many-to-many relationships)
+        project.name = project_name
+        print("updated name", project.name)
+        project.client = client
+        project.start_date = start_date
+        project.end_date = end_date
+        project.currency = currency
+        project.rate_status = rate_status
+        project.rate = rate if rate else None
+        project.priority = priority
+        project.leader_id = leader_id
+        project.admin_id = admin_id
+        project.description = description
+        project.document = document
+        project.save()  # Save project before setting team_members
+
+        # Now you can safely assign the many-to-many relationship
+        project.team_members.set(team_ids)
+        project.save()  # Make sure to save again after updating the many-to-many field
+
+        # Success response for AJAX
+        if p_id != 0 :
+            return JsonResponse({'success': True, 'message': "Project Updated successfully!"})
+        return JsonResponse({'success': True, 'message': "Project saved successfully!"})
+
+    # Context for the form (used in the template)
+    context = {
+        'leaders': AddEmployee.objects.filter(role_id=2),
+        'admins': AddEmployee.objects.filter(role_id=1),
+        'team_members': AddEmployee.objects.filter(role_id=3),
+    }
+    return render(request, 'add_project.html', context)
+
+
+
 
 def toggle_leave_status(request, leave_id):
     if request.method == "POST":
@@ -143,7 +271,8 @@ def leave_dashboard(request, val=0):
     applicants = LeaveApplication.objects.all()
     applicants = applicants.order_by('-id')  # to reverse the order
     leave_type = Leave_Type.objects.all()
-    return render(request,"leave_dashboard.html", {"applicants" : applicants, "val": val, "leave_type" : leave_type})  # Adjust for actual user system
+    today = timezone.now().date()
+    return render(request,"leave_dashboard.html", {"applicants" : applicants, "val": val, "leave_type" : leave_type, 'today' : today})  # Adjust for actual user system
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -386,9 +515,40 @@ def update_employee(request, id):
         messages.success(request, "Employee updated successfully!")
         return redirect('employees')  # Redirect back to employee list
 
-    return render(request, 'update_employee.html', {'employee': employee})
+    return render(request, 'add_emp.html', {'employee': employee})
 
 def update_employee1(request, id) :
+    # Get the employee object
+    emp = get_object_or_404(AddEmployee, id=id)
+
+
+    if request.method == 'POST':
+        # Get the selected action from the form
+        action = request.POST.get('action')
+
+        # Based on the selected action, update the corresponding field
+        if action == 'department':
+            # Update the department
+            new_department = request.POST.get('new_department')  # Assuming you have a field for the new department
+            emp.department = new_department
+
+        elif action == 'designation':
+            # Update the designation
+            new_designation = request.POST.get('new_designation')  # Assuming you have a field for the new designation
+            emp.designation = new_designation
+
+        elif action == 'salary':
+            # Update the salary
+            new_salary = request.POST.get('new_salary')  # Assuming you have a field for the new salary
+            emp.salary = new_salary
+
+        # Save the updated employee record
+        emp.save()
+
+        # Redirect to the employee detail page (or wherever you want)
+        return redirect('employees')
+
+        # In case the method is not POST, redirect to some default page
     roles = Role.objects.all()
     employee = get_object_or_404(AddEmployee, id=id)
     return render(request, 'add_emp.html',{'employee': employee, 'roles' : roles} )
@@ -659,12 +819,135 @@ def index2(request):
     # Pass the leave details to the template
     return render(request, 'index2.html', {'leave_details': leave_details})
 
+def get_team_members(request, project_id):
+    employee_id = request.session.get('employee_id')
+    project = Project.objects.filter(
+        id=project_id
+    ).filter(
+        models.Q(leader_id=employee_id) | models.Q(admin_id=employee_id)
+    ).prefetch_related('team_members').first()
 
+    if not project:
+        return JsonResponse({'error': 'Unauthorized or project not found'}, status=403)
+
+    members = [{'id': m.id, 'name': m.full_name} for m in project.team_members.all()]
+    return JsonResponse({'members': members})
+
+
+def task(request, task_id=0):
+    employee_id = request.session.get('employee_id')
+    employee = AddEmployee.objects.get(id=employee_id)
+
+    # This is always needed — move it here
+    projects = Project.objects.filter(
+        models.Q(leader_id=employee_id) | models.Q(admin_id=employee_id)
+    ).distinct()
+
+    if task_id != 0:
+        task = get_object_or_404(Task, id=task_id)
+        team_members = task.project.team_members.all() if task.project else []
+    else:
+        task = None
+        team_members = []
+
+    if request.method == 'POST':
+        task_name = request.POST.get('task_name')
+        project_id = request.POST.get('project_id')
+        assignee_id = request.POST.get('assignee')
+        priority = request.POST.get('priority')
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        status = request.POST.get('status')
+        description = request.POST.get('description')
+        document = request.FILES.get('file_upload')
+
+        if task:
+            task.name = task_name
+            task.project_id = project_id
+            task.assignee_id = assignee_id
+            task.priority = priority
+            task.start_date = start_date
+            task.end_date = end_date
+            task.status = status
+            task.description = description
+            if document:
+                task.document = document
+            task.save()
+            messages.success(request, "Task updated successfully.")
+        else:
+            Task.objects.create(
+                name=task_name,
+                project_id=project_id,
+                assignee_id=assignee_id,
+                priority=priority,
+                start_date=start_date,
+                end_date=end_date,
+                status=status,
+                description=description,
+                document=document
+            )
+            messages.success(request, "Task created successfully.")
+        return redirect('task_list')
+
+    context = {
+        'task': task,
+        'projects': projects,
+        'team_members': team_members
+    }
+    return render(request, 'add_task.html', context)
+import json
+
+@csrf_exempt
+def update_task_status(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            task_id = data.get('task_id')
+            status = data.get('status')
+            task = Task.objects.get(id=task_id)
+            task.status = status
+            task.save()
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+
+
+def task_list(request):
+    employee_id = request.session.get('employee_id')
+
+    # Get all projects where user is leader or admin
+    projects = Project.objects.filter(
+        Q(leader_id=employee_id) | Q(admin_id=employee_id)
+    ).values_list('id', flat=True)
+
+    # Get all tasks related to those projects
+    tasks = Task.objects.filter(project_id__in=projects).all().order_by('-id')  # you can adjust ordering
+    paginator = Paginator(tasks, 10)  # Show 10 tasks per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'task_list.html', {'tasks': page_obj})
 
 def dash_v3(request) :
     return render(request, 'index3.html')
 def widgets(request) :
-    return render(request, 'widgets.html')
+    employee_id = request.session.get('employee_id')
+    print("Session Data:", request.session.items())
+
+    role_id = request.session.get('role')
+    if role_id == 'HR':  # Admin
+        projects = Project.objects.all()
+    elif role_id == 'Project Manager':  # Leader
+        projects = Project.objects.filter(leader_id=employee_id)
+    else:  # Team Member
+        projects = Project.objects.filter(team_members__id=employee_id)
+    projects = projects.order_by('-id')
+    paginator = Paginator(projects, 10)  # Show 10 projects per page
+    page_number = request.GET.get('page')  # Get current page number
+    page_obj = paginator.get_page(page_number)  # Get the page object
+    return render(request, 'widgets.html', {'projects' : page_obj})
 def calendar(request) :
     return render(request, 'calendar.html')
 def gallery(request) :
