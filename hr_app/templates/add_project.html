@@ -37,110 +37,116 @@
           </div>
           <div class="card-body">
             <div class="row mb-3">
-              <div class="col-md-6">
-              <label>Project Name *</label>
-              <input type="text" class="form-control" name="project_name" value="{{ project.name|default_if_none:'' }}" required>
-              <small id="error-project_name" class="text-danger"></small>
-            </div>
-
-              <div class="col-md-6">
-                <label>Client Name *</label>
-                <input type="text" class="form-control" name="client_name" value="{{ project.client|default_if_none:'' }}" required>
+              <div class="col-md-3">
+                <label>Project Name *</label>
+                <input type="text" class="form-control" name="project_name" value="{{ project.name|default_if_none:'' }}" {% if request.session.role == 'Employee' %}disabled{% endif %} required>
+                <small id="error-project_name" class="text-danger"></small>
               </div>
-            </div>
 
-            <div class="row mb-3">
-              <div class="col-md-6">
+              <div class="col-md-3">
+                <label>Client Name *</label>
+                <input type="text" class="form-control" name="client_name" value="{{ project.client|default_if_none:'' }}" {% if request.session.role == 'Employee' %}disabled{% endif %} required>
+                <small id="error-client" class="text-danger"></small>
+              </div>
+
+              <div class="col-md-3">
                 <label>Start Date *</label>
-                <input type="date" class="form-control" name="start_date" value="{% if project %}{{ project.start_date|date:'Y-m-d' }}{% endif %}" required>
+                <input type="date" class="form-control" name="start_date" value="{% if project %}{{ project.start_date|date:'Y-m-d' }}{% endif %}" {% if request.session.role == 'Employee' %}disabled{% endif %} required>
                 <small id="error-date" class="text-danger"></small>
                 <small id="error-start_date" class="text-danger"></small>
               </div>
-              <div class="col-md-6">
+
+              <div class="col-md-3">
                 <label>End Date *</label>
-               <input type="date" class="form-control" name="end_date" value="{% if project %}{{ project.end_date|date:'Y-m-d' }}{% endif %}" required>
+                <input type="date" class="form-control" name="end_date" value="{% if project %}{{ project.end_date|date:'Y-m-d' }}{% endif %}" {% if request.session.role == 'Employee' %}disabled{% endif %} required>
                 <small id="error-end_date" class="text-danger"></small>
               </div>
             </div>
 
             <div class="row mb-3">
-              <div class="col-md-4">
+              <div class="col-md-2">
                 <label>Rate Status</label>
-                <select class="form-control" name="rate_status" >
+                <select class="form-control" name="rate_status" id="rate_status" {% if request.session.role == 'Employee' %}disabled{% endif %}>
                   <option value="Non Billable" {% if project.rate_status == 'Non Billable' %} selected {% endif %}>Non Billable</option>
                   <option value="Billable" {% if project.rate_status == "Billable" %} selected {% endif %}>Billable</option>
                 </select>
               </div>
-              <div class="col-md-4">
+
+              <div class="col-md-2" id="rate_section">
                 <label>Rate</label>
                 <div class="input-group">
-                  <select class="form-select" name="currency" style="max-width: 80px;">
+                  <select class="form-select" name="currency" style="max-width: 80px;" {% if request.session.role == 'Employee' %}disabled{% endif %}>
                     <option value="rs" {% if project.currency == "rs" %} selected {% endif %}>Rs</option>
                     <option value="usd" {% if project.currency == "usd" %} selected {% endif %}>$</option>
                   </select>
-                  <input type="number" class="form-control" name="rate" placeholder="Rate" value="{% if project %}{{project.rate}}{% endif %}">
+                  <input type="number" class="form-control" name="rate" placeholder="Rate" value="{% if project %}{{ project.rate }}{% endif %}" {% if request.session.role == 'Employee' %}disabled{% endif %}>
                 </div>
               </div>
-              <div class="col-md-4">
+
+              <div class="col-md-2">
                 <label>Priority *</label>
-                <select class="form-control" name="priority" required>
+                <select class="form-control" name="priority" required {% if request.session.role == 'Employee' %}disabled{% endif %}>
                   <option {% if project.priority == "Low" %} selected {% endif %}>Low</option>
                   <option {% if project.priority == "Medium" %} selected {% endif %}>Medium </option>
                   <option {% if project.priority == "High" %} selected {% endif %}>High</option>
                 </select>
               </div>
-            </div>
 
-            <div class="row mb-3">
-              <div class="col-md-6">
+              <div class="col-md-3">
                 <label>Project Leader *</label>
-                <select class="form-control" name="project_leader" required>
+                <select class="form-control" name="project_leader" required {% if request.session.role == 'Employee' %}disabled{% endif %}>
+                  {% if not project %} <option value="" disabled selected>-- Select Team Leader --</option> {% endif %}
                   {% for leader in leaders %}
                   <option value="{{ leader.id }}" {% if project.project_leader.id == leader.id %} selected {% endif %}>{{ leader.full_name }}</option>
                   {% endfor %}
                 </select>
                 <small id="error-leader" class="text-danger"></small>
               </div>
-              <div class="col-md-6">
+
+              <div class="col-md-3">
                 <label>Admin *</label>
-                <select class="form-control" name="admin" required>
-                 {% for admin in admins %}
-                    <option value="{{ admin.id }}" {% if project.admin.id == admin.id %} selected {% endif %}>{{ admin.full_name }}</option>{% endfor %}
+                <select class="form-control" name="admin" required {% if request.session.role == 'Employee' %}disabled{% endif %}>
+                  {% if not project %} <option value="" disabled selected>-- Select Administrator --</option> {% endif %}
+                  {% for admin in admins %}
+                    <option value="{{ admin.id }}" {% if project.admin.id == admin.id %} selected {% endif %}>{{ admin.full_name }}</option>
+                  {% endfor %}
                 </select>
                 <small id="error-admin" class="text-danger"></small>
               </div>
             </div>
 
             <div class="row mb-3">
-              <div class="col-md-12">
+              <div class="col-md-6">
                 <label>Team Members *</label>
-                <select class="form-control" name="team_members" multiple required>
+                <select class="form-control" name="team_members" multiple required {% if request.session.role == 'Employee' %}disabled{% endif %}>
                   {% for member in team_members %}
-                  <option value="{{ member.id }}" {% if member.id in selected_team_member_ids %} selected {% endif %}>{{ member.full_name }}</option>
+                    <option value="{{ member.id }}" {% if member.id in selected_team_member_ids %} selected {% endif %}>{{ member.full_name }}</option>
                   {% endfor %}
                 </select>
+              </div>
+
+              <div class="col-md-6">
+                <label>Description *</label>
+                <textarea class="form-control" name="description" rows="4" placeholder="Add Description here..." required {% if request.session.role == 'Employee' %}disabled{% endif %}>{% if project %}{{ project.description }}{% endif %}</textarea>
               </div>
             </div>
 
             <div class="row mb-3">
               <div class="col-md-12">
-                <label>Description</label>
-                <textarea class="form-control" name="description" rows="4">{% if project %}{{ project.description }}{% endif %}</textarea>
-              </div>
-            </div>
-            <div class="row mb-3">
-              <div class="col-md-12">
-              <label>Upload File</label>
-                <input type="file" class="form-control" name="file_upload">
+                <label>Upload File</label>
+                <input type="file" class="form-control" name="file_upload" {% if request.session.role == 'Employee' %}disabled{% endif %}>
                 {% if project and project.document %}
                   <p>Current file: <a href="{{ project.document.url }}" target="_blank">{{ project.document.name }}</a></p>
                 {% endif %}
               </div>
             </div>
-          <div class="card-footer text-right">
-            <button type="submit" class="btn btn-success">{% if project %} Update {% else %} Save {% endif %}</button>
+
+            {% if request.session.role != 'Employee' %}
+            <div class="card-footer text-right">
+              <button type="submit" class="btn btn-success">{% if project %} Update {% else %} Save {% endif %}</button>
+            </div>
+            {% endif %}
           </div>
-        </div>
         </div>
       </form>
     </div>
@@ -148,5 +154,39 @@
 
 </div>
 
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const rateStatus = document.getElementById('rate_status');
+    const rateInput = document.querySelector('input[name="rate"]');
+    const currencySelect = document.querySelector('select[name="currency"]');
+
+    function toggleRateFields() {
+      const isBillable = rateStatus.value === 'Billable';
+      rateInput.disabled = !isBillable || "{{ request.session.role }}" === "Employee";
+      currencySelect.disabled = !isBillable || "{{ request.session.role }}" === "Employee";
+    }
+
+    toggleRateFields();
+    rateStatus.addEventListener('change', toggleRateFields);
+  });
+</script>
+
+<!-- Validations -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const startDateInput = document.querySelector('input[name="start_date"]');
+    const endDateInput = document.querySelector('input[name="end_date"]');
+
+    const today = new Date().toISOString().split('T')[0];
+    startDateInput.setAttribute('min', today);
+    endDateInput.setAttribute('min', today);
+
+    startDateInput.addEventListener('change', function () {
+      const selectedStart = this.value;
+      endDateInput.value = '';
+      endDateInput.setAttribute('min', selectedStart);
+    });
+  });
+</script>
 {% endblock %}
 </div>

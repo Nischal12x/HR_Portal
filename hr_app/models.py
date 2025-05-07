@@ -233,10 +233,9 @@ class Task(models.Model):
     ]
 
     STATUS_CHOICES = [
-        ('Not Started', 'Not Started'),
-        ('In Progress', 'In Progress'),
+        ('Pending', 'Pending'),
         ('Completed', 'Completed'),
-        ('On Hold', 'On Hold'),
+        ('Claimed Completed', 'Claimed Completed'),
     ]
 
     name = models.CharField(max_length=255)
@@ -245,7 +244,7 @@ class Task(models.Model):
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='Medium')
     start_date = models.DateField(default=timezone.now)
     end_date = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Not Started')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     description = models.TextField(blank=True, null=True)
     document = models.FileField(upload_to='tasks/documents/', null=True, blank=True)
 
@@ -254,3 +253,42 @@ class Task(models.Model):
 
     def __str__(self):
         return self.name
+
+class Timesheet(models.Model):
+    WEEKDAYS = [
+        ('Monday', 'Monday'),
+        ('Tuesday', 'Tuesday'),
+        ('Wednesday', 'Wednesday'),
+        ('Thursday', 'Thursday'),
+        ('Friday', 'Friday'),
+        ('Saturday', 'Saturday'),
+        ('Sunday', 'Sunday'),
+    ]
+
+    employee = models.ForeignKey(AddEmployee, on_delete=models.CASCADE, related_name='timesheets')
+    day = models.CharField(max_length=10, choices=WEEKDAYS)
+    date = models.DateField()
+    project = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, related_name='timesheet_entries')
+    task = models.ForeignKey(Task, on_delete=models.SET_NULL, null=True, related_name='timesheet_entries')
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    description = models.TextField()
+    attachment = models.FileField(
+        upload_to='attachments/',
+        null=True,
+        blank=True,
+        validators=[validate_file_size]
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.employee.full_name} - {self.date} - {self.project.name if self.project else 'No Project'}"
+
+    def clean(self):
+        if self.start_time >= self.end_time:
+            raise ValidationError("Start time must be before end time.")
+
+    class Meta:
+        verbose_name = 'Timesheet Entry'
+        verbose_name_plural = 'Timesheet Entries'
+        ordering = ['-date']

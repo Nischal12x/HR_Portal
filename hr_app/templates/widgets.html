@@ -38,7 +38,7 @@
             <div class="card">
               <div class="card-header d-flex align-items-center">
                   <h3 class="card-title mb-0 flex-grow-1">List Of Projects</h3>
-                  <a href="{% url 'add_project' %}" class="btn btn-primary ms-auto">Add Project</a>
+                  {% if request.session.role == 'HR' or request.session.role == 'Project Manager' %}<a href="{% url 'add_project' %}" class="btn btn-primary ms-auto">Add Project</a>{% endif %}
               </div>
 
 
@@ -72,7 +72,7 @@
                       No team members assigned
                     {% endfor %}
                     </td>
-                    <td><span class="badge bg-success"><a href="{% url 'update_project' project.id %}"> Edit</a></span> </td>
+                    <td><span class="badge bg-success"><a href="{% url 'update_project' project.id %}"> {% if request.session.role == 'Employee' %}  View {% else %} Edit {% endif %}</a></span> </td>
                   </tr>
                   {% endfor %}
                   </tbody>

@@ -378,12 +378,16 @@ td form select.custom-select-sm {
 td .btn + .btn {
   margin-left: 5px;
 }
-
-</style>
+  </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
 
-{% block content %}{% endblock %}
+<!-- CSRF token for JavaScript fetch() -->
+<input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+
+{% block content %}
+{% endblock %}
+
 
 
 <!-- REQUIRED SCRIPTS -->
@@ -680,11 +684,12 @@ td .btn + .btn {
 </script>
 <!--scripts for project-->
 <script src="{% static 'plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js' %}"></script>
-<script src="{% static 'path/to/jquery.min.js' %}"></script>
+
 <!--for project module add_project-->
 <script>
 $(document).ready(function () {
-  $('#projectForm').on('submit', function(e) {
+  // Unbind any previous submit handler to avoid duplicates
+  $('#projectForm').off('submit').on('submit', function(e) {
     e.preventDefault();
     let formData = new FormData(this);
 
@@ -698,9 +703,7 @@ $(document).ready(function () {
       success: function(response) {
           if (response.success) {
               alert(response.message);
-              location.reload();
               window.location.href = "{% url 'widgets' %}";
-
           }
       },
       error: function(xhr) {
@@ -771,7 +774,41 @@ function setStatus(option, text, badgeClass) {
     });
   });
 </script>
+<!--this is for task options status to toggle and update in db-->
+<script>
+  // Show dropdown menu for a specific task
+  function showStatusMenu(badgeElement) {
+    // Hide all other status menus first
+    document.querySelectorAll('.status-menu').forEach(menu => menu.classList.add('d-none'));
 
+    // Toggle the current one
+    const menu = badgeElement.nextElementSibling;
+    if (menu && menu.classList.contains('status-menu')) {
+      menu.classList.toggle('d-none');
+    }
+
+    // Stop propagation so the click doesn't bubble to document and close it instantly
+    event.stopPropagation();
+  }
+
+  // Submit status change
+  function submitStatus(status, taskId) {
+    const statusInput = document.getElementById(`statusInput-${taskId}`);
+    const statusForm = document.getElementById(`statusForm-${taskId}`);
+    statusInput.value = status;
+    statusForm.submit();
+  }
+
+  // Close status menus when clicking outside
+  document.addEventListener('click', function (event) {
+    const clickedInsideMenu = event.target.closest('.status-menu');
+    const clickedStatusBadge = event.target.closest('.task-status');
+
+    if (!clickedInsideMenu && !clickedStatusBadge) {
+      document.querySelectorAll('.status-menu').forEach(menu => menu.classList.add('d-none'));
+    }
+  });
+</script>
 
 </body>
 </html>

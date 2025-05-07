@@ -21,6 +21,15 @@ def get_status_text_color(status):
     dark_text_statuses = ['Pending', 'Claimed Completed']
     return '#000' if status in dark_text_statuses else '#fff'
 
+@register.filter
+def pluck(queryset, attr):
+    """Extracts a list of attribute values from a queryset or list."""
+    return [getattr(item, attr, None) for item in queryset]
+
+@register.filter
+def contains(value, item):
+    """Returns True if item is in value."""
+    return item in value
 
 @register.filter
 def get_badge_class(status):

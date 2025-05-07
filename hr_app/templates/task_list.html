@@ -32,7 +32,7 @@
             <div class="card">
               <div class="card-header d-flex align-items-center">
                 <h3 class="card-title mb-0 flex-grow-1">List Of Tasks</h3>
-                <a href="{% url 'task' %}" class="btn btn-primary ms-auto">Add Task</a>
+                {% if request.session.role == 'HR' or request.session.role == 'Project Manager' %}<a href="{% url 'task' %}" class="btn btn-primary ms-auto">Add Task</a>{% endif %}
               </div>
 
               <div class="card-body">
@@ -46,14 +46,14 @@
                       <th>Start Date</th>
                       <th>End Date</th>
                       <th>Status</th>
-                      <th>Actions</th>
+                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
   {% for task in tasks %}
     <tr>
       <td>{{ forloop.counter }}</td>
-      <td>{{ task.name }}</td>
+      <td><a href="{% url 'task_detail' task.id %}">{{ task.name }}</a></td>
       <td>{{ task.project.name }}</td>
       <td>{{ task.assignee.full_name }}</td>
       <td>{{ task.start_date }}</td>

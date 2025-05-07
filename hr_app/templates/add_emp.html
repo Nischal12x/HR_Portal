@@ -29,18 +29,21 @@
           </div>
           <div class="card-body">
             {% if messages %}
-<script>
+  <script>
     document.addEventListener("DOMContentLoaded", function () {
         {% for message in messages %}
             Swal.fire({
-                title: "{% if message.tags == 'success' %}Success{% else %}Error{% endif %}",
-                text: "{{ message }}",
-                icon: "{% if message.tags == 'success' %}success{% else %}error{% endif %}",
-                confirmButtonText: "OK"
+                title: "{{ message.tags|capfirst }}",
+                text: "{{ message|escapejs }}",
+                icon: "{{ message.tags }}",
+                confirmButtonText: "OK",
+                confirmButtonColor: "{% if message.tags == 'success' %}#28a745{% else %}#dc3545{% endif %}"
             });
         {% endfor %}
     });
 </script>
+
+
 {% endif %}
 
 

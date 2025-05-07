@@ -1,0 +1,90 @@
+{% extends "main1.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}Task Detail{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+  {% include 'navbar.html' %}
+  {% include 'sidebar.html' %}
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="text-primary">Task Detail</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="{% url 'task_list' %}">Tasks</a></li>
+              <li class="breadcrumb-item active">{{ task.name }}</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <div class="card p-4 shadow-lg border-start border-primary border-5">
+          <div class="row">
+            <!-- Task Details Section -->
+            <div class="col-md-8">
+              <h4 class="mb-3"><i class="fas fa-info-circle"></i> Task Overview</h4>
+              <div class="row mb-3">
+                <div class="col-md-6"><strong>Name:</strong> {{ task.name }}</div>
+                <div class="col-md-6"><strong>Project:</strong> {{ task.project.name }}</div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-6"><strong>Assignee:</strong> {{ task.assignee.full_name }}</div>
+                <div class="col-md-6">
+                  <strong>Priority:</strong>
+                  <span class="badge bg-{{ task.priority|lower }}">{{ task.priority }}</span>
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-6"><strong>Start Date:</strong> {{ task.start_date }}</div>
+                <div class="col-md-6"><strong>End Date:</strong> {{ task.end_date|default:"—" }}</div>
+              </div>
+              <div class="mb-3"><strong>Description:</strong>
+                <div class="bg-light rounded p-2 mt-1">{{ task.description|default:"No description provided." }}</div>
+              </div>
+              {% if task.document %}
+              <div class="mb-3"><strong>Document:</strong>
+                <a href="{{ task.document.url }}" class="btn btn-sm btn-outline-primary ms-2" target="_blank">
+                  <i class="fas fa-file-download"></i> View File
+                </a>
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- Status Update Section -->
+            <div class="col-md-4">
+              <div class="bg-white rounded shadow-sm p-3 text-center">
+                <h5><i class="fas fa-tasks"></i> Task Status</h5>
+                <div class="mb-3">
+                  <span class="badge task-status px-3 py-2 {{ task.status|get_badge_class }}">
+                    {{ task.status }}
+                  </span>
+                </div>
+
+                <!-- Status Dropdown Styled as Interactive Box -->
+                <div class="d-grid gap-2">
+                  <a href="{% url 'update_task_status' %}?task_id={{ task.id }}&status=Pending"
+                     class="btn btn-outline-warning btn-sm">🕑 Mark Pending</a>
+                  <a href="{% url 'update_task_status' %}?task_id={{ task.id }}&status=Claimed Completed"
+                     class="btn btn-outline-info btn-sm">🏁 Claim Completed</a>
+                  <a href="{% url 'update_task_status' %}?task_id={{ task.id }}&status=Completed"
+                     class="btn btn-outline-success btn-sm">✅ Mark Completed</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

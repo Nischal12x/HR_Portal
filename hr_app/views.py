@@ -1,5 +1,5 @@
 import re
-from datetime import datetime, timezone, date
+from datetime import datetime, timezone, date, timedelta
 
 from django.db import models
 from django.utils import timezone
@@ -15,7 +15,7 @@ from django.shortcuts import render, redirect
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.utils.dateparse import parse_date
-from .models import Project, AddEmployee  # Ensure these models are imported
+from .models import Project, AddEmployee, Timesheet  # Ensure these models are imported
 from .forms import EmployeeForm
 from .models import Role, AddEmployee, LeaveApplication, Leave_Type, Task
 from django.views.decorators.csrf import csrf_exempt
@@ -41,6 +41,7 @@ def project(request, project_id):
 
     # Fetch only tasks associated with this project
     tasks = Task.objects.filter(project=proj)
+
 
     return render(request, 'project.html', {
         'proj': proj,
@@ -73,15 +74,15 @@ def add_project(request, p_id=0):
         if not project_name:
             errors['project_name'] = "Project name is required."
         if not client:
-            errors['client'] = "Client name is required."
+            errors['client_name'] = "Client name is required."
         if not start_date:
             errors['start_date'] = "Start date is required."
         if not end_date:
             errors['end_date'] = "End date is required."
         if start_date and end_date and start_date > end_date:
-            errors['date'] = "Start date cannot be after end date."
+            errors['start_date'] = "Start date cannot be after end date."  # assign to actual form field
         if not leader_id:
-            errors['leader'] = "Project leader is required."
+            errors['project_leader'] = "Project leader is required."
         if not admin_id:
             errors['admin'] = "Project admin is required."
 
@@ -96,6 +97,7 @@ def add_project(request, p_id=0):
                 errors['rate'] = "Rate must be a valid number."
 
         if errors:
+            print("FORM VALIDATION ERRORS:", errors)
             return JsonResponse({'success': False, 'errors': errors}, status=400)
 
         # Create or update project
@@ -832,16 +834,130 @@ def get_team_members(request, project_id):
 
     members = [{'id': m.id, 'name': m.full_name} for m in project.team_members.all()]
     return JsonResponse({'members': members})
+def get_current_week_dates():
+    # Get the current date
+    today = datetime.today()
+    # Calculate how many days back to Monday
+    days_to_monday = today.weekday()  # Monday is 0 and Sunday is 6
+    # Get the date of Monday of this week
+    start_of_week = today - timedelta(days=days_to_monday)
+    # Get the date of Sunday of this week
+    end_of_week = start_of_week + timedelta(days=6)
 
+    # Create a list of dates for each day of the week (Monday to Sunday)
+    week_dates = {}
+    for i in range(7):
+        date = start_of_week + timedelta(days=i)
+        week_dates[date.strftime('%A')] = date.strftime('%Y-%m-%d')  # Store as 'Monday', 'Tuesday', etc.
+
+    return week_dates
+
+def add_weekly_timesheet(request):
+    employee_id = request.session.get('employee_id')
+    try:
+        employee = AddEmployee.objects.get(id=employee_id)
+    except AddEmployee.DoesNotExist:
+        employee = None
+        messages.error(request, "Employee record not found.")
+        return redirect('timesheet')
+
+    today = timezone.now()
+    start_of_week = today - timedelta(days=today.weekday())  # Monday of the current week
+    current_week_dates = {}
+
+    # Generate current week dates (Monday to Sunday)
+    for i in range(7):
+        day = start_of_week + timedelta(days=i)
+        current_week_dates[day.strftime('%A')] = day.strftime('%Y-%m-%d')  # Format: 'Monday': '2025-05-05'
+
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+    if request.method == 'POST':
+        entries_saved = 0
+
+        for day in days:
+            day_key = day.lower()
+
+            # Get form data for each day
+            date = request.POST.get(f'date_{day}', '').strip()
+            project_id = request.POST.get(f'project_{day}', '').strip()
+            task_id = request.POST.get(f'task_{day}', '').strip()
+            start_time = request.POST.get(f'start_time_{day}', '').strip()
+            end_time = request.POST.get(f'end_time_{day}', '').strip()
+            description = request.POST.get(f'description_{day}', '').strip()
+
+            file_field = f'attachment_{day}'
+            attachment = request.FILES.get(file_field)
+
+            # Skip empty rows (if no project/task or time data)
+            if not (project_id and task_id and start_time and end_time and description):
+                continue
+
+            try:
+                project = Project.objects.get(id=project_id)
+                task = Task.objects.get(id=task_id)
+            except (Project.DoesNotExist, Task.DoesNotExist):
+                messages.warning(request, f"Project or Task not found for {day}. Skipping entry.")
+                continue
+
+            try:
+                # Create Timesheet entry
+                Timesheet.objects.create(
+                    employee=employee,
+                    day=day,
+                    date=parse_date(date),
+                    project=project,
+                    task=task,
+                    start_time=start_time,
+                    end_time=end_time,
+                    description=description,
+                    attachment=attachment
+                )
+                entries_saved += 1
+            except Exception as e:
+                messages.error(request, f"Error saving {day} entry: {str(e)}")
+
+        if entries_saved > 0:
+            messages.success(request, f"Successfully saved {entries_saved} timesheet entries.")
+        else:
+            messages.warning(request, "No valid timesheet entries were submitted.")
+
+        return redirect('time_sheet')
+
+    # Filter projects and tasks based on employee role
+    if employee and employee.role_id == 1:
+        projects = Project.objects.all()
+        tasks = Task.objects.all()
+    elif employee and employee.role_id == 2:
+        projects = Project.objects.filter(leader=employee).distinct()
+        tasks = Task.objects.filter(project__leader=employee).distinct()
+    else:
+        projects = Project.objects.filter(team_members=employee).distinct()
+        tasks = Task.objects.filter(assignee=employee) if employee else Task.objects.none()
+
+    return render(request, 'Timesheet.html', {
+        'projects': projects,
+        'tasks': tasks,
+        'employee': employee,
+        'days': days,
+        'current_week_dates': current_week_dates,
+    })
 
 def task(request, task_id=0):
     employee_id = request.session.get('employee_id')
     employee = AddEmployee.objects.get(id=employee_id)
-
+    print('i run',employee.role )
     # This is always needed — move it here
-    projects = Project.objects.filter(
-        models.Q(leader_id=employee_id) | models.Q(admin_id=employee_id)
-    ).distinct()
+    if employee.role.name != 'Employee' and  employee.role.name != 'Project Manager' :
+        print("123")
+        projects = Project.objects.all()
+
+    else :
+        projects = Project.objects.filter(
+            models.Q(leader_id=employee_id) |
+            models.Q(admin_id=employee_id)
+        ).distinct()
+
 
     if task_id != 0:
         task = get_object_or_404(Task, id=task_id)
@@ -872,6 +988,28 @@ def task(request, task_id=0):
             task.description = description
             if document:
                 task.document = document
+
+            errors = []
+
+            if start_date and end_date:
+                try:
+                    start = datetime.strptime(start_date, "%Y-%m-%d").date()
+                    end = datetime.strptime(end_date, "%Y-%m-%d").date()
+
+                    if start > end:
+                        errors.append("End date must be after or equal to start date.")
+
+                except ValueError:
+                    errors.append("Invalid date format.")
+
+            if errors:
+                for error in errors:
+                    messages.error(request, error)
+                return render(request, 'add_task.html', {
+                    'task': task,
+                    'projects': projects,
+                    'team_members': team_members
+                })
             task.save()
             messages.success(request, "Task updated successfully.")
         else:
@@ -888,7 +1026,6 @@ def task(request, task_id=0):
             )
             messages.success(request, "Task created successfully.")
         return redirect('task_list')
-
     context = {
         'task': task,
         'projects': projects,
@@ -897,21 +1034,34 @@ def task(request, task_id=0):
     return render(request, 'add_task.html', context)
 import json
 
-@csrf_exempt
+
 def update_task_status(request):
     if request.method == 'POST':
+        task_id = request.POST.get('task_id')
+        status = request.POST.get('status')
+
         try:
-            data = json.loads(request.body)
-            task_id = data.get('task_id')
-            status = data.get('status')
             task = Task.objects.get(id=task_id)
             task.status = status
+            task.created_at = timezone.now()
             task.save()
-            return JsonResponse({'success': True})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-    return JsonResponse({'success': False, 'error': 'Invalid request'})
+            return redirect('project', task.project_id )  # 👈 ensure 'project' matches your URL name
 
+
+        except Task.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Task not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    task_id = request.GET.get('task_id')
+    new_status = request.GET.get('status')
+
+    task = get_object_or_404(Task, id=task_id)
+    if new_status in dict(Task.STATUS_CHOICES):
+        task.status = new_status
+        task.save()
+
+    return redirect('task_detail', task_id=task.id)
 
 
 def task_list(request):
@@ -919,16 +1069,31 @@ def task_list(request):
 
     # Get all projects where user is leader or admin
     projects = Project.objects.filter(
-        Q(leader_id=employee_id) | Q(admin_id=employee_id)
+        Q(leader_id=employee_id) | Q(admin_id=employee_id) | Q(team_members__id=employee_id)
     ).values_list('id', flat=True)
 
     # Get all tasks related to those projects
-    tasks = Task.objects.filter(project_id__in=projects).all().order_by('-id')  # you can adjust ordering
+    role_id = request.session.get('role')
+    if role_id == 'HR':  # Admin
+        tasks = Task.objects.all()
+
+    elif role_id == 'Employee':
+        tasks = Task.objects.filter(
+            assignee_id=employee_id
+        )
+    else :
+        tasks = Task.objects.filter(project_id__in=projects).all().order_by('-id')  # you can adjust ordering
     paginator = Paginator(tasks, 10)  # Show 10 tasks per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'task_list.html', {'tasks': page_obj})
+
+
+def task_detail(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    return render(request, 'task_details.html', {'task': task})
+
 
 def dash_v3(request) :
     return render(request, 'index3.html')
@@ -981,3 +1146,58 @@ def upload_handbook(request):
 
 def assets(request):
     return render(request, 'configuration/assets.html')
+
+
+def view_timesheet(request):
+    employee_id = request.session.get('employee_id')
+    timesheets = Timesheet.objects.filter(employee_id=employee_id).order_by('-date')
+
+    # Calculate hours difference
+    for entry in timesheets:
+        if entry.start_time and entry.end_time:
+            start = datetime.combine(entry.date, entry.start_time)
+            end = datetime.combine(entry.date, entry.end_time)
+            diff = end - start
+            entry.hours = round(diff.total_seconds() / 3600, 2)  # hours as float
+        else:
+            entry.hours = None
+
+    return render(request, 'Timesheet_records.html', {'timesheets': timesheets})
+
+def add_last_week_timesheet(request):
+    employee_id = request.session.get('employee_id')
+    try:
+        employee = AddEmployee.objects.get(id=employee_id)
+    except AddEmployee.DoesNotExist:
+        messages.error(request, "Employee not found.")
+        return redirect('timesheet')
+
+    today = timezone.now()
+    start_of_last_week = today - timedelta(days=today.weekday() + 7)
+    current_week_dates = {}
+
+    for i in range(7):
+        day = start_of_last_week + timedelta(days=i)
+        current_week_dates[day.strftime('%A')] = day.strftime('%Y-%m-%d')
+
+    # same logic as current week, reuse or refactor to DRY it
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+    if employee.role_id == 1:
+        projects = Project.objects.all()
+        tasks = Task.objects.all()
+    elif employee.role_id == 2:
+        projects = Project.objects.filter(leader=employee)
+        tasks = Task.objects.filter(project__leader=employee)
+    else:
+        projects = Project.objects.filter(team_members=employee)
+        tasks = Task.objects.filter(assignee=employee)
+
+    return render(request, 'Timesheet.html', {
+        'projects': projects,
+        'tasks': tasks,
+        'employee': employee,
+        'days': days,
+        'current_week_dates': current_week_dates,
+        'is_last_week': True,  # useful flag
+    })

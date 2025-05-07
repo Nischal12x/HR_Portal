@@ -18,11 +18,9 @@
         <div class="user-panel mt-3 pb-3 mb-3 d-flex">
 
             <div class="image" style="display: flex; justify-content: center; align-items: center;">
-                {% if employee and employee.attachment %}
-                    <img src="{{ request.session.attachment }}" class="img-circle elevation-2" alt="User Image">
-                {% else %}
-                    <img src="{% static 'img/user2-160x160.jpg' %}" class="img-circle elevation-2" style="width : 40px" alt="User Image">
-                {% endif %}
+                {% with default_img='/static/img/user2-160x160.jpg' %}
+                  <img src="{{ request.session.attachment|default:default_img }}" class="img-circle elevation-2" style="width: 40px;" alt="User Image">
+                {% endwith %}
             </div>
             <div class="info">
                 <a href="#" class="d-block">{{ request.session.name|default:"User Name" }}</a>
@@ -77,15 +75,15 @@
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
-                            <a href="pages/tables/simple.html" class="nav-link">
+                            <a href="{% url 'view_timesheet' %}" class="nav-link">
                                 <i class="far fa-circle nav-icon"></i>
-                                <p>Simple Tables</p>
+                                <p>Records</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="pages/tables/data.html" class="nav-link">
+                            <a href="{% url 'time_sheet' %}" class="nav-link">
                                 <i class="far fa-circle nav-icon"></i>
-                                <p>DataTables</p>
+                                <p>Add Weekly Record</p>
                             </a>
                         </li>
                         <li class="nav-item">
