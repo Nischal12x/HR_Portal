@@ -103,13 +103,11 @@ def add_project(request, p_id=0):
         # Create or update project
         if p_id:
             project = get_object_or_404(Project, id=p_id)
-            print("I AM Executed " , project)
         else:
             project = Project()
 
         # Save the project data (must be saved before setting many-to-many relationships)
         project.name = project_name
-        print("updated name", project.name)
         project.client = client
         project.start_date = start_date
         project.end_date = end_date
@@ -451,7 +449,29 @@ def add_employee(request):
             attachment=attachment, role_id = request.POST.get('role')
         )
         emp.save()
-
+        # Create new history with current employee data
+        employee = get_object_or_404(AddEmployee, id=emp.id)
+        EmployeeHistory.objects.create(
+            employee=employee,
+            full_name=employee.full_name,
+            email=employee.email,
+            phone=employee.phone,
+            nationality=employee.nationality,
+            dob=employee.dob,
+            role=employee.role,
+            marital_status=employee.marital_status,
+            gender=employee.gender,
+            address=employee.address,
+            employee_id=employee.id,
+            department=employee.department,
+            designation=employee.designation,
+            joining_date=employee.joining_date,
+            salary=employee.salary,
+            employment_type=employee.employment_type,
+            attachment=employee.attachment,
+            created_at=now(),
+            until=None  # this remains null until next update
+        )
         messages.success(request, "Employee added successfully!")
         return redirect('index')
 
@@ -469,10 +489,29 @@ def employee_list(request):
 
 
 # Update Employee
+from django.shortcuts import render, get_object_or_404, redirect
+from django.core.files.storage import FileSystemStorage
+from django.contrib import messages
+from django.utils.timezone import now
+from datetime import datetime
+import re
+
+from .models import AddEmployee, EmployeeHistory
+
 def update_employee(request, id):
     employee = get_object_or_404(AddEmployee, id=id)
 
     if request.method == 'POST':
+
+        # Fetch the last history entry (if exists)
+        last_history = EmployeeHistory.objects.filter(employee=employee).order_by('-created_at').first()
+
+        # Close the previous history period
+        if last_history and last_history.until is None:
+            last_history.until = now()
+            last_history.save()
+
+        # Update employee data from form
         employee.full_name = request.POST.get('full_name', '').strip()
         employee.email = request.POST.get('email', '').strip()
         employee.phone = request.POST.get('phone', '').strip()
@@ -485,39 +524,75 @@ def update_employee(request, id):
         employee.salary = request.POST.get('salary', '').strip()
         employee.employment_type = request.POST.get('employment_type', '').strip()
         employee.marital_status = request.POST.get('marital_status')
-        # Handle file upload
+
+
+        # File upload
         if 'attachment' in request.FILES:
             attachment = request.FILES['attachment']
             fs = FileSystemStorage()
             filename = fs.save(attachment.name, attachment)
-            employee.attachment = filename  # Save new attachment
+            employee.attachment = filename
 
-        for char in employee.full_name:
-            if char.isdigit():
-                messages.error(request, "Invalid Name")
-                return redirect('employees')
+        # Validations
         if not re.match(r'^[A-Za-z\s]+$', employee.full_name):
             messages.error(request, "Name should only contain alphabets and spaces.")
             return redirect('employees')
         if not re.fullmatch(r'^[0-9]{10}$', employee.phone):
-            messages.error(request, "Invalid phone number. It must be exactly 10 digits and contain only numbers.")
+            messages.error(request, "Invalid phone number. It must be 10 digits.")
             return redirect("employees")
-        # Convert `dob` string to a date object
         try:
-            dob_date = datetime.strptime(employee.dob, "%Y-%m-%d").date()  # Ensure `dob` is in YYYY-MM-DD format
-            today_date = datetime.today().date()
-
-            if dob_date > today_date:
-                messages.error(request, "Date of Birth cannot be in the future.")
-                return redirect("employees")  # Redirect back if the date is invalid
+            dob_date = datetime.strptime(str(employee.dob), "%Y-%m-%d").date()
+            if dob_date > datetime.today().date():
+                messages.error(request, "DOB cannot be in the future.")
+                return redirect("employees")
         except ValueError:
-            messages.error(request, "Invalid Date of Birth format. Please enter a valid date.")
+            messages.error(request, "Invalid DOB format.")
             return redirect("employees")
+
+        # Save updated data
         employee.save()
+
+        # Create new history with current employee data
+        EmployeeHistory.objects.create(
+            employee=employee,
+            full_name=employee.full_name,
+            email=employee.email,
+            phone=employee.phone,
+            nationality=employee.nationality,
+            dob=employee.dob,
+            role=employee.role,
+            marital_status=employee.marital_status,
+            gender=employee.gender,
+            address=employee.address,
+            employee_id=employee.id,
+            department=employee.department,
+            designation=employee.designation,
+            joining_date=employee.joining_date,
+            salary=employee.salary,
+            employment_type=employee.employment_type,
+            attachment=employee.attachment,
+            created_at=now(),
+            until=None  # this remains null until next update
+        )
+
         messages.success(request, "Employee updated successfully!")
-        return redirect('employees')  # Redirect back to employee list
+        return redirect('employees')
 
     return render(request, 'add_emp.html', {'employee': employee})
+
+def employee_history(request, id):
+    employee = get_object_or_404(AddEmployee, id=id)
+    history_qs = EmployeeHistory.objects.filter(employee=employee).order_by('created_at')
+
+    paginator = Paginator(history_qs, 10)  # Show 10 records per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'employee_history.html', {
+        'employee': employee,
+        'page_obj': page_obj,
+        'total_pages': paginator.num_pages,
+    })
 
 def update_employee1(request, id) :
     # Get the employee object
@@ -760,8 +835,22 @@ def add_leave(request):
     return render(request, 'index.html')
 
 
-def admins(request) :
-    return render(request, 'index.html')
+def admins(request):
+    total_employees = AddEmployee.objects.count()
+    total_projects = Project.objects.count()
+    ongoing_tasks = Task.objects.exclude(status='Completed').count()
+    pending_leaves = LeaveApplication.objects.filter(status='Pending').count()
+    total_image_timesheets = ImageTimesheet.objects.count()
+    context = {
+        'total_employees': total_employees,
+        'total_projects': total_projects,
+        'ongoing_tasks': ongoing_tasks,
+        'pending_leaves': pending_leaves,
+        'total_image_timesheets': total_image_timesheets,
+    }
+
+    return render(request, 'index.html', context)
+
 
 # from .utils import calculate_remaining_leave  # Assuming the function is in utils.py
 from django.db.models import F
@@ -852,96 +941,173 @@ def get_current_week_dates():
 
     return week_dates
 
+
+from datetime import datetime, timedelta
+from django.utils import timezone
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import AddEmployee, Project, Task
+
 def add_weekly_timesheet(request):
     employee_id = request.session.get('employee_id')
     try:
         employee = AddEmployee.objects.get(id=employee_id)
     except AddEmployee.DoesNotExist:
-        employee = None
         messages.error(request, "Employee record not found.")
         return redirect('timesheet')
 
     today = timezone.now()
-    start_of_week = today - timedelta(days=today.weekday())  # Monday of the current week
-    current_week_dates = {}
-
-    # Generate current week dates (Monday to Sunday)
-    for i in range(7):
-        day = start_of_week + timedelta(days=i)
-        current_week_dates[day.strftime('%A')] = day.strftime('%Y-%m-%d')  # Format: 'Monday': '2025-05-05'
+    start_of_week = today - timedelta(days=today.weekday())
+    current_week_dates = {
+        (start_of_week + timedelta(days=i)).strftime('%A'): (start_of_week + timedelta(days=i)).strftime('%Y-%m-%d')
+        for i in range(7)
+    }
 
     days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    errors = {}
+    cleaned_data = {}
 
     if request.method == 'POST':
-        entries_saved = 0
-
         for day in days:
-            day_key = day.lower()
+            if day == 'Sunday' and not request.POST.get('description_sunday') and not request.FILES.get('attachment_sunday'):
+                continue  # Only include Sunday if checkbox is clicked
 
-            # Get form data for each day
             date = request.POST.get(f'date_{day}', '').strip()
             project_id = request.POST.get(f'project_{day}', '').strip()
             task_id = request.POST.get(f'task_{day}', '').strip()
             start_time = request.POST.get(f'start_time_{day}', '').strip()
             end_time = request.POST.get(f'end_time_{day}', '').strip()
             description = request.POST.get(f'description_{day}', '').strip()
+            attachment = request.FILES.get(f'attachment_{day}')
 
-            file_field = f'attachment_{day}'
-            attachment = request.FILES.get(file_field)
+            cleaned_data[day] = {
+                'date': date,
+                'project_id': project_id,
+                'task_id': task_id,
+                'start_time': start_time,
+                'end_time': end_time,
+                'description': description,
+                'attachment': attachment,
+            }
 
-            # Skip empty rows (if no project/task or time data)
-            if not (project_id and task_id and start_time and end_time and description):
+            # Skip if entire row is blank
+            if not any([project_id, task_id, start_time, end_time, description, attachment]):
                 continue
 
-            try:
-                project = Project.objects.get(id=project_id)
-                task = Task.objects.get(id=task_id)
-            except (Project.DoesNotExist, Task.DoesNotExist):
-                messages.warning(request, f"Project or Task not found for {day}. Skipping entry.")
-                continue
+            errors[day] = {}
 
-            try:
-                # Create Timesheet entry
-                Timesheet.objects.create(
-                    employee=employee,
-                    day=day,
-                    date=parse_date(date),
-                    project=project,
-                    task=task,
-                    start_time=start_time,
-                    end_time=end_time,
-                    description=description,
-                    attachment=attachment
-                )
-                entries_saved += 1
-            except Exception as e:
-                messages.error(request, f"Error saving {day} entry: {str(e)}")
+            if not project_id:
+                errors[day]['project'] = 'Project is required.'
+            elif not Project.objects.filter(id=project_id).exists():
+                errors[day]['project'] = 'Project not found.'
 
-        if entries_saved > 0:
-            messages.success(request, f"Successfully saved {entries_saved} timesheet entries.")
+            if not task_id:
+                errors[day]['task'] = 'Task is required.'
+            elif not Task.objects.filter(id=task_id).exists():
+                errors[day]['task'] = 'Task not found.'
+
+            if not start_time:
+                errors[day]['start_time'] = 'Start time is required.'
+            if not end_time:
+                errors[day]['end_time'] = 'End time is required.'
+            if start_time and end_time:
+                try:
+                    start = datetime.strptime(start_time, '%H:%M')
+                    end = datetime.strptime(end_time, '%H:%M')
+                    if end <= start:
+                        errors[day]['end_time'] = 'End time must be after start time.'
+                except ValueError:
+                    errors[day]['start_end_time'] = 'Invalid time format.'
+
+            if not description:
+                errors[day]['description'] = 'Description is required.'
+
+            if attachment and attachment.size > 5 * 1024 * 1024:
+                errors[day]['file'] = 'File too large (max 5MB).'
+
+            if not errors[day]:
+                errors.pop(day)
+
+        if errors:
+            return render(request, 'Timesheet.html', {
+                'employee': employee,
+                'projects': Project.objects.all(),
+                'tasks': Task.objects.all(),
+                'days': days[:-1],
+                'current_week_dates': current_week_dates,
+                'errors': errors,
+                'cleaned_data': cleaned_data,
+            })
+
+        # ✅ Save to DB after validation
+        # Initialize the list to store skipped duplicate days
+        skipped_days = []
+
+        # Loop through each day's data and check for duplicates
+        for day, data in cleaned_data.items():
+            if not any([data['project_id'], data['task_id'], data['start_time'], data['end_time'], data['description'],
+                        data['attachment']]):
+                continue  # Skip if no data is provided
+
+            # Duplicate check
+            entry_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+            project = Project.objects.get(id=data['project_id']) if data['project_id'] else None
+            task = Task.objects.get(id=data['task_id']) if data['task_id'] else None
+
+            # Check if a duplicate exists
+            duplicate = Timesheet.objects.filter(
+                employee=employee,
+                date=entry_date,
+                project=project,
+                task=task
+            ).exists()
+
+            if duplicate:
+                skipped_days.append(day)  # Add the day to skipped days
+                continue  # Skip saving this entry
+
+            # Save the valid timesheet entry if not a duplicate
+            Timesheet.objects.create(
+                employee=employee,
+                day=day,
+                date=entry_date,
+                project=project,
+                task=task,
+                start_time=datetime.strptime(data['start_time'], '%H:%M').time(),
+                end_time=datetime.strptime(data['end_time'], '%H:%M').time(),
+                description=data['description'],
+                attachment=data['attachment'] if data['attachment'] else None,
+            )
+
+        # If any days were skipped due to duplication, notify the user
+        if skipped_days:
+            skipped_days_str = ', '.join(skipped_days)
+            messages.warning(request, f"The following days were skipped due to duplicate entries: {skipped_days_str}")
         else:
-            messages.warning(request, "No valid timesheet entries were submitted.")
+            messages.success(request, "Timesheet submitted successfully!")
 
-        return redirect('time_sheet')
+        return redirect('view_timesheet')
 
-    # Filter projects and tasks based on employee role
-    if employee and employee.role_id == 1:
+    # Role-based filtering
+    if employee.role_id == 1:
         projects = Project.objects.all()
         tasks = Task.objects.all()
-    elif employee and employee.role_id == 2:
-        projects = Project.objects.filter(leader=employee).distinct()
-        tasks = Task.objects.filter(project__leader=employee).distinct()
+    elif employee.role_id == 2:
+        projects = Project.objects.filter(leader=employee)
+        tasks = Task.objects.filter(project__leader=employee)
     else:
-        projects = Project.objects.filter(team_members=employee).distinct()
-        tasks = Task.objects.filter(assignee=employee) if employee else Task.objects.none()
+        projects = Project.objects.filter(team_members=employee)
+        tasks = Task.objects.filter(assignee=employee)
 
     return render(request, 'Timesheet.html', {
+        'employee': employee,
         'projects': projects,
         'tasks': tasks,
-        'employee': employee,
-        'days': days,
+        'days': days[:-1],
         'current_week_dates': current_week_dates,
     })
+
+
 
 def task(request, task_id=0):
     employee_id = request.session.get('employee_id')
@@ -955,9 +1121,10 @@ def task(request, task_id=0):
     else :
         projects = Project.objects.filter(
             models.Q(leader_id=employee_id) |
-            models.Q(admin_id=employee_id)
+            models.Q(admin_id=employee_id) |
+            models.Q(team_members__id=employee_id)
         ).distinct()
-
+        print(project for project in projects)
 
     if task_id != 0:
         task = get_object_or_404(Task, id=task_id)
@@ -1026,10 +1193,12 @@ def task(request, task_id=0):
             )
             messages.success(request, "Task created successfully.")
         return redirect('task_list')
+    role = request.session.get('role')
     context = {
         'task': task,
         'projects': projects,
-        'team_members': team_members
+        'team_members': team_members,
+        'role': role,
     }
     return render(request, 'add_task.html', context)
 import json
@@ -1181,7 +1350,7 @@ def add_last_week_timesheet(request):
         current_week_dates[day.strftime('%A')] = day.strftime('%Y-%m-%d')
 
     # same logic as current week, reuse or refactor to DRY it
-    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
     if employee.role_id == 1:
         projects = Project.objects.all()
@@ -1200,4 +1369,183 @@ def add_last_week_timesheet(request):
         'days': days,
         'current_week_dates': current_week_dates,
         'is_last_week': True,  # useful flag
+    })
+
+def get_tasks_by_project(request, project_id):
+    tasks = Task.objects.filter(project_id=project_id).values('id', 'name')
+    return JsonResponse({'tasks': list(tasks)})
+
+def add_daily_timesheet(request):
+    employee_id = request.session.get('employee_id')
+    try:
+        employee = AddEmployee.objects.get(id=employee_id)
+    except AddEmployee.DoesNotExist:
+        messages.error(request, "Employee not found.")
+        return redirect('login')
+
+    today = timezone.localdate()
+
+    if request.method == 'POST':
+        project_id = request.POST.get('project')
+        task_id = request.POST.get('task')
+        timesheet_date = request.POST.get('date')
+        start_time = request.POST.get('start_time')
+        end_time = request.POST.get('end_time')
+        description = request.POST.get('description')
+        attachment = request.FILES.get('attachment')
+
+        errors = []
+
+        if not all([project_id, task_id, timesheet_date, start_time, end_time, description]):
+            errors.append("All fields except attachment are required.")
+
+        if start_time >= end_time:
+            errors.append("End time must be after start time.")
+
+        try:
+            project = Project.objects.get(id=project_id)
+            task = Task.objects.get(id=task_id)
+        except (Project.DoesNotExist, Task.DoesNotExist):
+            errors.append("Invalid project or task.")
+
+        if errors:
+            for error in errors:
+                messages.error(request, error)
+        else:
+            Timesheet.objects.create(
+                employee=employee,
+                project=project,
+                task=task,
+                date=timesheet_date,
+                start_time=start_time,
+                end_time=end_time,
+                description=description,
+                attachment=attachment,
+                day=parse_date(timesheet_date).strftime('%A')
+            )
+            messages.success(request, "Timesheet submitted successfully.")
+            return redirect('add_daily_timesheet')
+
+    # GET - fetch project list depending on role
+    if employee.role_id == 1:  # HR
+        projects = Project.objects.all()
+    elif employee.role_id == 2:  # PM
+        projects = Project.objects.filter(leader=employee)
+    else:  # Team member
+        projects = Project.objects.filter(team_members=employee)
+
+    return render(request, 'Daily_Timesheet.html', {
+        'projects': projects,
+        'today': today.strftime('%Y-%m-%d'),
+    })
+
+from django.shortcuts import render
+from .models import ImageTimesheet
+#
+# def add_image_timesheet(request):
+#     today = datetime.today()
+#     start_of_week = today - timedelta(days=today.weekday())  # Monday
+#     end_of_week = start_of_week + timedelta(days=6)  # Sunday
+#
+#     # Last week's start and end dates
+#     last_week_start = start_of_week - timedelta(days=7)
+#     last_week_end = end_of_week - timedelta(days=7)
+#
+#     week_type = request.GET.get('week', 'current')  # Default to current week
+#
+#     if week_type == "last":
+#         start_date = last_week_start
+#         end_date = last_week_end
+#     else:
+#         start_date = start_of_week
+#         end_date = end_of_week
+#
+#     return render(request, 'image_timesheet.html', {
+#         'start_date': start_date.strftime('%Y-%m-%d'),
+#         'end_date': end_date.strftime('%Y-%m-%d'),
+#         'week_type': week_type,
+#     })
+
+from .models import ImageTimesheet
+from django.contrib.auth.decorators import login_required
+def add_image_timesheet(request):
+    today = datetime.today()
+    start_of_week = today - timedelta(days=today.weekday())  # Monday
+    end_of_week = start_of_week + timedelta(days=6)  # Sunday
+
+    last_week_start = start_of_week - timedelta(days=7)
+    last_week_end = end_of_week - timedelta(days=7)
+
+    week_type = request.GET.get('week', 'current')
+
+    if week_type == "last":
+        start_date = last_week_start
+        end_date = last_week_end
+    else:
+        start_date = start_of_week
+        end_date = end_of_week
+
+    if request.method == "POST":
+        image = request.FILES.get('image')
+
+        if not image:
+            messages.error(request, "Please upload a valid image.")
+            return redirect(request.path)
+
+        # File validation (optional but recommended)
+        if image.size > 5 * 1024 * 1024:
+            messages.error(request, "File must be less than 5MB.")
+            return redirect(request.path)
+
+        valid_extensions = ['.jpg', '.jpeg', '.png', '.pdf']
+        if not any(image.name.lower().endswith(ext) for ext in valid_extensions):
+            messages.error(request, "Invalid file type. Only jpg, jpeg, png, pdf allowed.")
+            return redirect(request.path)
+
+        try:
+            employee_id = request.session.get('employee_id')
+            employee = AddEmployee.objects.get(id=employee_id)
+
+            ImageTimesheet.objects.create(
+                employee=employee,
+                start_date=start_date,
+                end_date=end_date,
+                image=image
+            )
+
+            messages.success(request, "Timesheet uploaded successfully.")
+            return redirect('view_timesheet')  # Update this to your actual success view name
+        except AddEmployee.DoesNotExist:
+            messages.error(request, "Employee not found.")
+            return redirect(request.path)
+
+    return render(request, 'image_timesheet.html', {
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'end_date': end_date.strftime('%Y-%m-%d'),
+        'week_type': week_type,
+    })
+
+
+def timesheet_image_records(request):
+    employee_id = request.session.get('employee_id')
+    role = request.session.get('role', '').lower()
+    view_type = request.GET.get('view', 'self')  # default to own timesheet
+
+    if not employee_id:
+        return render(request, 'error.html', {"message": "Employee not found in session."})
+
+    if role == 'hr':
+        if view_type == 'staff':
+            # HR sees others' records (excluding their own)
+            timesheets = ImageTimesheet.objects.exclude(employee__id=employee_id)
+        else:
+            # HR views their own timesheet
+            timesheets = ImageTimesheet.objects.filter(employee__id=employee_id)
+    else:
+        # Regular employee - only their own records
+        timesheets = ImageTimesheet.objects.filter(employee__id=employee_id)
+
+    return render(request, 'image_timesheet_records.html', {
+        'timesheets': timesheets,
+        'view_type': view_type
     })

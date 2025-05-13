@@ -81,15 +81,27 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a href="{% url 'timesheet_image_records' %}" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Image Timesheet Records</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a href="{% url 'time_sheet' %}" class="nav-link">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Add Weekly Record</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="pages/tables/jsgrid.html" class="nav-link">
+                            <a href="{% url 'add_daily_timesheet' %}" class="nav-link">
                                 <i class="far fa-circle nav-icon"></i>
-                                <p>jsGrid</p>
+                                <p>Daily Timesheet</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'add_image_timesheet' %}" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Image Timesheet</p>
                             </a>
                         </li>
                     </ul>

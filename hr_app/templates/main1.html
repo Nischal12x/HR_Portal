@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}BISP Solutions{% endblock %}</title>
 
-
 <link rel="stylesheet" href="{% static 'plugins/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -45,6 +44,14 @@
   <!-- DataTables JS -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+  <style>
+  .text-end {
+    text-align: right;
+    margin-top: 10px; /* Optional spacing */
+    margin-bottom: 10px;
+  }
+</style>
+
   <style>
     /* Pagination Styling */
 .dataTables_paginate .paginate_button {
@@ -618,6 +625,7 @@ td .btn + .btn {
 </script>
 
 <!-- Joining Date Validation -->
+{% if not employee %}
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const joinDate = document.getElementById('joining_date');
@@ -630,6 +638,7 @@ td .btn + .btn {
     joinDate.max = fourMonthsLater.toISOString().split('T')[0];
   });
 </script>
+{% endif %}
 
 <!-- View More/Less Toggle -->
 <script>

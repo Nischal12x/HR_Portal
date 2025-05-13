@@ -1,0 +1,179 @@
+{% extends "main1.html" %}
+{% load static %}
+{% load custom_tags %}
+{% block title %}Tasks{% endblock %}
+{% load custom_filters %}
+{% block content %}
+<div class="wrapper">
+  {% include 'navbar.html' %}
+  {% include 'sidebar.html' %}
+
+    <div class="content-wrapper" style="min-height: 698px;">
+    <div class="content">
+      <div class="container-fluid">
+   <link href="/static/css/loader.css" rel="stylesheet">
+<section class="content-header">
+      <div class="container-fluid">
+        <div class="row ">
+          <div class="col-sm-12">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="/timesheet_record/">Timesheet</a></li>
+              <li class="breadcrumb-item active">Add Timesheet</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+
+
+<section>
+    <div class="content-header pt-0">
+        <div class="row">
+            <div class="col-10 m-auto">
+                <div class="card card-outline card-primary">
+                    <div class="card-header">
+                        <h2 class="card-title">Add Daily Record</h2>
+                    </div>
+                    <div class="card-body">
+
+                         <form method="post" action="{% url 'add_daily_timesheet' %}" onsubmit="return Timesheetformvalidation()" enctype="multipart/form-data">
+                            {% csrf_token %}
+                             <div class="row">
+                                  <div class="col-lg-6 col-xs-12 col-sm-6">
+                                      <div class="loader">
+                                           <div class="loading">
+                                           </div>
+                                       </div>
+                                    <div class="form-group">
+                                      <label for="exampleInputEmail1">Project<span class="text-danger">*</span></label>
+                                      <select class="form-control" id="project" name="project" onchange="ProjectClick(this.value)">
+                                            <option value="">-- Select Project --</option>
+                                            {% for project in projects %}
+                                                <option value="{{ project.id }}">{{ project.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                      <span class="text-danger" id="projectError"></span>
+                                    </div>
+                                  </div>
+
+                                  <div class="col-lg-offset-0 col-lg-6 col-xs-12 col-sm-6">
+                                    <div class="form-group">
+                                      <label for="exampleInputEmail1">Task <span class="text-danger">*</span></label>
+                                      <select class="form-control" id="task" name="task">
+
+                                          <option value=""></option>
+
+
+                                      </select>
+                                      <span class="text-danger" id="taskError"></span>
+                                    </div>
+                                  </div>
+
+                                  <div class="col-lg-offset-0 col-lg-4 col-xs-12 col-sm-6">
+                                    <div class="form-group">
+                                      <label for="exampleInputEmail1">Date <span class="text-danger">*</span></label>
+                                      <input type="date" class="form-control" id="date" name="date" value="{{ today }}" readonly>
+                                      <span class="text-danger" id="dateError"></span>
+                                    </div>
+                                  </div>
+                                  <div class="col-lg-offset-0 col-lg-4 col-xs-12 col-sm-6">
+                                    <div class="form-group">
+                                      <label for="exampleInputEmail1">Start Time <span class="text-danger">*</span></label>
+
+
+                                      <input type="time" class="form-control" value="11:00" id="start_time" name="start_time">
+
+
+                                      <span class="text-danger" id="start_timeError"></span>
+                                    </div>
+                                  </div>
+                                  <div class="col-lg-offset-0 col-lg-4 col-xs-12 col-sm-12">
+                                    <div class="form-group">
+                                      <label for="rate_status" class="select">End Time <span class="text-danger">*</span></label>
+
+
+                                       <input type="time" class="form-control" id="end_time" value="20:00" name="end_time">
+
+                                      <span class="text-danger" id="end_timeError"></span>
+                                    </div>
+                                  </div>
+
+                                  <div class="col-lg-offset-0 col-lg-12 col-xs-12 col-sm-6">
+                                    <div class="form-group">
+                                      <label for="exampleInputEmail1">Description <span class="text-danger">*</span></label>
+                                      <textarea name="description" class="form-control" id="description"></textarea>
+                                      <span class="text-danger" id="descriptionError"></span>
+                                    </div>
+                                  </div>
+
+                                  <div class="col-lg-offset-0 col-lg-12 col-xs-12 col-sm-6">
+                                    <div class="form-group">
+                                      <label for="exampleInputEmail1">Attachment <span class="text-danger" style="font-size:12px;">(File size: Max 5MB)</span></label>
+                                      <input type="file" class="form-control" id="attach" name="attachment">
+                                      <input id="filename" name="attach" type="hidden">
+                                        <span id="errorFile" class="text-danger"></span>
+                                    </div>
+                                  </div>
+
+                                </div><!--/ Row-->
+                                <div class="pull-right">
+                                    <button type="submit" class="btn btn-primary btn-large">Send</button>
+                                </div>
+                              </form>
+
+                    </div>
+                    <!-- /.card-body -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script src="/static/js/validation.js"></script>
+<script>
+    document.getElementById('attach').onchange = uploadOnChange;
+        function uploadOnChange() {
+          var filename = this.value;
+          var lastIndex = filename.lastIndexOf("\\");
+          if (lastIndex >= 0) {
+            filename = filename.substring(lastIndex + 1);
+          }
+          document.getElementById('filename').value = filename;
+
+          if(this.files[0].size > 5097152){
+            document.getElementById('errorFile').innerHTML='File is to big';
+            document.getElementById('attach').value = null;
+            document.getElementById('filename').value = '';
+            }
+            else{
+            document.getElementById('errorFile').innerHTML='';
+            }
+        }
+ </script>
+<script>
+function ProjectClick(projectId) {
+    const taskSelect = document.getElementById("task");
+    taskSelect.innerHTML = '<option value="">Loading...</option>';
+
+    fetch(`/get_tasks_by_project/${projectId}/`)
+        .then(response => response.json())
+        .then(data => {
+            taskSelect.innerHTML = '<option value="">-- Select Task --</option>';
+            data.tasks.forEach(task => {
+                const option = document.createElement("option");
+                option.value = task.id;
+                option.text = task.name;
+                taskSelect.appendChild(option);
+            });
+        });
+}
+</script>
+
+
+
+      </div><!-- /.container-fluid -->
+    </div>
+    </div>
+</div>
+<!-- /.container-fluid -->
+    {% endblock %}

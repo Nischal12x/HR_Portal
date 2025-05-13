@@ -59,6 +59,10 @@ urlpatterns = [
     path('weeklytimesheet_add/', views.add_weekly_timesheet, name='weeklytimesheet_add'),
     path('timesheet/view/', views.view_timesheet, name='view_timesheet'),
     path('last_week_timesheet/', views.add_last_week_timesheet, name='last_week_timesheet'),
-
+    path('timesheet/daily/', views.add_daily_timesheet, name='add_daily_timesheet'),
+    path('get_tasks_by_project/<int:project_id>/', views.get_tasks_by_project, name='get_tasks_by_project'),
+    path('add_image_timesheet/', views.add_image_timesheet, name='add_image_timesheet'),
+    path('timesheet_record/', views.timesheet_image_records, name='timesheet_image_records'),
+    path('employee/<int:id>/history/', views.employee_history, name='employee_history'),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

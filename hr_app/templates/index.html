@@ -19,265 +19,159 @@
 </script>
 {% endif %}
 
-
 <div class="wrapper">
-
-  <!-- Preloader -->
   <div class="preloader flex-column justify-content-center align-items-center">
-<img class="animation__shake" src="{% static 'img/AdminLTELogo.png' %}" alt="AdminLTELogo" height="60" width="60">
-
+    <img class="animation__shake" src="{% static 'img/AdminLTELogo.png' %}" alt="AdminLTELogo" height="60" width="60">
   </div>
 
-  <!-- Navbar -->
   {% include 'navbar.html' %}
-  <!-- /.navbar -->
+  {% include 'sidebar.html' %}
 
-      <!-- Sidebar Menu -->
-      {% include 'sidebar.html' %}
-
-
-  <!-- Content Wrapper. Contains page content -->
   <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
     <div class="content-header">
       <div class="container-fluid">
         <div class="row mb-2">
           <div class="col-sm-6">
-            <h1 class="m-0">Dashboard</h1>
+            <h1 class="m-0">Dashboard <small class="text-muted">{{ current_date }}</small></h1>
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
               <li class="breadcrumb-item"><a href="#">Home</a></li>
-              <li class="breadcrumb-item active">Dashboard v1</li>
+              <li class="breadcrumb-item active">Dashboard</li>
             </ol>
-          </div><!-- /.col -->
-        </div><!-- /.row -->
-      </div><!-- /.container-fluid -->
+          </div>
+        </div>
+      </div>
     </div>
-    <!-- /.content-header -->
-
-    <!-- Main content -->
 
     <div class="container-fluid">
-  <!-- Summary Cards -->
-
       <div class="row">
-          <div class="col-md-3 col-sm-6 col-12">
-            <div class="info-box bg-info" >
-               <span class="info-box-icon"><i class="far fa-bookmark"></i></span>
-
-              <div class="info-box-content">
-
-                <span class="info-box-number">Total Employee</span>
-
-                <div class="progress">
-                  <div class="progress-bar" style="width: 100%"></div>
-                </div>
-                    <span class="progress-description"> 30
-
-                </span>
-              </div>
-              <!-- /.info-box-content -->
+        <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+          <div class="card shadow-sm border-left-primary h-100 py-2">
+            <div class="card-body">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Employees</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_employees }}</div>
             </div>
-            <!-- /.info-box -->
-          </div>
-          <!-- ./col -->
-          <div class="col-md-3 col-sm-6 col-12">
-            <div class="info-box bg-info">
-              <span class="info-box-icon"><i class="far fa-bookmark"></i></span>
-
-              <div class="info-box-content">
-                <span class="info-box-number">Total Holiday </span>
-
-                <div class="progress">
-                  <div class="progress-bar" style="width: 70%"></div>
-                </div>
-                    <span class="progress-description"> 30
-
-                </span>
-              </div>
-              <!-- /.info-box-content -->
-            </div>
-            <!-- /.info-box -->
-          </div>
-          <!-- ./col -->
-          <div class="col-md-3 col-sm-6 col-12">
-            <div class="info-box bg-info">
-              <span class="info-box-icon"><i class="far fa-bookmark"></i></span>
-
-              <div class="info-box-content">
-
-                <span class="info-box-number">Total Leave</span>
-
-                <div class="progress">
-                  <div class="progress-bar" style="width: 70%"></div>
-                </div>
-                    <span class="progress-description"> 30
-
-                </span>
-              </div>
-              <!-- /.info-box-content -->
-            </div>
-            <!-- /.info-box -->
-          </div>
-            <!-- small box -->
-           <div class="col-md-3 col-sm-6 col-12">
-            <div class="info-box bg-info">
-              <span class="info-box-icon"><i class="far fa-bookmark"></i></span>
-
-              <div class="info-box-content">
-
-                <span class="info-box-number">Total Request </span>
-
-                <div class="progress">
-                  <div class="progress-bar" style="width: 70%"></div>
-                </div>
-                    <span class="progress-description"> 30
-
-                </span>
-              </div>
-              <!-- /.info-box-content -->
-            </div>
-            <!-- /.info-box -->
-          </div>
-          <!-- ./col -->
-         <div class="col-md-3 col-sm-6 col-12">
-            <div class="info-box bg-info">
-              <span class="info-box-icon"><i class="far fa-bookmark"></i></span>
-
-              <div class="info-box-content">
-
-                <span class="info-box-number">Availed Leave</span>
-
-                <div class="progress">
-                  <div class="progress-bar" style="width: 70%"></div>
-                </div>
-                    <span class="progress-description"> 30
-
-                </span>
-              </div>
-              <!-- /.info-box-content -->
-            </div>
-            <!-- /.info-box -->
-          </div>
-          <!-- ./col -->
-          <div class="col-md-3 col-sm-6 col-12">
-            <div class="info-box bg-info">
-              <span class="info-box-icon"><i class="far fa-bookmark"></i></span>
-
-              <div class="info-box-content">
-
-                <span class="info-box-number">Project</span>
-
-                <div class="progress">
-                  <div class="progress-bar" style="width: 70%"></div>
-                </div>
-                    <span class="progress-description">  30
-
-                </span>
-              </div>
-              <!-- /.info-box-content -->
-            </div>
-            <!-- /.info-box -->
-          </div>
-          <div class="col-md-3 col-sm-6 col-12">
-            <div class="info-box bg-info">
-              <span class="info-box-icon"><i class="far fa-bookmark"></i></span>
-
-              <div class="info-box-content">
-
-                <span class="info-box-number">Task</span>
-
-                <div class="progress">
-                  <div class="progress-bar" style="width: 70%"></div>
-                </div>
-                    <span class="progress-description">
-                    30
-                </span>
-              </div>
-              <!-- /.info-box-content -->
-            </div>
-            <!-- /.info-box -->
           </div>
         </div>
-    <div class="row">
-    <div class="col-lg-3 col-md-6">
+        <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+          <div class="card shadow-sm border-left-success h-100 py-2">
+            <div class="card-body">
+              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Projects</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_projects }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+          <div class="card shadow-sm border-left-warning h-100 py-2">
+            <div class="card-body">
+              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Ongoing Tasks</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ ongoing_tasks }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+          <div class="card shadow-sm border-left-danger h-100 py-2">
+            <div class="card-body">
+              <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Pending Leaves</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_leaves }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <div class="card bg-info text-white shadow">
-        <div class="card-body">Total Employees: 30</div>
-      </div>
-    </div>
-    <div class="col-lg-3 col-md-6">
-      <div class="card bg-success text-white shadow">
-        <div class="card-body">Total Leave: 30</div>
-      </div>
-    </div>
-    <div class="col-lg-3 col-md-6">
-      <div class="card bg-warning text-dark shadow">
-        <div class="card-body">Total Projects: 30</div>
-      </div>
-    </div>
-    <div class="col-lg-3 col-md-6">
-      <div class="card bg-danger text-white shadow">
-        <div class="card-body">Total Requests: 30</div>
-      </div>
-    </div>
-  </div>
-  <!-- Department Wise Task and Leave Request -->
-  <div class="row mt-4">
-    <div class="col-md-12">
-      <div class="card">
-        <div class="card-header">Department Wise Task/Leave Request</div>
+      <div class="card mt-4">
+        <div class="card-header bg-primary text-white">Department Wise Task & Leave Requests</div>
         <div class="card-body">
-          <div class="row text-center">
-            <div class="col-md-3"><strong>IT Department</strong><br>Pending Tasks: 10 | Leave Requests: 30</div>
-            <div class="col-md-3"><strong>HR Department</strong><br>Pending Tasks: 10 | Leave Requests: 40</div>
-            <div class="col-md-3"><strong>Marketing Department</strong><br>Pending Tasks: 10 | Leave Requests: 40</div>
-            <div class="col-md-3"><strong>Finance Department</strong><br>Pending Tasks: 10 | Leave Requests: 30</div>
+          <table class="table table-bordered table-striped">
+            <thead class="bg-info text-white">
+              <tr>
+                <th>Department</th>
+                <th>Pending Tasks</th>
+                <th>Leave Requests</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if department_summary %}
+                {% for dept in department_summary %}
+                <tr>
+                  <td>{{ dept.name }}</td>
+                  <td>{{ dept.pending_tasks }}</td>
+                  <td>{{ dept.leave_requests }}</td>
+                </tr>
+                {% endfor %}
+              {% else %}
+                <tr><td colspan="3" class="text-center text-muted">No data available</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-md-6">
+          <div class="form-inline mb-2">
+            <label class="mr-2">Filter by Month:</label>
+            <select id="monthFilter" class="form-control" onchange="updateCharts()">
+              {% for month in months %}
+              <option value="{{ month.value }}" {% if selected_month == month.value %}selected{% endif %}>{{ month.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div id="taskChartLoader" class="text-center d-none">
+            <div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>
+          </div>
+          <div class="card">
+            <div class="card-header">Task Statistics</div>
+            <div class="card-body">
+              <canvas id="taskChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">Leave Statistics</div>
+            <div class="card-body">
+              <canvas id="leaveChart"></canvas>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Statistics Section -->
-  <div class="row mt-4">
-    <div class="col-md-6">
-      <div class="card">
-        <div class="card-header">Task Statistics</div>
+      <div class="card mt-4">
+        <div class="card-header bg-secondary text-white">Timesheet Submissions</div>
         <div class="card-body">
-          <canvas id="taskChart"></canvas>
+          <h5>
+            <span class="text-dark">Image Timesheets:</span>
+            <span class="badge badge-dark">{{ total_image_timesheets }}</span>
+          </h5>
+          {% if total_weekly_timesheets %}
+          <h5 class="mt-2">
+            <span class="text-dark">Weekly Timesheets:</span>
+            <span class="badge badge-info">{{ total_weekly_timesheets }}</span>
+          </h5>
+          {% endif %}
+        </div>
+        {% if timesheet_last_updated %}
+        <div class="card-footer text-muted text-right">
+          Last Updated: {{ timesheet_last_updated }}
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="card mt-4">
+        <div class="card-header bg-warning">Announcements</div>
+        <div class="card-body">
+          <ul class="list-group">
+            {% for note in announcements %}
+            <li class="list-group-item">{{ note.text }} <small class="text-muted float-right">{{ note.date|timesince }} ago</small></li>
+            {% empty %}
+            <li class="list-group-item text-muted">No announcements available</li>
+            {% endfor %}
+          </ul>
         </div>
       </div>
     </div>
-    <div class="col-md-6">
-      <div class="card">
-        <div class="card-header">Leave Statistics</div>
-        <div class="card-body">
-          <canvas id="leaveChart"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Chart.js Integration -->
-
-
-    <section class="content">
-      <div class="container-fluid">
-        <!-- Small boxes (Stat box) -->
-
-        <!-- /.row -->
-        <!-- Main row -->
-        <div class="row">
-          <!-- Left col -->
-          <!-- right col -->
-        </div>
-        <!-- /.row (main row) -->
-      </div><!-- /.container-fluid -->
-    </section>
-    <!-- /.content -->
   </div>
   {% include 'footer.html' %}
 </div>

@@ -76,8 +76,8 @@
                      class="btn btn-outline-warning btn-sm">🕑 Mark Pending</a>
                   <a href="{% url 'update_task_status' %}?task_id={{ task.id }}&status=Claimed Completed"
                      class="btn btn-outline-info btn-sm">🏁 Claim Completed</a>
-                  <a href="{% url 'update_task_status' %}?task_id={{ task.id }}&status=Completed"
-                     class="btn btn-outline-success btn-sm">✅ Mark Completed</a>
+                  {% if resuest.session.role == 'HR' %}<a href="{% url 'update_task_status' %}?task_id={{ task.id }}&status=Completed"
+                     class="btn btn-outline-success btn-sm">✅ Mark Completed</a> {% endif %}
                 </div>
               </div>
             </div>

@@ -36,13 +36,13 @@
               <div class="row mb-3">
                 <div class="col-md-3">
                   <label>Task Name *</label>
-                  <input type="text" class="form-control" name="task_name" value="{{ task.name|default_if_none:'' }}" placeholder="Add Task" required>
+                  <input type="text" class="form-control" name="task_name" value="{{ task.name|default_if_none:'' }}" placeholder="Add Task"  {% if role == 'Employee' %}disabled{% endif %} required>
                 </div>
 
                 <div class="col-md-3">
                   <label>Project *</label>
-                  <select class="form-control" name="project_id" id="projectSelect" required>
-                    {% if not task %}<option value="" disabled selected>-- Select Project --</option>{% endif %}
+                  <select class="form-control" name="project_id" id="projectSelect" {% if role == 'Employee' %}disabled{% endif %} required>
+                   <option value="" disabled selected>-- Select Project --</option>
                     {% for project in projects %}
                       <option value="{{ project.id }}" {% if task.project.id == project.id %}selected{% endif %}>{{ project.name }}</option>
                     {% endfor %}
@@ -50,28 +50,29 @@
                 </div>
                 <div class="col-md-3">
                   <label>Start Date *</label>
-                  <input type="date" class="form-control" name="start_date" value="{% if task %}{{ task.start_date|date:'Y-m-d' }}{% endif %}" required>
+                  <input type="date" class="form-control" name="start_date" value="{% if task %}{{ task.start_date|date:'Y-m-d' }}{% endif %}"  {% if role == 'Employee' %}disabled{% endif %} required>
                 </div>
                 <div class="col-md-3">
                   <label>End Date *</label>
-                  <input type="date" class="form-control" name="end_date" value="{% if task %}{{ task.end_date|date:'Y-m-d' }}{% endif %}" required>
+                  <input type="date" class="form-control" name="end_date" value="{% if task %}{{ task.end_date|date:'Y-m-d' }}{% endif %}"  {% if role == 'Employee' %}disabled{% endif %} required>
                 </div>
               </div>
 
               <div class="row mb-3">
                 <div class="col-md-2">
                   <label>Assignee *</label>
-                  <select class="form-control" name="assignee" id="assigneeSelect" required>
+                  <select class="form-control" name="assignee" id="assigneeSelect"  {% if role == 'Employee' %}disabled{% endif %} required>
                     <option value="" disabled selected>-- Select Assignee --</option>
                     {% if task %}
-                      <option value="{{ task.assignee.id }}">{{ task.assignee.full_name }}</option>
+                      {% for member in task.project.team_members.all %}
+                      <option value="{{ member.id }}" {% if task.assignee.id == member.id %} selected {% endif %}>{{ member.full_name }}</option>
+                      {% endfor %}
                     {% endif %}
                   </select>
                 </div>
-
                 <div class="col-md-2">
                   <label>Priority *</label>
-                  <select class="form-control" name="priority" required>
+                  <select class="form-control" name="priority"  {% if role == 'Employee' %}disabled{% endif %} required>
                     <option value="Low" {% if task.priority == "Low" %} selected {% endif %}>Low</option>
                     <option value="Medium" {% if task.priority == "Medium" %} selected {% endif %}>Medium</option>
                     <option value="High" {% if task.priority == "High" %} selected {% endif %}>High</option>
@@ -87,21 +88,18 @@
                 </div>
                 <div class="col-md-6">
                   <label>Description</label>
-                  <textarea class="form-control" name="description" rows="4" placeholder="Add Description here...">{{ task.description|default_if_none:'' }}</textarea>
+                  <textarea class="form-control" name="description" rows="4" placeholder="Add Description here..."  {% if role == 'Employee' %}disabled{% endif %} >{{ task.description|default_if_none:'' }}</textarea>
                 </div>
                 <div class="col-md-6">
                   <label>Upload File</label>
-                  <input type="file" class="form-control" name="file_upload">
+                  <input type="file" class="form-control" name="file_upload"  {% if role == 'Employee' %}disabled{% endif %}>
                   {% if task and task.document %}
                     <p>Current file: <a href="{{ task.document.url }}" target="_blank">{{ task.document.name }}</a></p>
                   {% endif %}
                 </div>
               </div>
-
-
-
               <div class="card-footer text-right">
-                <button type="submit" class="btn btn-success">{% if task %} Update {% else %} Save {% endif %}</button>
+                <button type="submit" class="btn btn-success" >{% if task %} Update {% else %} Save {% endif %}</button>
               </div>
             </div>
           </div>
@@ -153,10 +151,11 @@ document.addEventListener('DOMContentLoaded', function () {
   const endDateInput = document.querySelector('input[name="end_date"]');
 
   // Prevent past dates
+  {% if not task %}
   const today = new Date().toISOString().split('T')[0];
   if (startDateInput) startDateInput.setAttribute('min', today);
   if (endDateInput) endDateInput.setAttribute('min', today);
-
+  {% endif %}
   if (startDateInput && endDateInput) {
     startDateInput.addEventListener('change', function () {
       endDateInput.value = ''; // Reset end date
@@ -165,6 +164,4 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 </script>
-
-
 {% endblock %}

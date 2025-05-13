@@ -187,6 +187,33 @@ class AddEmployee(models.Model):
         return f"{self.full_name} - {self.employee_id}"
 
 
+class EmployeeHistory(models.Model):
+    employee = models.ForeignKey(AddEmployee, on_delete=models.CASCADE)
+    full_name = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone = models.CharField(max_length=15)
+    nationality = models.CharField(max_length=50)
+    dob = models.DateField()
+    role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True)
+    marital_status = models.CharField(max_length=10, choices=[('Single', 'Single'), ('Married', 'Married')])
+    gender = models.CharField(max_length=10, choices=[('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')])
+    address = models.TextField()
+    employee_code = models.CharField(max_length=50)  # ← renamed from employee_id
+    department = models.CharField(max_length=20)
+    designation = models.CharField(max_length=50)
+    joining_date = models.DateField()
+    salary = models.DecimalField(max_digits=10, decimal_places=2)
+    employment_type = models.CharField(max_length=15)
+    attachment = models.FileField(upload_to="attachments/", null=True, blank=True)
+
+    # History fields
+    created_at = models.DateTimeField()
+    until = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"History for {self.employee.full_name} (from {self.created_at} until {self.until or 'now'})"
+
+
 
 class Project(models.Model):
     RATE_STATUS = [
@@ -292,3 +319,13 @@ class Timesheet(models.Model):
         verbose_name = 'Timesheet Entry'
         verbose_name_plural = 'Timesheet Entries'
         ordering = ['-date']
+
+class ImageTimesheet(models.Model):
+    employee = models.ForeignKey(AddEmployee, on_delete=models.CASCADE)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    image = models.FileField(upload_to='timesheet_images/')
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.employee.full_name} - {self.start_date} to {self.end_date}"

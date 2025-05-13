@@ -1,240 +1,270 @@
 {% extends "main1.html" %}
 {% load static %}
 {% load custom_tags %}
-{% block title %}Tasks{% endblock %}
 {% load custom_filters %}
+{% block title %}Tasks{% endblock %}
+
 {% block content %}
 <div class="wrapper">
   {% include 'navbar.html' %}
   {% include 'sidebar.html' %}
-
-    <div class="content-wrapper" style="min-height: 698px;">
+  <div class="content-wrapper">
     <div class="content">
       <div class="container-fluid">
+        <link href="{% static 'css/loader.css' %}" rel="stylesheet">
 
-<link href="/static/css/loader.css" rel="stylesheet">
-
-
-<section class="content-header">
-      <div class="container-fluid">
-        <div class="row ">
-          <div class="col-sm-10">
-            <ol class="breadcrumb">
-              <li class="breadcrumb-item"><a href="/timesheet_record/">Timesheet</a></li>
-              <li class="breadcrumb-item active">Add Timesheet</li>
-            </ol>
-          </div>
-           <div class="col-sm-2">
-
-          </div>
-        </div>
-      </div><!-- /.container-fluid -->
-    </section>
-
-<section>
-<div class="content-header pt-0">
-<div class="row">
-<div class="col-12 m-auto">
-<div class="card card-outline card-primary">
-    <form method="post" action="{% url 'weeklytimesheet_add' %}" onsubmit="showloader()" enctype="multipart/form-data">
-        <div class="card-header">
-            <h2 class="card-title">Add Weekly Record</h2>
-
-            {% if is_last_week %}
-                <a href="{% url 'weeklytimesheet_add' %}" class="btn btn-block btn-primary btn-sm float-right" style="width: 160px; margin-left: 10px;">Current Week</a>
-            {% else %}
-                <a href="{% url 'last_week_timesheet' %}" class="btn btn-block btn-primary btn-sm float-right" style="width: 160px; margin-left: 10px;">Last Week Timesheet</a>
-            {% endif %}
-            <div class="card-tool float-right">
-                <button type="submit" class="btn btn-block btn-primary btn-sm float-right">Send</button>
+        <section class="content-header">
+          <div class="container-fluid">
+            <div class="row">
+              <div class="col-sm-10">
+                <ol class="breadcrumb">
+                  <li class="breadcrumb-item"><a href="/timesheet_record/">Timesheet</a></li>
+                  <li class="breadcrumb-item active">Add Timesheet</li>
+                </ol>
+              </div>
             </div>
-        </div>
+          </div>
+        </section>
 
-        <div class="card-body">
-            <p class="text-danger small m-0">Description is mandatory to send the timesheet.</p>
-            <div class="loader">
-                <div class="loading"></div>
-            </div>
+        <section>
+          <div class="content-header pt-0">
+            <div class="row">
+              <div class="col-12 m-auto">
+                <div class="card card-outline card-primary">
+                  <form method="post" action="{% url 'weeklytimesheet_add' %}" enctype="multipart/form-data" onsubmit="return validateForm()" novalidate>
+                    {% csrf_token %}
+                    <div class="card-header">
+                      <h2 class="card-title">Add Weekly Record</h2>
+                      {% if is_last_week %}
+                        <a href="{% url 'weeklytimesheet_add' %}" class="btn btn-primary btn-sm float-right ml-2">Current Week</a>
+                      {% else %}
+                        <a href="{% url 'last_week_timesheet' %}" class="btn btn-primary btn-sm float-right ml-2">Last Week Timesheet</a>
+                      {% endif %}
+                      <button type="submit" class="btn btn-primary btn-sm float-right">Send</button>
+                    </div>
 
-            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Day</th>
-                            <th>Date</th>
-                            <th>Project</th>
-                            <th>Task</th>
-                            <th>Start Time</th>
-                            <th>End Time</th>
-                            <th width="200px">Description<span class="text-danger">*</span></th>
-                            <th>Attach File</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for day in days %}
+                    <div class="card-body">
+                      <p class="text-danger small m-0">Description is mandatory to send the timesheet.</p>
+                      <div class="loader"><div class="loading"></div></div>
+
+                      <div class="table-responsive">
+                        <table class="table">
+                          <thead>
                             <tr>
-                                <td><input type="text" class="form-control" id="day_{{ day }}" value="{{ day }}" name="day_{{ day }}" readonly></td>
-                                <td>
-                                    <input type="text" class="form-control" id="date_{{ day }}" name="date_{{ day }}"
-                                           value="{{ current_week_dates|get_item:day }}" readonly>
-                                </td>
-                                <td>
-                                    <select class="form-control" id="project_{{ day }}" name="project_{{ day }}" onchange="ProjectClick(this.value, this.id)">
-                                        <option value="">-- Select Project --</option>
-                                        {% for project in projects %}
-                                            <option value="{{ project.id }}">{{ project.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </td>
-                                <td>
-                                    <select class="form-control" id="task_{{ day }}" name="task_{{ day }}">
-                                        <option value="">Select Task</option>
-                                    </select>
-                                </td>
-                                <td><input type="time" class="form-control" id="start_time_{{ day }}" name="start_time_{{ day }}"></td>
-                                <td><input type="time" class="form-control" id="end_time_{{ day }}" name="end_time_{{ day }}"></td>
-                                <td><textarea name="description_{{ day }}" class="form-control" rows="1" id="description_{{ day }}"></textarea></td>
-                                <td>
-                                    <input type="file" class="form-control" id="attach_{{ day }}" name="attachment_{{ day }}" onchange="FileAttachment(this.id)">
-                                    <input id="filename_{{ day }}" name="attach_{{ day }}" type="hidden">
-                                    <span id="errorFile_{{ day }}" class="text-danger"></span>
-                                </td>
+                              <th>Day</th><th>Date</th><th>Project</th><th>Task</th>
+                              <th>Start Time</th><th>End Time</th><th>Description<span class="text-danger">*</span></th><th>Attach File</th>
                             </tr>
-                        {% endfor %}
+                          </thead>
+                          <tbody>
+                            {% for day in days %}
+                              <tr>
+                                <td><input type="text" class="form-control" name="day_{{ day }}" value="{{ day }}" readonly></td>
+                                <td><input type="text" class="form-control" name="date_{{ day }}" value="{{ current_week_dates|get_item:day }}" readonly></td>
 
-                        <!-- Checkbox for Sunday -->
-                        <tr>
-                            <td colspan="8">
-                                <input type="checkbox" name="checkBoxName" onclick="SundayEnter()"> Click on checkbox for Sunday entry.
-                            </td>
-                        </tr>
-
-                        <!-- Sunday entry row (hidden initially) -->
-                        <tr style="display:none;" id="sundaydata">
-                            <td><input type="text" class="form-control" id="day_sunday" value="Sunday" name="day_sunday" readonly></td>
-                            <td><input type="text" class="form-control" id="date_sunday" name="date_sunday" value="{{ current_week_dates.Sunday }}" readonly></td>
-                            <td>
-                                <select class="form-control" id="project_sunday" name="project_sunday" onchange="ProjectClick(this.value, this.id)">
-                                    <option value="">Select Project</option>
+                                <td>
+                                  <select class="form-control" name="project_{{ day }}" id="project_{{ day }}" onchange="ProjectClick(this.value, this.id)">
+                                    <option value="">-- Select Project --</option>
                                     {% for project in projects %}
-                                        <option value="{{ project.id }}">{{ project.name }}</option>
+                                      <option value="{{ project.id }}" {% if request.POST|get_item:'project_'|add:day == project.id|stringformat:"s" %}selected{% endif %}>{{ project.name }}</option>
                                     {% endfor %}
+                                  </select>
+                                  <span class="text-danger" id="error_project_{{ day }}"></span>
+                                </td>
+
+                                <td>
+                                  <select class="form-control" name="task_{{ day }}" id="task_{{ day }}">
+                                    <option value="">-- Select Task --</option>
+                                    {% for task in tasks %}
+                                      {% if task.project.id|stringformat:"s" == request.POST|get_item:'project_'|add:day %}
+                                        <option value="{{ task.id }}" {% if request.POST|get_item:'task_'|add:day == task.id|stringformat:"s" %}selected{% endif %}>{{ task.name }}</option>
+                                      {% endif %}
+                                    {% endfor %}
+                                  </select>
+                                  <span class="text-danger" id="error_task_{{ day }}"></span>
+                                </td>
+
+                                <td><input type="time" class="form-control" name="start_time_{{ day }}" id="start_time_{{ day }}" value="{{ request.POST|get_item:'start_time_'|add:day }}">
+                                  <span class="text-danger" id="error_start_time_{{ day }}"></span>
+                                </td>
+
+                                <td><input type="time" class="form-control" name="end_time_{{ day }}" id="end_time_{{ day }}" value="{{ request.POST|get_item:'end_time_'|add:day }}">
+                                  <span class="text-danger" id="error_end_time_{{ day }}"></span>
+                                </td>
+
+                                <td>
+                                  <textarea name="description_{{ day }}" class="form-control" rows="1" id="description_{{ day }}">{{ request.POST|get_item:'description_'|add:day }}</textarea>
+                                  <span class="text-danger" id="error_description_{{ day }}"></span>
+                                </td>
+
+                                <td>
+                                  <input type="file" class="form-control" name="attachment_{{ day }}" id="attach_{{ day }}" onchange="FileAttachment(this.id)">
+                                  <input type="hidden" name="attach_{{ day }}" id="filename_{{ day }}">
+                                  <span class="text-danger" id="errorFile_{{ day }}"></span>
+                                </td>
+                              </tr>
+                            {% endfor %}
+
+                            <tr>
+                              <td colspan="8">
+                                <input type="checkbox" name="checkBoxName" onclick="SundayEnter()"> Click on checkbox for Sunday entry.
+                              </td>
+                            </tr>
+
+                            <tr id="sundaydata" style="display:none;">
+                              <td><input type="text" class="form-control" name="day_sunday" value="Sunday" readonly></td>
+                              <td><input type="text" class="form-control" name="date_sunday" value="{{ current_week_dates.Sunday }}" readonly></td>
+
+                              <td>
+                                <select class="form-control" name="project_sunday" id="project_sunday" onchange="ProjectClick(this.value, this.id)">
+                                  <option value="">Select Project</option>
+                                  {% for project in projects %}
+                                    <option value="{{ project.id }}">{{ project.name }}</option>
+                                  {% endfor %}
                                 </select>
-                            </td>
-                            <td>
-                                <select class="form-control" id="task_sunday" name="task_sunday">
-                                    <option value="">Select Task</option>
+                                <span class="text-danger" id="error_project_sunday"></span>
+                              </td>
+
+                              <td>
+                                <select class="form-control" name="task_sunday" id="task_sunday">
+                                  <option value="">Select Task</option>
                                 </select>
-                            </td>
-                            <td><input type="time" class="form-control" id="start_time_sunday" name="start_time_sunday"></td>
-                            <td><input type="time" class="form-control" id="end_time_sunday" name="end_time_sunday"></td>
-                            <td><textarea name="description_sunday" class="form-control" rows="1" id="description_sunday"></textarea></td>
-                            <td>
-                                <input type="file" class="form-control" id="attach_sunday" name="attachment_sunday" onchange="FileAttachment(this.id)">
-                                <input id="filename_sunday" name="attach_sunday" type="hidden">
-                                <span id="errorFile_sunday" class="text-danger"></span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </form>
-</div>
+                                <span class="text-danger" id="error_task_sunday"></span>
+                              </td>
 
+                              <td><input type="time" class="form-control" name="start_time_sunday" id="start_time_sunday"><span class="text-danger" id="error_start_time_sunday"></span></td>
+                              <td><input type="time" class="form-control" name="end_time_sunday" id="end_time_sunday"><span class="text-danger" id="error_end_time_sunday"></span></td>
+                              <td><textarea name="description_sunday" class="form-control" rows="1" id="description_sunday"></textarea><span class="text-danger" id="error_description_sunday"></span></td>
+                              <td><input type="file" class="form-control" name="attachment_sunday" id="attach_sunday" onchange="FileAttachment(this.id)">
+                                  <input type="hidden" name="attach_sunday" id="filename_sunday">
+                                  <span class="text-danger" id="errorFile_sunday"></span>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+
+<script src="{% static 'js/validation.js' %}"></script>
 <script>
-    // Function to handle the checkbox for Sunday
-    function SundayEnter() {
-        var sundayRow = document.getElementById('sundaydata');
-        var checkbox = document.querySelector('input[name="checkBoxName"]');
-
-        if (checkbox.checked) {
-            sundayRow.style.display = 'table-row';
-        } else {
-            sundayRow.style.display = 'none';
-        }
-    }
-</script>
-
-
-
-
-
-
-            </div>
-        </div>
-    </div>
-</section>
-<script src="/static/js/validation.js"></script>
-<script>
- function showloader() {
-        document.getElementsByClassName("loader")[0].style.display = "block";
-    }
-    function SundayEnter(){
-    if($('input[name="checkBoxName"]').is(':checked'))
-        {
-          document.getElementById('sundaydata').style.display = "";
-        }else
-        {
-         document.getElementById('sundaydata').style.display = "none";
-        }
-    }
-</script>
-<script>
-function FileAttachment(file_id){
-    var day = file_id.split('_');
-
-    var inputFile = document.getElementById(file_id);
-    document.getElementById('filename_' + day[1]).value = 'filename';
-
-    if (inputFile.files[0].size > 5097152) {
-        document.getElementById('errorFile_' + day[1]).innerHTML = 'File is too big';
-        inputFile.value = null;
-        document.getElementById('filename_' + day[1]).value = '';
-    } else {
-        document.getElementById('errorFile_' + day[1]).innerHTML = '';
-    }
+function showloader() {
+  document.querySelector(".loader").style.display = "block";
 }
 
+function SundayEnter() {
+  document.getElementById('sundaydata').style.display =
+    document.querySelector('input[name="checkBoxName"]').checked ? "table-row" : "none";
+}
 
- </script>
+function FileAttachment(file_id) {
+  const day = file_id.split('_')[1];
+  const inputFile = document.getElementById(file_id);
+  const hidden = document.getElementById('filename_' + day);
+  const error = document.getElementById('errorFile_' + day);
 
-<script>
-    // Pass tasks to JS as a JSON object
-    const allTasks = [
-        {% for task in tasks %}
-        {
-            id: {{ task.id }},
-            name: "{{ task.name|escapejs }}",
-            project_id: {{ task.project.id }}
-        }{% if not forloop.last %},{% endif %}
-        {% endfor %}
-    ];
+  hidden.value = 'filename';
+  if (inputFile.files[0] && inputFile.files[0].size > 5 * 1024 * 1024) {
+    error.textContent = 'File is too big';
+    inputFile.value = null;
+    hidden.value = '';
+  } else {
+    error.textContent = '';
+  }
+}
 
-    function ProjectClick(projectId, selectId) {
-    const day = selectId.split("_")[1]; // Extract 'Monday', 'Tuesday', etc.
-    const taskSelectId = `task_${day}`;
-    const taskSelect = document.getElementById(taskSelectId);
+const allTasks = [
+  {% for task in tasks %}
+    {id: {{ task.id }}, name: "{{ task.name|escapejs }}", project_id: {{ task.project.id }}}
+    {% if not forloop.last %},{% endif %}
+  {% endfor %}
+];
 
-    // Clear existing options
-    taskSelect.innerHTML = '<option value="">Select Task</option>';
+function ProjectClick(projectId, selectId) {
+  const day = selectId.split("_")[1];
+  const taskSelect = document.getElementById(`task_${day}`);
+  taskSelect.innerHTML = '<option value="">Select Task</option>';
+  allTasks.forEach(task => {
+    if (task.project_id == projectId) {
+      const opt = document.createElement("option");
+      opt.value = task.id;
+      opt.textContent = task.name;
+      taskSelect.appendChild(opt);
+    }
+  });
+}
 
-    // Filter tasks by project ID
-    const filteredTasks = allTasks.filter(task => task.project_id == projectId);
+function validateForm() {
+  const days = JSON.parse(document.getElementById('days-json').textContent);
+  const allDays = [...days, 'sunday'];
+  let hasErrors = false;
 
-    // Populate the task dropdown
-    filteredTasks.forEach(task => {
-        const option = document.createElement("option");
-        option.value = task.id;
-        option.textContent = task.name;
-        taskSelect.appendChild(option);
-    });
+  allDays.forEach(day => {
+    if (day === 'sunday' && !document.querySelector('input[name="checkBoxName"]').checked) return;
+
+    const project = document.getElementById(`project_${day}`);
+    const task = document.getElementById(`task_${day}`);
+    const start = document.getElementById(`start_time_${day}`);
+    const end = document.getElementById(`end_time_${day}`);
+    const desc = document.getElementById(`description_${day}`);
+
+    const projectVal = project?.value.trim();
+    const taskVal = task?.value.trim();
+    const startVal = start?.value.trim();
+    const endVal = end?.value.trim();
+    const descVal = desc?.value.trim();
+
+    document.getElementById(`error_project_${day}`).innerText = '';
+    document.getElementById(`error_task_${day}`).innerText = '';
+    document.getElementById(`error_start_time_${day}`).innerText = '';
+    document.getElementById(`error_end_time_${day}`).innerText = '';
+    document.getElementById(`error_description_${day}`).innerText = '';
+
+    if (projectVal || taskVal || startVal || endVal || descVal) {
+      if (!projectVal) {
+        document.getElementById(`error_project_${day}`).innerText = 'Project is required.';
+        hasErrors = true;
+      }
+      if (!taskVal) {
+        document.getElementById(`error_task_${day}`).innerText = 'Task is required.';
+        hasErrors = true;
+      }
+      if (!startVal) {
+        document.getElementById(`error_start_time_${day}`).innerText = 'Start time is required.';
+        hasErrors = true;
+      }
+      if (!endVal) {
+        document.getElementById(`error_end_time_${day}`).innerText = 'End time is required.';
+        hasErrors = true;
+      }
+      if (startVal && endVal && startVal >= endVal) {
+        document.getElementById(`error_end_time_${day}`).innerText = 'End time must be after start time.';
+        hasErrors = true;
+      }
+      if (!descVal) {
+        document.getElementById(`error_description_${day}`).innerText = 'Description is required.';
+        hasErrors = true;
+      }
+    }
+  });
+
+  if (hasErrors) {
+    alert("Please fix the highlighted errors before submitting.");
+    return false;
+  }
+
+  showloader();
+  return true;
 }
 </script>
+
+{{ days|json_script:"days-json" }}
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
-    </div>
-    </div>
+  </div>
 </div>
-<!-- /.container-fluid -->
-    {% endblock %}
+{% endblock %}

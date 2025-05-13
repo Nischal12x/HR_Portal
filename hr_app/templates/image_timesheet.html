@@ -1,0 +1,142 @@
+{% extends "main1.html" %}
+{% load static %}
+{% load custom_tags %}
+{% block title %}Tasks{% endblock %}
+{% load custom_filters %}
+{% block content %}
+<div class="wrapper">
+  {% include 'navbar.html' %}
+  {% include 'sidebar.html' %}
+
+    <div class="content-wrapper" style="min-height: 698px;">
+    <div class="content">
+      <div class="container-fluid">
+<section class="content-header">
+      <div class="container-fluid">
+        <div class="row ">
+          <div class="col-sm-10">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="/timesheet_record/">Timesheet</a></li>
+              <li class="breadcrumb-item active">Add Timesheet</li>
+            </ol>
+          </div>
+          <div class="col-sm-2">
+
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+
+
+<section>
+    <div class="content-header pt-0">
+        <div class="row">
+            <div class="col-10 m-auto">
+                <div class="card card-outline card-primary">
+                    <div class="card-header">
+                        <h2 class="card-title">Add Timesheet in Image</h2>
+
+                                <a href="javascript:void(0);" class="btn btn-block btn-primary btn-sm float-right"
+                                   id="toggleWeekButton" style="width: 160px;margin-left: 10px;">
+                                   {% if week_type == "last" %}
+                                      Current Week Timesheet
+                                   {% else %}
+                                      Last Week Timesheet
+                                   {% endif %}
+                                </a>
+
+
+                    </div>
+                    <div class="card-body">
+
+                            <form method="post" action="{% url 'add_image_timesheet' %}" onsubmit="return Validate(this);" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="row">
+                                  <div class="col-lg-6 col-xs-12 col-sm-6">
+                                    <div class="form-group">
+                                      <label for="exampleInputEmail1">Start Date <span class="text-danger">*</span></label>
+                                      <input type="date" class="form-control" value="2025-05-05" name="start_date" readonly="">
+                                    </div>
+                                  </div>
+                                   <div class="col-lg-6 col-xs-12 col-sm-6">
+                                    <div class="form-group">
+                                      <label for="exampleInputEmail1">End Date <span class="text-danger">*</span></label>
+                                      <input type="date" class="form-control" value="2025-05-11" name="end_date" readonly="">
+                                    </div>
+                                  </div>
+                                  <div class="col-lg-12 col-xs-12 col-sm-12">
+                                    <div class="form-group">
+                                      <label for="exampleInputEmail1">Upload Image<span class="text-danger" style="font-size:12px;">* (File should be png, jpeg, pdf and less than 5MB)</span></label>
+                                      <input type="file" class="form-control" id="attach" name="image" required="">
+                                      <span class="text-danger" id="errorFile"></span>
+                                    </div>
+                                  </div>
+                                    <div class="col-lg-12 col-xs-12 col-sm-12">
+                                        <button class="btn btn-primary" type="submit">Send</button>
+                                    </div>
+                                </div>
+                            </form>
+
+                    </div>
+                    <!-- /.card-body -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+          <script>
+   document.addEventListener("DOMContentLoaded", function () {
+    let startInput = document.querySelector("input[name='start_date']");
+    let endInput = document.querySelector("input[name='end_date']");
+    let toggleButton = document.getElementById("toggleWeekButton");
+
+    let currentUrl = new URL(window.location.href);
+    let weekType = currentUrl.searchParams.get("week") || "current"; // Default to current week
+
+    // Get today's date and calculate start of current week (Monday) and end of current week (Sunday)
+    let today = new Date();
+    let startOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 1)); // Monday
+    let endOfWeek = new Date(new Date(startOfWeek).setDate(startOfWeek.getDate() + 6)); // Sunday
+
+    // Calculate last week's start and end dates
+    let lastWeekStart = new Date(new Date(startOfWeek).setDate(startOfWeek.getDate() - 7));
+    let lastWeekEnd = new Date(new Date(endOfWeek).setDate(endOfWeek.getDate() - 7));
+
+    // Set initial values based on URL parameter
+    if (weekType === "last") {
+        startInput.value = lastWeekStart.toISOString().split('T')[0];
+        endInput.value = lastWeekEnd.toISOString().split('T')[0];
+        toggleButton.innerText = "Current Week Timesheet";
+    } else {
+        startInput.value = startOfWeek.toISOString().split('T')[0];
+        endInput.value = endOfWeek.toISOString().split('T')[0];
+        toggleButton.innerText = "Last Week Timesheet";
+    }
+
+    // Handle button click event
+    toggleButton.addEventListener("click", function () {
+        if (weekType === "last") {
+            currentUrl.searchParams.set("week", "current");
+            startInput.value = startOfWeek.toISOString().split('T')[0];
+            endInput.value = endOfWeek.toISOString().split('T')[0];
+            this.innerText = "Last Week Timesheet";
+        } else {
+            currentUrl.searchParams.set("week", "last");
+            startInput.value = lastWeekStart.toISOString().split('T')[0];
+            endInput.value = lastWeekEnd.toISOString().split('T')[0];
+            this.innerText = "Current Week Timesheet";
+        }
+
+        window.location.href = currentUrl.href;
+    });
+});
+</script>
+
+
+      </div><!-- /.container-fluid -->
+    </div>
+    </div>
+</div>
+<!-- /.container-fluid -->
+    {% endblock %}

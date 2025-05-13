@@ -24,9 +24,19 @@
     <div class="row">
       <div class="col-md-12">
         <div class="card">
-          <div class="card-header">
-            <h3>{% if employee and employee.id %} Update Employee {% else %} Add Employee {% endif %}</h3>
-          </div>
+          <div class="card-header d-flex justify-content-between align-items-center">
+  <h3 class="mb-0">
+    {% if employee and employee.id %} Update Employee {% else %} Add Employee {% endif %}
+  </h3>
+  {% if employee and employee.id %}
+    <div class="ms-auto">
+      <a href="{% url 'employee_history' employee.id %}" class="btn btn-info btn-sm">
+        View History
+      </a>
+    </div>
+  {% endif %}
+</div>
+
           <div class="card-body">
             {% if messages %}
   <script>
