@@ -10,6 +10,8 @@ from datetime import timedelta
 from django.db import models
 from django.contrib.auth.models import User  # Import the User model
 
+
+
 class Role(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
@@ -241,13 +243,35 @@ class Project(models.Model):
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
     leader = models.ForeignKey(AddEmployee, on_delete=models.SET_NULL, related_name='leading_projects', null=True)
     admin = models.ForeignKey(AddEmployee, on_delete=models.SET_NULL, related_name='admin_projects', null=True)
-    team_members = models.ManyToManyField(AddEmployee, related_name='team_projects', blank=True, null=True)
+    team_members = models.ManyToManyField(AddEmployee, related_name='team_projects', blank=True)
     description = models.TextField(blank=True, null=True)
     document = models.FileField(upload_to='project_docs/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
+
+# models.py
+class ProjectHistory(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+    client = models.CharField(max_length=255, blank=True, null=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    currency = models.CharField(max_length=3)
+    rate_status = models.CharField(max_length=50)
+    rate = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    priority = models.CharField(max_length=10)
+    leader = models.ForeignKey(AddEmployee, on_delete=models.SET_NULL, related_name='project_history_leader', null=True)
+    admin = models.ForeignKey(AddEmployee, on_delete=models.SET_NULL, related_name='project_history_admin', null=True)
+    description = models.TextField(blank=True, null=True)
+    document = models.FileField(upload_to='project_history_docs/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)  # When this version became active
+    until = models.DateTimeField(null=True, blank=True)   # When this version was replaced
+
+    def __str__(self):
+        return f"{self.name} - History @ {self.created_at}"
+
 
 from django.db import models
 from django.utils import timezone
@@ -329,3 +353,28 @@ class ImageTimesheet(models.Model):
 
     def __str__(self):
         return f"{self.employee.full_name} - {self.start_date} to {self.end_date}"
+
+from django.db import models
+from django.contrib.auth.models import User
+
+class EmployeeHandbook(models.Model):
+    title = models.CharField(max_length=255, default='Employee Handbook')
+    file = models.FileField(upload_to='handbooks/')
+    version = models.CharField(max_length=20, unique=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} (v{self.version})"
+
+
+class EmployeeHandbookAcknowledgement(models.Model):
+    employee = models.ForeignKey(AddEmployee, on_delete=models.CASCADE)
+    handbook = models.ForeignKey(EmployeeHandbook, on_delete=models.CASCADE)
+    acknowledged_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('employee', 'handbook')
+
+    def __str__(self):
+        return f"{self.employee.full_name} acknowledged {self.handbook.version} on {self.acknowledged_at}"
+

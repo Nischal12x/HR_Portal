@@ -64,5 +64,13 @@ urlpatterns = [
     path('add_image_timesheet/', views.add_image_timesheet, name='add_image_timesheet'),
     path('timesheet_record/', views.timesheet_image_records, name='timesheet_image_records'),
     path('employee/<int:id>/history/', views.employee_history, name='employee_history'),
+    path('projects/<int:project_id>/history/', views.project_history, name='project_history'),
+    path('employee-handbook/', views.employee_handbook_view, name='employee_handbook'),
+    path('acknowledge-handbook/', views.acknowledge_handbook, name='acknowledge_handbook'),
+    path('handbook/manage/', views.manage_handbooks, name='manage_handbooks'),
+
 ]
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

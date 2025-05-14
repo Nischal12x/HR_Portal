@@ -29,7 +29,7 @@
 
   <section class="content">
     <div class="container-fluid">
-      <form id="projectForm" method="post" enctype="multipart/form-data" action="{% if project %}{% url 'add_project' project.id %}{% else %}{% url 'add_project' 0 %}{% endif %}">
+      <form id="projectForm" method="post" enctype="multipart/form-data" action="{% if project %}{% url 'add_project' project.id %}{% else %}{% url 'add_project' %}{% endif %}">
         {% csrf_token %}
         <div class="card">
           <div class="card-header bg-primary text-white">
@@ -97,7 +97,8 @@
                 <select class="form-control" name="project_leader" required {% if request.session.role == 'Employee' %}disabled{% endif %}>
                   {% if not project %} <option value="" disabled selected>-- Select Team Leader --</option> {% endif %}
                   {% for leader in leaders %}
-                  <option value="{{ leader.id }}" {% if project.project_leader.id == leader.id %} selected {% endif %}>{{ leader.full_name }}</option>
+
+                  <option value="{{ leader.id }}" {% if project.leader.id == leader.id %} selected {% endif %}>{{ leader.full_name }}</option>
                   {% endfor %}
                 </select>
                 <small id="error-leader" class="text-danger"></small>
@@ -172,6 +173,7 @@
 </script>
 
 <!-- Validations -->
+  {% if not project %}
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const startDateInput = document.querySelector('input[name="start_date"]');
@@ -188,5 +190,6 @@
     });
   });
 </script>
+  {% endif %}
 {% endblock %}
 </div>

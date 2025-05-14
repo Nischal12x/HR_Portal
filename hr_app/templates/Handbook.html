@@ -1,0 +1,177 @@
+{% extends "main1.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}Employee Handbook{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+  {% include 'navbar.html' %}
+  {% include 'sidebar.html' %}
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Employee Handbook</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+              <li class="breadcrumb-item active">Employee Handbook</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container py-3">
+    {% if handbook %}
+    <div class="card mb-4 shadow-sm rounded">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h5 class="card-title mb-0">📘 Latest Employee Handbook</h5>
+
+          <div class="btn-group">
+            <!-- View button triggers modal -->
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#viewHandbookModal" onclick="loadPDF('{{ handbook.file.url }}')">
+              <i class="fas fa-eye"></i> View Handbook
+            </button>
+            <a href="{{handbook.file.url }}" download class="btn btn-outline-secondary">
+              <i class="fas fa-download"></i> Download Handbook
+            </a>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+          <div class="mb-2 mb-md-0">
+            <strong>Status:</strong>
+            {% if acknowledged %}
+
+              <span class="badge bg-success">Acknowledged</span>
+            {% else %}
+              <span class="badge bg-warning">Not Acknowledged</span>
+            {% endif %}
+          </div>
+
+          {% if acknowledged  %}
+          {% else %}
+          <!-- Acknowledge Button: Hidden initially -->
+          <form method="POST" action="#" id="acknowledgeSection" style="display: none;">
+  {% csrf_token %}
+  <button type="button" class="btn btn-success" onclick="submitAcknowledgement()">
+    Acknowledge <i class="fas fa-check"></i>
+  </button>
+</form>
+
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="alert alert-warning">No handbook uploaded yet.</div>
+    {% endif %}
+  </div>
+
+    </section>
+  </div>
+
+  <aside class="control-sidebar control-sidebar-dark"></aside>
+</div>
+
+<!-- Modal -->
+<!-- Modal to show PDF -->
+<div class="modal fade" id="viewHandbookModal" tabindex="-1" aria-labelledby="viewHandbookModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="viewHandbookModalLabel">Employee Handbook</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="pdf-container" style="border: 1px solid #ddd; height: 600px; overflow-y: auto;" onscroll="checkScroll()"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PDF.js library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+
+<!-- JS to Render and Handle Scroll -->
+<script>
+  let pdfDocument = null;
+
+  // Load PDF
+  function loadPDF(pdfUrl) {
+    const container = document.getElementById('pdf-container');
+    container.innerHTML = ''; // Clear previous PDF content
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+    pdfjsLib.getDocument(pdfUrl).promise.then(pdf => {
+      pdfDocument = pdf;
+      const totalPages = pdf.numPages;
+
+      for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+        pdf.getPage(pageNum).then(page => {
+          const scale = 1.2;
+          const viewport = page.getViewport({ scale });
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          const renderContext = {
+            canvasContext: context,
+            viewport: viewport
+          };
+
+          container.appendChild(canvas);
+
+          page.render(renderContext);
+        });
+      }
+    });
+  }
+
+  // Check scroll position
+  function checkScroll() {
+  const container = document.getElementById('pdf-container');
+  const isAtBottom = container.scrollHeight <= container.scrollTop + container.clientHeight + 5;
+
+  if (isAtBottom) {
+    document.getElementById('acknowledgeSection').style.display = 'inline-block';
+  }
+}
+
+function submitAcknowledgement() {
+  fetch("{% url 'acknowledge_handbook' %}", {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": "{{ csrf_token }}",
+      "Accept": "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({})
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'Acknowledged') {
+      alert('Acknowledged successfully!');
+      window.location.reload();
+    } else {
+      alert('Already acknowledged or something went wrong.');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Failed to acknowledge. Please try again.');
+  });
+}
+
+</script>
+{% endblock %}

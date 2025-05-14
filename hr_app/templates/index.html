@@ -45,132 +45,63 @@
     </div>
 
     <div class="container-fluid">
-      <div class="row">
-        <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
-          <div class="card shadow-sm border-left-primary h-100 py-2">
-            <div class="card-body">
-              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Employees</div>
-              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_employees }}</div>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
-          <div class="card shadow-sm border-left-success h-100 py-2">
-            <div class="card-body">
-              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Projects</div>
-              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_projects }}</div>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
-          <div class="card shadow-sm border-left-warning h-100 py-2">
-            <div class="card-body">
-              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Ongoing Tasks</div>
-              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ ongoing_tasks }}</div>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
-          <div class="card shadow-sm border-left-danger h-100 py-2">
-            <div class="card-body">
-              <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Pending Leaves</div>
-              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_leaves }}</div>
-            </div>
-          </div>
-        </div>
+      <div class="dashboard-container">
+  <div class="dashboard-cards">
+    <!-- Card: Total Employees -->
+    {% if request.session.role != "Employee" %}
+    <div class="card-box">
+      <div class="icon-box bg-blue"><i class="fas fa-users"></i></div>
+      <div class="info">
+        <div class="label">Total Employees</div>
+        <div class="count" data-count="{{total_employees}}">{{total_employees}}</div>
       </div>
+    </div>
+    {% endif %}
+    <!-- Card: Total Projects -->
+    <div class="card-box">
+      <div class="icon-box bg-green"><i class="fas fa-folder-open"></i></div>
+      <div class="info">
+        <div class="label">Total Projects</div>
+        <div class="count" data-count="{{total_projects}}">{{total_projects}}</div>
+      </div>
+    </div>
 
-      <div class="card mt-4">
-        <div class="card-header bg-primary text-white">Department Wise Task & Leave Requests</div>
-        <div class="card-body">
-          <table class="table table-bordered table-striped">
-            <thead class="bg-info text-white">
-              <tr>
-                <th>Department</th>
-                <th>Pending Tasks</th>
-                <th>Leave Requests</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% if department_summary %}
-                {% for dept in department_summary %}
-                <tr>
-                  <td>{{ dept.name }}</td>
-                  <td>{{ dept.pending_tasks }}</td>
-                  <td>{{ dept.leave_requests }}</td>
-                </tr>
-                {% endfor %}
-              {% else %}
-                <tr><td colspan="3" class="text-center text-muted">No data available</td></tr>
-              {% endif %}
-            </tbody>
-          </table>
-        </div>
+    <!-- Card: Ongoing Tasks -->
+    <div class="card-box">
+      <div class="icon-box bg-yellow"><i class="fas fa-tasks"></i></div>
+      <div class="info">
+        <div class="label">Ongoing Tasks</div>
+        <div class="count" data-count="{{ongoing_tasks}}">{{ongoing_tasks}}</div>
       </div>
+    </div>
+    <!-- Card: Total Leave -->
+    <div class="card-box">
+      <div class="icon-box bg-gray"><i class="fas fa-calendar-check"></i></div>
+      <div class="info">
+        <div class="label">Total Leave</div>
+        <div class="count" data-count="{{total_leaves}}">{{total_leaves}}</div>
+      </div>
+    </div>
+    <!-- Card: Availed Leaves -->
+    <div class="card-box">
+      <div class="icon-box bg-red"><i class="fas fa-clock"></i></div>
+      <div class="info">
+        <div class="label">Availed Leaves</div>
+        <div class="count" data-count="{{availed_leaves}}">{{availed_leaves}}</div>
+      </div>
+    </div>
 
-      <div class="row mt-4">
-        <div class="col-md-6">
-          <div class="form-inline mb-2">
-            <label class="mr-2">Filter by Month:</label>
-            <select id="monthFilter" class="form-control" onchange="updateCharts()">
-              {% for month in months %}
-              <option value="{{ month.value }}" {% if selected_month == month.value %}selected{% endif %}>{{ month.name }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div id="taskChartLoader" class="text-center d-none">
-            <div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>
-          </div>
-          <div class="card">
-            <div class="card-header">Task Statistics</div>
-            <div class="card-body">
-              <canvas id="taskChart"></canvas>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-header">Leave Statistics</div>
-            <div class="card-body">
-              <canvas id="leaveChart"></canvas>
-            </div>
-          </div>
-        </div>
+    <!-- Card: Remaining Leave -->
+    <div class="card-box">
+      <div class="icon-box bg-teal"><i class="fas fa-umbrella-beach"></i></div>
+      <div class="info">
+        <div class="label">Remaining Leave</div>
+        <div class="count" data-count="{{remaining_leaves}}">{{remaining_leaves}}</div>
       </div>
+    </div>
+  </div>
+</div>
 
-      <div class="card mt-4">
-        <div class="card-header bg-secondary text-white">Timesheet Submissions</div>
-        <div class="card-body">
-          <h5>
-            <span class="text-dark">Image Timesheets:</span>
-            <span class="badge badge-dark">{{ total_image_timesheets }}</span>
-          </h5>
-          {% if total_weekly_timesheets %}
-          <h5 class="mt-2">
-            <span class="text-dark">Weekly Timesheets:</span>
-            <span class="badge badge-info">{{ total_weekly_timesheets }}</span>
-          </h5>
-          {% endif %}
-        </div>
-        {% if timesheet_last_updated %}
-        <div class="card-footer text-muted text-right">
-          Last Updated: {{ timesheet_last_updated }}
-        </div>
-        {% endif %}
-      </div>
-
-      <div class="card mt-4">
-        <div class="card-header bg-warning">Announcements</div>
-        <div class="card-body">
-          <ul class="list-group">
-            {% for note in announcements %}
-            <li class="list-group-item">{{ note.text }} <small class="text-muted float-right">{{ note.date|timesince }} ago</small></li>
-            {% empty %}
-            <li class="list-group-item text-muted">No announcements available</li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
     </div>
   </div>
   {% include 'footer.html' %}

@@ -15,12 +15,94 @@ from django.shortcuts import render, redirect
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.utils.dateparse import parse_date
-from .models import Project, AddEmployee, Timesheet  # Ensure these models are imported
+from .models import Project, AddEmployee, Timesheet, EmployeeHandbook  # Ensure these models are imported
 from .forms import EmployeeForm
-from .models import Role, AddEmployee, LeaveApplication, Leave_Type, Task
+from .models import Role, AddEmployee, LeaveApplication, Leave_Type, Task, ProjectHistory
 from django.views.decorators.csrf import csrf_exempt
 from .models import Project
 from django.utils.dateparse import parse_date
+
+from .models import EmployeeHandbook, EmployeeHandbookAcknowledgement, AddEmployee
+
+def employee_handbook_view(request):
+    employee_id = request.session.get('employee_id')
+    name = request.session.get('name')
+
+    if not employee_id:
+        return JsonResponse({'error': 'User not logged in'}, status=401)
+
+    handbook = EmployeeHandbook.objects.last()  # Latest uploaded handbook
+    acknowledged = EmployeeHandbookAcknowledgement.objects.filter(
+        employee_id=employee_id,
+        handbook=handbook
+    ).exists()
+
+    return render(request, 'Handbook.html', {
+        'acknowledged': acknowledged,
+        'handbook': handbook,
+        'employee_name': name
+    })
+
+
+import json
+
+def acknowledge_handbook(request):
+    if request.method == 'POST':
+        employee_id = request.session.get('employee_id')
+
+        if not employee_id:
+            return JsonResponse({'error': 'User not logged in'}, status=401)
+
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            data = {}
+
+        handbook = EmployeeHandbook.objects.last()
+        employee = get_object_or_404(AddEmployee, id=employee_id)
+
+        obj, created = EmployeeHandbookAcknowledgement.objects.get_or_create(
+            employee=employee,
+            handbook=handbook
+        )
+
+        return JsonResponse({'status': 'Acknowledged', 'created': created})
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+def manage_handbooks(request):
+    if request.session.get('role') != 'HR':
+        return JsonResponse({'error': 'Access denied'}, status=403)
+
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        version = request.POST.get('version')
+        file = request.FILES.get('file')
+
+        if title and version and file:
+            EmployeeHandbook.objects.create(
+                title=title,
+                version=version,
+                file=file
+            )
+            return redirect('manage_handbooks')
+
+    handbooks = EmployeeHandbook.objects.all().order_by('-uploaded_at')
+    history = []
+
+    for handbook in handbooks:
+        acknowledgements = EmployeeHandbookAcknowledgement.objects.filter(handbook=handbook)
+        history.append({
+            'handbook': handbook,
+            'ack_count': acknowledgements.count(),
+            'acknowledged_employees': acknowledgements.select_related('employee')
+        })
+
+    return render(request, 'manage_handbooks.html', {
+        'history': history
+    })
+
 
 def update_project(request, project_id):
     project = get_object_or_404(Project, id=project_id)
@@ -33,6 +115,7 @@ def update_project(request, project_id):
         'selected_team_member_ids': selected_team_member_ids
     }
     return render(request, 'add_project.html', context)
+
 
 from .models import Project, Task  # adjust import if needed
 
@@ -50,7 +133,34 @@ def project(request, project_id):
 
 @csrf_exempt
 
-@csrf_exempt
+
+def archive_project(project):
+    # Get the most recent history entry
+    last_history = ProjectHistory.objects.filter(project=project).order_by('-created_at').first()
+
+    # Update the 'until' field of the last history record
+    if last_history and last_history.until is None:
+        last_history.until = now()
+        last_history.save()
+
+    # Create new history record with current data
+    ProjectHistory.objects.create(
+        project=project,
+        name=project.name,
+        client=project.client,
+        start_date=project.start_date,
+        end_date=project.end_date,
+        currency=project.currency,
+        rate_status=project.rate_status,
+        rate=project.rate,
+        priority=project.priority,
+        leader=project.leader,
+        admin=project.admin,
+        description=project.description,
+        document=project.document,
+        created_at=now(),
+    )
+
 @csrf_exempt
 def add_project(request, p_id=0):
     if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -103,6 +213,7 @@ def add_project(request, p_id=0):
         # Create or update project
         if p_id:
             project = get_object_or_404(Project, id=p_id)
+
         else:
             project = Project()
 
@@ -125,6 +236,8 @@ def add_project(request, p_id=0):
         project.team_members.set(team_ids)
         project.save()  # Make sure to save again after updating the many-to-many field
 
+        # Add to project history (on both create and update)
+        archive_project(project)
         # Success response for AJAX
         if p_id != 0 :
             return JsonResponse({'success': True, 'message': "Project Updated successfully!"})
@@ -139,7 +252,20 @@ def add_project(request, p_id=0):
     return render(request, 'add_project.html', context)
 
 
+def project_history(request, project_id):
+    project = get_object_or_404(Project, id=project_id)
+    history_qs = ProjectHistory.objects.filter(project=project).order_by('-created_at')
 
+    paginator = Paginator(history_qs, 10)  # 10 records per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'project': project,
+        'page_obj': page_obj,
+        'total_pages': paginator.num_pages,
+    }
+    return render(request, 'project_history.html', context)
 
 def toggle_leave_status(request, leave_id):
     if request.method == "POST":
@@ -835,23 +961,6 @@ def add_leave(request):
     return render(request, 'index.html')
 
 
-def admins(request):
-    total_employees = AddEmployee.objects.count()
-    total_projects = Project.objects.count()
-    ongoing_tasks = Task.objects.exclude(status='Completed').count()
-    pending_leaves = LeaveApplication.objects.filter(status='Pending').count()
-    total_image_timesheets = ImageTimesheet.objects.count()
-    context = {
-        'total_employees': total_employees,
-        'total_projects': total_projects,
-        'ongoing_tasks': ongoing_tasks,
-        'pending_leaves': pending_leaves,
-        'total_image_timesheets': total_image_timesheets,
-    }
-
-    return render(request, 'index.html', context)
-
-
 # from .utils import calculate_remaining_leave  # Assuming the function is in utils.py
 from django.db.models import F
 
@@ -909,6 +1018,47 @@ def index2(request):
 
     # Pass the leave details to the template
     return render(request, 'index2.html', {'leave_details': leave_details})
+
+def admins(request):
+
+    total_employees = AddEmployee.objects.count()
+    total_projects = Project.objects.count()
+    ongoing_tasks = Task.objects.exclude(status='Completed').count()
+    employee_id = request.session.get('employee_id')
+
+    leaves = Leave_Type.objects.filter(
+        is_active=True,
+        applied_to__in=['All', employee_id]
+    )
+
+    # Initialize a list to store the leave details (consumed and remaining)
+    leave_details = []
+
+    # Iterate over each leave type and calculate consumed and remaining leave
+    for leave in leaves:
+        total_consumed_leave, remaining_leave = calculate_leave_details(request, leave)
+        leave_details.append({
+            'leave_type': leave,
+            'total_consumed_leave': total_consumed_leave,
+            'remaining_leave': remaining_leave
+        })
+    total_leaves = 0
+    remaining_leaves = 0
+    total_consumed_leaves = 0
+    for leave in leave_details:
+        total_leaves += leave['total_consumed_leave']+leave['remaining_leave']
+        remaining_leaves += leave['remaining_leave']
+        total_consumed_leaves += leave['total_consumed_leave']
+    context = {
+        'total_employees': total_employees,
+        'total_projects': total_projects,
+        'ongoing_tasks': ongoing_tasks,
+        'remaining_leaves': remaining_leaves,
+        'availed_leaves': total_consumed_leaves,
+        'total_leaves': total_leaves,
+    }
+
+    return render(request, 'index.html', context)
 
 def get_team_members(request, project_id):
     employee_id = request.session.get('employee_id')

@@ -1,0 +1,105 @@
+{% extends "main1.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}Manage Handbooks{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+  {% include 'navbar.html' %}
+  {% include 'sidebar.html' %}
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Manage Employee Handbooks</h1>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <!-- Upload Form -->
+        <div class="card mb-4 shadow-sm border rounded-3">
+          <div class="card-header bg-primary text-white">Upload New Handbook</div>
+          <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+              {% csrf_token %}
+              <div class="row">
+                <div class="col-md-4 mb-3">
+                  <label for="title" class="form-label">Title</label>
+                  <input type="text" class="form-control" name="title" id="title" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label for="version" class="form-label">Version</label>
+                  <input type="text" class="form-control" name="version" id="version" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label for="file" class="form-label">File</label>
+                  <input type="file" class="form-control" name="file" id="file" required>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-success mt-2"><i class="fas fa-upload"></i> Upload Handbook</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Handbook History -->
+        <div class="card shadow-sm border rounded-3">
+          <div class="card-header bg-secondary text-white">Handbook History</div>
+          <div class="card-body table-responsive">
+            <table class="table table-bordered table-striped">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Version</th>
+                  <th>Uploaded At</th>
+                  <th>File</th>
+                  <th>Employees Acknowledged</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for record in history %}
+                <tr>
+                  <td>{{ record.handbook.title }}</td>
+                  <td>{{ record.handbook.version }}</td>
+                  <td>{{ record.handbook.uploaded_at|date:"Y-m-d H:i" }}</td>
+                  <td><a href="{{ record.handbook.file.url }}" target="_blank">View</a></td>
+                  <td>
+                    <span class="badge bg-info">{{ record.ack_count }}</span>
+                    <ul class="mb-0">
+                      {% for ack in record.acknowledged_employees %}
+                      <li>{{ ack.employee.full_name }} ({{ ack.employee.employee_id }})</li>
+                      {% empty %}
+                      <li><em>No acknowledgments yet</em></li>
+                      {% endfor %}
+                    </ul>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="5">No handbooks uploaded yet.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+
+  <footer class="main-footer">
+    <div class="float-right d-none d-sm-block">
+      <b>Version</b> 3.1.0
+    </div>
+    <strong>&copy; 2025 Your Company.</strong> All rights reserved.
+  </footer>
+
+  <aside class="control-sidebar control-sidebar-dark"></aside>
+</div>
+{% endblock %}
