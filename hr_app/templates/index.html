@@ -99,6 +99,19 @@
         <div class="count" data-count="{{remaining_leaves}}">{{remaining_leaves}}</div>
       </div>
     </div>
+
+    <a href="{% url 'holiday_dashboard' %}" class="text-decoration-none text-dark">
+  <div class="card-box">
+    <div class="icon-box bg-red">
+      <i class="fas fa-calendar-day"></i>
+    </div>
+    <div class="info">
+      <div class="label">Total Holidays</div>
+      <div class="count" data-count="{{ total_holidays }}">{{ total_holidays }}</div>
+    </div>
+  </div>
+</a>
+
   </div>
 </div>
 

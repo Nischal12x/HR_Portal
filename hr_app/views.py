@@ -453,6 +453,17 @@ def apply_leave(request):
         if compensation == '1' :
             pass
         else :
+            if lt.count_holidays == 1:
+                # Fetch all holiday dates into a set for fast lookup
+                holiday_dates = set(Holiday.objects.values_list('date', flat=True))
+
+                # Iterate through date range and subtract holidays
+                current_date = leave.from_date
+                while current_date <= leave.till_date:
+                    if current_date in holiday_dates:
+                        leave_days -= 1
+                    current_date += timedelta(days=1)
+
             leave.leave_days = leave_days
         leave.save()
         messages.success(request, "Leave applied successfully!")
@@ -1457,8 +1468,6 @@ def add_employees(request):
 def leave_settings(request):
     return render(request, 'leave_settings.html')
 
-def holiday_list(request):
-    return render(request, 'configuration/holiday_list.html')
 
 def upload_handbook(request):
     return render(request, 'configuration/upload_handbook.html')
@@ -1699,3 +1708,67 @@ def timesheet_image_records(request):
         'timesheets': timesheets,
         'view_type': view_type
     })
+
+
+
+def profile_view(request):
+    if not request.session.get('is_logged_in'):
+        return redirect('check_cred')  # redirect if not logged in
+
+    try:
+        employee_id = request.session.get('employee_id')
+        employee = AddEmployee.objects.get(id=employee_id)
+    except AddEmployee.DoesNotExist:
+        return redirect('check_cred')  # fallback if invalid
+
+    # Fetch associated data
+    leaves = LeaveApplication.objects.filter(employee=employee)
+    projects = Project.objects.filter(
+        models.Q(leader_id=employee_id) |
+        models.Q(admin_id=employee_id) |
+        models.Q(team_members__id=employee_id)
+    )
+    tasks = Task.objects.filter(
+            assignee_id=employee_id
+        )
+    timesheets = Timesheet.objects.filter(employee=employee)
+
+    context = {
+        'employee': employee,
+        'leaves': leaves,
+        'projects': projects,
+        'tasks': tasks,
+        'timesheets': timesheets,
+    }
+    return render(request, 'Profile.html', context)
+
+
+from .models import Holiday
+
+def holiday_dashboard(request):
+    holidays = Holiday.objects.all().order_by('date')
+    return render(request, 'holiday/holiday_dashboard.html', {'holidays': holidays})
+
+def add_holiday(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        date = request.POST.get('date')
+        description = request.POST.get('description')
+        Holiday.objects.create(name=name, date=date, description=description)
+    return redirect('holiday_dashboard')
+
+def delete_holiday(request, pk):
+    holiday = get_object_or_404(Holiday, pk=pk)
+    holiday.delete()
+    return redirect('holiday_dashboard')
+
+def holiday_json(request):
+    holidays = Holiday.objects.all()
+    events = []
+    for holiday in holidays:
+        events.append({
+            'title': holiday.name,
+            'start': holiday.date.isoformat(),
+            'description': holiday.description,
+        })
+    return JsonResponse(events, safe=False)

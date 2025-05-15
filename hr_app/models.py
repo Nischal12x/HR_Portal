@@ -133,6 +133,7 @@ class LeaveApplication(models.Model):
 
 class AddEmployee(models.Model):
     # Personal Details
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     full_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=15)
@@ -188,6 +189,15 @@ class AddEmployee(models.Model):
     def __str__(self):
         return f"{self.full_name} - {self.employee_id}"
 
+
+
+class Holiday(models.Model):
+    name = models.CharField(max_length=100)
+    date = models.DateField(unique=True)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.date})"
 
 class EmployeeHistory(models.Model):
     employee = models.ForeignKey(AddEmployee, on_delete=models.CASCADE)

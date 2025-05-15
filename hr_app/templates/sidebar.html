@@ -23,7 +23,7 @@
                 {% endwith %}
             </div>
             <div class="info">
-                <a href="#" class="d-block">{{ request.session.name|default:"User Name" }}</a>
+                <a href="{% url 'my_profile' %}" class="d-block">{{ request.session.name|default:"User Name" }}</a>
                 <span class="text-muted">{{ request.session.role|default:"Sr. Software Developer" }}</span>
             </div>
         </div>
@@ -199,7 +199,7 @@
             </a>
         </li>
         <li class="nav-item">
-            <a href="{% url 'holiday_list' %}" class="nav-link">
+            <a href="{% url 'holiday_dashboard' %}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Holiday</p>
             </a>

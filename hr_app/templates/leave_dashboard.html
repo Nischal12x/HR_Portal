@@ -70,7 +70,18 @@
                       {% endfor %}
                       <td>{{ applicant.from_date }}</td>
                       <td>{{ applicant.till_date }}</td>
-                      <td>{{ applicant.reason }}</td>
+                      <td>
+  {% if applicant.reason|length > 20 %}
+  <span class="text-primary" style="cursor:pointer;"
+        data-bs-toggle="modal"
+        data-bs-target="#reasonModal"
+        onclick="showFullReason('{{ applicant.reason|default:''|escapejs }}')">
+    {{ applicant.reason|slice:":20" }}...
+  </span>
+  {% else %}
+    {{ applicant.reason }}
+  {% endif %}
+</td>
                       <td>
                         <div class="status-container">
                           <i class="fas status-icon
@@ -154,6 +165,45 @@
                     </tr>
                     {% endif %}
                     {% endfor %}
+                    <!-- Cancel Reason Modal -->
+<div class="modal fade" id="cancelReasonModal" tabindex="-1" aria-labelledby="cancelReasonModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" id="cancelReasonForm">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="cancelReasonModalLabel">Cancel Leave</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="status" value="Cancelled">
+          <label for="cancel-reason">Reason for Cancellation:</label>
+          <textarea name="cancel_reason" id="cancel-reason" rows="4" class="form-control" required></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-danger">Submit Cancellation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+                    <!-- Reason Modal -->
+<div class="modal fade" id="reasonModal" tabindex="-1" aria-labelledby="reasonModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="reasonModalLabel">Full Reason</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="fullReasonText">
+      </div>
+    </div>
+  </div>
+</div>
+
+
                     {% endwith %}
                   </tbody>
                 </table>
@@ -165,5 +215,9 @@
     </section><!-- /.content -->
   </div><!-- /.content-wrapper -->
 </div><!-- /.wrapper -->
-
+<script>
+function showFullReason(reason) {
+  document.getElementById("fullReasonText").textContent = reason;
+}
+</script>
 {% endblock %}

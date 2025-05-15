@@ -1,0 +1,179 @@
+{% extends "main1.html" %}
+{% load static %}
+{% load custom_tags %}
+{% block title %}Holiday Management{% endblock %}
+{% block content %}
+<div class="wrapper">
+  {% include 'navbar.html' %}
+  {% include 'sidebar.html' %}
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <h1>Holiday Management</h1>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <div class="mb-3">
+          <button class="btn btn-info" onclick="toggleView('table')">Table View</button>
+          <button class="btn btn-success" onclick="toggleView('calendar')">Calendar View</button>
+          <button class="btn btn-primary" data-toggle="modal" data-target="#addHolidayModal">Add Holiday</button>
+        </div>
+
+        <!-- Calendar View -->
+        <div class="card" id="calendar-card" style="display:none;">
+          <div class="card-header bg-success text-white">
+            <h3 class="card-title"><i class="far fa-calendar-alt"></i> Calendar</h3>
+          </div>
+          <div class="card-body">
+            <div id="calendar" style="width: 100%"></div>
+          </div>
+        </div>
+
+        <!-- Table View -->
+        <div class="card" id="table-card">
+          <div class="card-header bg-info text-white">
+            <h3 class="card-title">Holiday Table</h3>
+          </div>
+          <div class="card-body">
+            <table class="table table-bordered">
+              <thead>
+                <tr><th>Name</th><th>Date</th><th>Description</th><th>Actions</th></tr>
+              </thead>
+              <tbody>
+                {% for holiday in holidays %}
+                <tr>
+                  <td>{{ holiday.name }}</td>
+                  <td>{{ holiday.date }}</td>
+                  <td>{{ holiday.description }}</td>
+                  <td>
+                    <a href="{% url 'delete_holiday' holiday.id %}" class="btn btn-danger btn-sm">Delete</a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Modal: Add Holiday -->
+        <div class="modal fade" id="addHolidayModal" tabindex="-1" role="dialog">
+          <div class="modal-dialog" role="document">
+            <form method="post" action="{% url 'add_holiday' %}">
+              {% csrf_token %}
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Add Holiday</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <div class="form-group">
+                    <label for="name">Holiday Name</label>
+                    <input type="text" class="form-control" name="name" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="date">Date</label>
+                    <input type="date" class="form-control" name="date" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea class="form-control" name="description"></textarea>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary">Add</button>
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Modal: Holiday Info -->
+        <div class="modal fade" id="holidayInfoModal" tabindex="-1" role="dialog">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+             <div class="modal-header">
+                <h5 class="modal-title">Holiday Info</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+
+                </button>
+              </div>
+              <div class="modal-body">
+                <p id="holiday-details"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- Styles & Scripts -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+
+<script>
+let calendar;
+let calendarInitialized = false;
+
+function toggleView(view) {
+  const calendarCard = document.getElementById('calendar-card');
+  const tableCard = document.getElementById('table-card');
+
+  if (view === 'calendar') {
+    calendarCard.style.display = 'block';
+    tableCard.style.display = 'none';
+
+    setTimeout(() => {
+      if (!calendarInitialized) {
+        initCalendar();  // first time only
+        calendarInitialized = true;
+      } else {
+        calendar.render();  // ensure re-render
+      }
+    }, 50); // short delay ensures DOM is visible before render
+  } else {
+    calendarCard.style.display = 'none';
+    tableCard.style.display = 'block';
+  }
+}
+
+function initCalendar() {
+  const calendarEl = document.getElementById('calendar');
+  calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    height: 'auto',  // optional, helps sizing
+    events: '{% url "holiday_json" %}',
+    eventClick: function(info) {
+      const title = info.event.title;
+      const date = info.event.start.toLocaleDateString();
+      const description = info.event.extendedProps.description || 'No description';
+      document.getElementById('holiday-details').innerHTML = `
+        <strong>Holiday:</strong> ${title}<br>
+        <strong>Date:</strong> ${date}<br>
+        <strong>Description:</strong> ${description}
+      `;
+      $('#holidayInfoModal').modal('show');
+    }
+  });
+  calendar.render();
+}
+
+// If you want to show calendar by default on page load:
+document.addEventListener('DOMContentLoaded', function () {
+  toggleView('calendar');
+});
+</script>
+
+
+{% endblock %}

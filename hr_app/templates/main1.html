@@ -5,6 +5,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}BISP Solutions{% endblock %}</title>
+<!-- FullCalendar CSS -->
+<!--<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/main.min.css" rel="stylesheet">-->
 
 <link rel="stylesheet" href="{% static 'plugins/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
   <!-- Google Font: Source Sans Pro -->
@@ -909,5 +911,44 @@ function setStatus(option, text, badgeClass) {
   });
 </script>
 
+<!--&lt;!&ndash; FullCalendar + Bootstrap dependencies &ndash;&gt;-->
+<!--<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.9/index.global.min.js"></script>-->
+<!--<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.9/index.global.min.js"></script>-->
+<!--<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.9/index.global.min.js"></script>-->
+<!--<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/bootstrap@6.1.9/index.global.min.js"></script>-->
+<script>
+  function toggleView(view) {
+    document.getElementById('calendar-card').style.display = view === 'calendar' ? 'block' : 'none';
+    document.getElementById('table-card').style.display = view === 'table' ? 'block' : 'none';
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      themeSystem: 'bootstrap',
+      initialView: 'dayGridMonth',
+      height: 650,
+      events: '{{ request.scheme }}://{{ request.get_host }}{% url "holiday_json" %}',
+      eventDidMount: function(info) {
+        // Tooltip on hover (optional)
+        $(info.el).tooltip({
+          title: info.event.title + ' - ' + (info.event.extendedProps.description || 'No description'),
+          placement: 'top',
+          trigger: 'hover',
+          container: 'body'
+        });
+      },
+      eventClick: function(info) {
+        const title = info.event.title;
+        const desc = info.event.extendedProps.description || 'No description';
+        document.getElementById('holiday-details').innerHTML = `<strong>${title}</strong><br>${desc}`;
+        $('#holidayInfoModal').modal('show');
+      }
+    });
+
+    calendar.render();
+  });
+</script>
 </body>
 </html>
