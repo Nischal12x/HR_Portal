@@ -17,7 +17,7 @@
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
-              <li class="breadcrumb-item"><a href="#">Home</a></li>
+              <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
               <li class="breadcrumb-item active">Tasks</li>
             </ol>
           </div>
@@ -61,7 +61,7 @@
       <td>{{ task.status }}</td>
       <td>
         <span class="badge bg-success">
-          <a href="{% url 'task' task.id %}">Edit</a>
+          <a href="{% url 'task' task.id %}">{% if task.status == 'Completed' and request.session.role != 'HR' %} View {% else %} Edit {% endif %}</a>
         </span>
       </td>
     </tr>

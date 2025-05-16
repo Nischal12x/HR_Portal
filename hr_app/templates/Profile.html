@@ -2,272 +2,141 @@
 {% load static %}
 {% load custom_tags %}
 {% block content %}
-<div class="wrapper">
-  <!-- Navbar -->
-  {% include 'navbar.html' %}
-  <!-- /.navbar -->
 
-  <!-- Main Sidebar Container -->
+<div class="wrapper">
+  {% include 'navbar.html' %}
   {% include 'sidebar.html' %}
 
-  <!-- Content Wrapper. Contains page content -->
   <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
     <section class="content-header">
       <div class="container-fluid">
-        <div class="row mb-2">
-          <div class="col-sm-6">
-          </div>
-          <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-right">
-              <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
-              <li class="breadcrumb-item active" aria-current="page">User Profile</li>
-            </ol>
-          </div>
+        <div class="d-flex justify-content-between align-items-center">
+          <h1 class="h4 mb-0">User Profile</h1>
+          <ol class="breadcrumb float-sm-right bg-transparent p-0 m-0">
+            <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+            <li class="breadcrumb-item active">User Profile</li>
+          </ol>
         </div>
-      </div><!-- /.container-fluid -->
+      </div>
     </section>
-<!-- Breadcrumb -->
 
-        <!-- /Breadcrumb -->
-    <!-- Main content -->
     <section class="content">
-<div class="container">
-    <div class="main-body">
-        <div class="row gutters-sm">
-            <div class="col-md-4 mb-3">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex flex-column align-items-center text-center">
-                            <img src="{{ employee.attachment.url|default:'/static/images/profile-placeholder.png' }}" alt="Profile Picture" class="rounded-circle" width="150" height="150">
-                            <div class="mt-3">
-                                <h4>{{ employee.full_name }}</h4>
-                                <p class="text-secondary mb-1">{{ employee.designation }}</p>
-                                <p class="text-muted font-size-sm">{{ employee.address }}</p>
-                                <button class="btn btn-primary">Follow</button>
-                                <button class="btn btn-outline-primary">Message</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card mt-3">
-                    <ul class="list-group list-group-flush">
-                        {% if employee.website %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
-                            <h6 class="mb-0">
-                                <i class="fas fa-globe mr-2"></i>Website
-                            </h6>
-                            <span class="text-secondary"><a href="{{ employee.website }}" target="_blank">{{ employee.website }}</a></span>
-                        </li>
-                        {% endif %}
-                        {% if employee.github %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
-                            <h6 class="mb-0">
-                                <i class="fab fa-github mr-2"></i>Github
-                            </h6>
-                            <span class="text-secondary">{{ employee.github }}</span>
-                        </li>
-                        {% endif %}
-                        {% if employee.twitter %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
-                            <h6 class="mb-0">
-                                <i class="fab fa-twitter mr-2 text-info"></i>Twitter
-                            </h6>
-                            <span class="text-secondary">{{ employee.twitter }}</span>
-                        </li>
-                        {% endif %}
-                        {% if employee.instagram %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
-                            <h6 class="mb-0">
-                                <i class="fab fa-instagram mr-2 text-danger"></i>Instagram
-                            </h6>
-                            <span class="text-secondary">{{ employee.instagram }}</span>
-                        </li>
-                        {% endif %}
-                        {% if employee.facebook %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
-                            <h6 class="mb-0">
-                                <i class="fab fa-facebook mr-2 text-primary"></i>Facebook
-                            </h6>
-                            <span class="text-secondary">{{ employee.facebook }}</span>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </div>
+      <div class="container py-3">
+        <div class="row g-4">
+          <!-- Profile Sidebar -->
+          <div class="col-lg-4">
+            <div class="card text-center p-3">
+              <img src="{% if employee and employee.attachment %}{{ employee.attachment.url }}{% else %}{% static 'img/avatar.png' %}{% endif %}" class="rounded-circle mx-auto mb-3" width="120" height="120" alt="Profile Picture">
+              <h4 class="mb-1">{{ employee.full_name }}</h4>
+              <p class="text-muted mb-2">{{ employee.designation }}</p>
+              <p class="text-secondary">{{ employee.address }}</p>
+              <div class="d-grid gap-2 d-sm-flex justify-content-center">
+                <button class="btn btn-primary btn-sm">Follow</button>
+                <button class="btn btn-outline-primary btn-sm">Message</button>
+              </div>
             </div>
 
-            <div class="col-md-8">
-                <div class="card mb-3">
-                    <div class="card-body">
-
-                        <div class="row">
-                            <div class="col-sm-3">
-                                <h6 class="mb-0">Full Name</h6>
-                            </div>
-                            <div class="col-sm-9 text-secondary">
-                                {{ employee.full_name }}
-                            </div>
-                        </div>
-                        <hr>
-
-                        <div class="row">
-                            <div class="col-sm-3">
-                                <h6 class="mb-0">Email</h6>
-                            </div>
-                            <div class="col-sm-9 text-secondary">
-                                {{ employee.email }}
-                            </div>
-                        </div>
-                        <hr>
-
-                        <div class="row">
-                            <div class="col-sm-3">
-                                <h6 class="mb-0">Phone</h6>
-                            </div>
-                            <div class="col-sm-9 text-secondary">
-                                {{ employee.phone }}
-                            </div>
-                        </div>
-                        <hr>
-
-                        <div class="row">
-                            <div class="col-sm-3">
-                                <h6 class="mb-0">Address</h6>
-                            </div>
-                            <div class="col-sm-9 text-secondary">
-                                {{ employee.address }}
-                            </div>
-                        </div>
-                        <hr>
-
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <a class="btn btn-info" href="{% url 'update_employee' employee.id %}">Edit</a>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-                <div class="row gutters-sm">
-                    <div class="col-sm-6 mb-3">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h6 class="d-flex align-items-center mb-3"><i class="material-icons text-info mr-2">assignment</i>Project Status</h6>
-                                <!-- Example project statuses -->
-                                <small>Web Design</small>
-                                <div class="progress mb-3" style="height: 5px;">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 80%;"></div>
-                                </div>
-                                <small>Website Markup</small>
-                                <div class="progress mb-3" style="height: 5px;">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 72%;"></div>
-                                </div>
-                                <small>One Page</small>
-                                <div class="progress mb-3" style="height: 5px;">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 89%;"></div>
-                                </div>
-                                <small>Mobile Template</small>
-                                <div class="progress mb-3" style="height: 5px;">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 55%;"></div>
-                                </div>
-                                <small>Backend API</small>
-                                <div class="progress mb-3" style="height: 5px;">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 66%;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-6 mb-3">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h6 class="d-flex align-items-center mb-3"><i class="material-icons text-info mr-2">assignment</i>Project Status</h6>
-                                <!-- You can duplicate or customize as needed -->
-                                <small>Web Design</small>
-                                <div class="progress mb-3" style="height: 5px;">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 80%;"></div>
-                                </div>
-                                <small>Website Markup</small>
-                                <div class="progress mb-3" style="height: 5px;">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 72%;"></div>
-                                </div>
-                                <small>One Page</small>
-                                <div class="progress mb-3" style="height: 5px;">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 89%;"></div>
-                                </div>
-                                <small>Mobile Template</small>
-                                <div class="progress mb-3" style="height: 5px;">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 55%;"></div>
-                                </div>
-                                <small>Backend API</small>
-                                <div class="progress mb-3" style="height: 5px;">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 66%;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+            <div class="card mt-4">
+              <ul class="list-group list-group-flush">
+                {% if employee.website %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <i class="fas fa-globe text-primary"></i>
+                  <a href="{{ employee.website }}" class="text-decoration-none" target="_blank">{{ employee.website }}</a>
+                </li>
+                {% endif %}
+                {% if employee.github %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <i class="fab fa-github text-dark"></i>
+                  <span>{{ employee.github }}</span>
+                </li>
+                {% endif %}
+                {% if employee.twitter %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <i class="fab fa-twitter text-info"></i>
+                  <span>{{ employee.twitter }}</span>
+                </li>
+                {% endif %}
+                {% if employee.instagram %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <i class="fab fa-instagram text-danger"></i>
+                  <span>{{ employee.instagram }}</span>
+                </li>
+                {% endif %}
+                {% if employee.facebook %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <i class="fab fa-facebook text-primary"></i>
+                  <span>{{ employee.facebook }}</span>
+                </li>
+                {% endif %}
+              </ul>
             </div>
+          </div>
+
+          <!-- Profile Details -->
+          <div class="col-lg-8">
+            <div class="card mb-4 p-3">
+              <h5 class="mb-3">Personal Information</h5>
+              <div class="row mb-2">
+                <div class="col-sm-4 text-muted">Full Name</div>
+                <div class="col-sm-8">{{ employee.full_name }}</div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-sm-4 text-muted">Email</div>
+                <div class="col-sm-8">{{ employee.email }}</div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-sm-4 text-muted">Phone</div>
+                <div class="col-sm-8">{{ employee.phone }}</div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-sm-4 text-muted">Address</div>
+                <div class="col-sm-8">{{ employee.address }}</div>
+              </div>
+              <div class="text-end mt-3">
+                <a href="{% url 'update_employee' employee.id %}" class="btn btn-info btn-sm">Edit Profile</a>
+              </div>
+            </div>
+
+            <!-- Project Status -->
+            <div class="card p-3">
+              <h5 class="mb-3"><i class="fas fa-chart-line me-2 text-info"></i>Project Progress</h5>
+              <div class="row">
+                <div class="col-md-6">
+
+                  <small>{{ label }}</small>
+                  <div class="progress mb-3" style="height: 6px;">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: {{ value }}%;"></div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+
+                  <small>{{ label }}</small>
+                  <div class="progress mb-3" style="height: 6px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ value }}%;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
         </div>
-
-    </div>
-</div>
-
-<style>
-body{
-    margin-top:0px;
-    color: #1a202c;
-    text-align: left;
-    background-color: #e2e8f0;
-}
-.main-body {
-    padding: 15px;
-}
-.card {
-    box-shadow: 0 1px 3px 0 rgba(0,0,0,.1), 0 1px 2px 0 rgba(0,0,0,.06);
-}
-.card {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    word-wrap: break-word;
-    background-color: #fff;
-    background-clip: border-box;
-    border: 0 solid rgba(0,0,0,.125);
-    border-radius: .25rem;
-}
-.card-body {
-    flex: 1 1 auto;
-    min-height: 1px;
-    padding: 1rem;
-}
-.gutters-sm {
-    margin-right: -8px;
-    margin-left: -8px;
-}
-.gutters-sm>.col, .gutters-sm>[class*=col-] {
-    padding-right: 8px;
-    padding-left: 8px;
-}
-.mb-3, .my-3 {
-    margin-bottom: 1rem!important;
-}
-.bg-gray-300 {
-    background-color: #e2e8f0;
-}
-.h-100 {
-    height: 100%!important;
-}
-.shadow-none {
-    box-shadow: none!important;
-}
-</style>
+      </div>
     </section>
   </div>
 </div>
+
+<style>
+body {
+  background-color: #f8f9fa;
+}
+.card {
+  border: none;
+  border-radius: 0.5rem;
+  box-shadow: 0 0 15px rgba(0,0,0,0.05);
+}
+.progress {
+  background-color: #e9ecef;
+}
+</style>
 
 {% endblock %}

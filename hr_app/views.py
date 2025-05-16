@@ -438,7 +438,7 @@ def apply_leave(request):
 
         if from_date > till_date:
             messages.error(request, "From date cannot be after till date.")
-            return redirect('apply_leave')
+            return redirect('index2')
 
         leave = LeaveApplication(
             employee=employee,
@@ -796,14 +796,14 @@ def check_cred(request):
                 if employee.attachment:
                     request.session['attachment'] = employee.attachment.url
                 # Redirect to the home page or dashboard
-                return render(request, "index.html", {"employee": employee})
+                return redirect('index')
             else:
                 messages.error(request, "Incorrect password!")
         except AddEmployee.DoesNotExist:
             messages.error(request, "Email does not exist!")
 
     # Render login page with error messages
-    return render(request, "login.html")
+    return render(request, "login.html" , )
 
 
 
@@ -1017,6 +1017,8 @@ def index2(request):
 
     # Initialize a list to store the leave details (consumed and remaining)
     leave_details = []
+    holiday_dates = list(Holiday.objects.values_list('date', flat=True))
+    holiday_str_dates = [d.strftime("%Y-%m-%d") for d in holiday_dates]
 
     # Iterate over each leave type and calculate consumed and remaining leave
     for leave in leaves:
@@ -1024,7 +1026,8 @@ def index2(request):
         leave_details.append({
             'leave_type': leave,
             'total_consumed_leave': total_consumed_leave,
-            'remaining_leave': remaining_leave
+            'remaining_leave': remaining_leave,
+            'holiday_dates': holiday_str_dates,
         })
 
     # Pass the leave details to the template
@@ -1034,9 +1037,29 @@ def admins(request):
 
     total_employees = AddEmployee.objects.count()
     total_projects = Project.objects.count()
+    total_task = Task.objects.all().count()
     ongoing_tasks = Task.objects.exclude(status='Completed').count()
+    total_holidays = Holiday.objects.count()
     employee_id = request.session.get('employee_id')
+    if request.session.get('role') != 'HR' :
+        total_projects = Project.objects.filter(
+            Q(team_members__id=employee_id) |
+            Q(leader__id=employee_id) |
+            Q(admin__id=employee_id)
+        ).distinct().count()
 
+        ongoing_tasks = Task.objects.filter(
+            ~Q(status='Completed'),
+            Q(assignee__id=employee_id) |
+            Q(project__leader__id=employee_id) |
+            Q(project__admin__id=employee_id)
+        ).distinct().count()
+
+        total_task = Task.objects.filter(
+            Q(assignee__id=employee_id) |
+            Q(project__leader__id=employee_id) |
+            Q(project__admin__id=employee_id)
+        ).distinct().count()
     leaves = Leave_Type.objects.filter(
         is_active=True,
         applied_to__in=['All', employee_id]
@@ -1067,23 +1090,28 @@ def admins(request):
         'remaining_leaves': remaining_leaves,
         'availed_leaves': total_consumed_leaves,
         'total_leaves': total_leaves,
+        'total_holidays' : total_holidays,
+        'total_task': total_task
     }
 
     return render(request, 'index.html', context)
 
 def get_team_members(request, project_id):
     employee_id = request.session.get('employee_id')
-    project = Project.objects.filter(
-        id=project_id
-    ).filter(
-        models.Q(leader_id=employee_id) | models.Q(admin_id=employee_id)
-    ).prefetch_related('team_members').first()
-
+    if request.session.get('role') == 'HR' :
+        project = Project.objects.filter(id=project_id).prefetch_related('team_members').first()
+    else :
+        project = Project.objects.filter(
+            id=project_id
+        ).filter(
+            models.Q(leader_id=employee_id) | models.Q(admin_id=employee_id)
+        ).prefetch_related('team_members').first()
     if not project:
         return JsonResponse({'error': 'Unauthorized or project not found'}, status=403)
 
     members = [{'id': m.id, 'name': m.full_name} for m in project.team_members.all()]
     return JsonResponse({'members': members})
+
 def get_current_week_dates():
     # Get the current date
     today = datetime.today()
@@ -1478,19 +1506,38 @@ def assets(request):
 
 def view_timesheet(request):
     employee_id = request.session.get('employee_id')
-    timesheets = Timesheet.objects.filter(employee_id=employee_id).order_by('-date')
+    role = request.session.get('role')
+    view_type = request.GET.get('view', 'self')
+    search_query = request.GET.get('search', '').strip()
 
-    # Calculate hours difference
+    if role == 'HR' and view_type == 'staff':
+        timesheets = Timesheet.objects.exclude(employee__id=employee_id)
+
+        if search_query:
+            timesheets = timesheets.filter(
+                Q(employee__id__icontains=search_query) |
+                Q(employee__full_name__icontains=search_query)
+            )
+    else:
+        timesheets = Timesheet.objects.filter(employee_id=employee_id)
+
+    timesheets = timesheets.order_by('-date')
+
+    # Calculate hours
     for entry in timesheets:
         if entry.start_time and entry.end_time:
             start = datetime.combine(entry.date, entry.start_time)
             end = datetime.combine(entry.date, entry.end_time)
             diff = end - start
-            entry.hours = round(diff.total_seconds() / 3600, 2)  # hours as float
+            entry.hours = round(diff.total_seconds() / 3600, 2)
         else:
             entry.hours = None
 
-    return render(request, 'Timesheet_records.html', {'timesheets': timesheets})
+    return render(request, 'Timesheet_records.html', {
+        'timesheets': timesheets,
+        'view_type': view_type,
+        'search_query': search_query,
+    })
 
 def add_last_week_timesheet(request):
     employee_id = request.session.get('employee_id')

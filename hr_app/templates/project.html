@@ -104,14 +104,15 @@
       style="cursor: pointer;">
   {{ task.status }}
 </span>
-
+        {% if request.session.role == 'HR' %}
         <!-- Status Menu -->
         <div class="status-menu d-none mt-2 p-2 bg-white shadow rounded position-absolute" style="z-index: 100;">
+
           <div class="badge bg-success text-white mb-1" onclick="submitStatus('Completed', {{ task.id }})">✅ Completed</div>
           <div class="badge bg-warning text-dark mb-1" onclick="submitStatus('Pending', {{ task.id }})">🕑 Pending</div>
           <div class="badge bg-info text-dark mb-1" onclick="submitStatus('Claimed Completed', {{ task.id }})">🏁 Claimed</div>
 
-        </div>
+        </div>{% endif %}
       </div>
     </div>
 
@@ -120,7 +121,7 @@
 
     <!-- Task Content -->
     <div class="task-content mt-4">
-      <h6 class="text-primary fw-bold"><a href="{% url 'task_detail' task.id %}"> {{ task.name }}</a></h6>
+      <h6 class="text-primary fw-bold">{% if request.session.employee_id == task.assignee_id or request.session.role == 'HR' %}<a href="{% url 'task_detail' task.id %}"> {{ task.name }}</a>{% else %} {{task.name}}{% endif %}</h6>
       <p class="mb-1"><i class="fas fa-user"></i> Assignee: {{ task.assignee.full_name }}</p>
       <p class="mb-1"><i class="fas fa-calendar-day"></i> Start: {{ task.start_date }}</p>
       <p class="mb-1"><i class="fas fa-calendar-check"></i> End: {{ task.end_date }}</p>
@@ -138,7 +139,7 @@
             <div class="col-md-4">
               <div class="section-card">
                 <h5 class="section-heading"><i class="fas fa-user-tie"></i> Team Details</h5>
-                <a href="{% url 'project_history' proj.id %}" class="btn btn-sm btn-info">View History</a>
+                {% if request.sesion.role == 'HR' %} <a href="{% url 'project_history' proj.id %}" class="btn btn-sm btn-info">View History</a> {% endif %}
                 <ul class="list-unstyled team-details">
                   <li><b>Project:</b> {{proj.name}}</li>
                   <li><b>Admin:</b> {{proj.admin.full_name}} ({{proj.admin.role}})</li>

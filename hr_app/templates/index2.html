@@ -3,7 +3,20 @@
 
 {% block title %}Apply Leave{% endblock %}
 {% block content %}
-
+    {% if messages %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        {% for message in messages %}
+            Swal.fire({
+                title: "{% if message.tags == 'success' %}Success{% else %}Error{% endif %}",
+                text: "{{ message }}",
+                icon: "{% if message.tags == 'success' %}success{% else %}error{% endif %}",
+                confirmButtonText: "OK"
+            });
+        {% endfor %}
+    });
+</script>
+{% endif %}
 <div class="wrapper d-flex flex-column min-vh-100">
 
   <!-- Navbar -->
@@ -147,6 +160,19 @@
 <!-- Error Alert Box -->
 <div id="errorAlert" class="alert alert-danger d-none mt-3"></div>
 <!--for validations on form-->
+
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+    </section>
+  </div>
+
+  <!-- Footer -->
+  {% include 'footer.html' %}
+</div>
 <script>
     const fromDateInput = document.getElementById("from_date");
     const tillDateInput = document.getElementById("till_date");
@@ -222,19 +248,6 @@
         if (toggle.checked) renderHalfDaySelectors();
     });
 </script>
-
-              </div>
-            </div>
-          </div>
-
-        </div>
-    </section>
-  </div>
-
-  <!-- Footer -->
-  {% include 'footer.html' %}
-</div>
-
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     let fileInput = document.querySelector('input[type="file"]');

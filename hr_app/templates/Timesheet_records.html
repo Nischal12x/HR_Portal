@@ -46,51 +46,71 @@
               </div>
 
               <div class="card-body">
-                <table id="example1" class="table table-bordered table-striped">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Project</th>
-                      <th>Task</th>
-                      <th>Date</th>
-                      <th>Start Time</th>
-                      <th>End Time</th>
-                      <th>Hours</th>
-                      <th>Description</th>
-                      <th>Attachment</th>
-                     </tr>
-                  </thead>
-                  <tbody>
-                    {% for entry in timesheets %}
-                      <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td>{{ entry.project.name }}</td>
-                        <td>{{ entry.task.name }}</td>
-                        <td>{{ entry.date }}</td>
-                        <td>{{ entry.start_time }}</td>
-                        <td>{{ entry.end_time }}</td>
-                        <td>
-                            {% if entry.hours %}
-                              {{ entry.hours }} hrs
-                            {% else %}
-                              N/A
-                            {% endif %}
-                          </td>
 
-                        <td>{{ entry.description }}</td>
-                        <td>
-                          {% if entry.attachment %}
-                            <a href="{{ entry.attachment.url }}" target="_blank">View</a>
-                          {% else %}
-                            N/A
-                          {% endif %}
-                        </td>
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
+  {% if request.session.role == 'HR' %}
+<div class="mb-3">
+  <form method="get" class="form-inline">
+    <label class="mr-2">
+      <input type="radio" name="view" value="self" {% if view_type == 'self' %}checked{% endif %}>
+      My Timesheet
+    </label>
+    <label class="ml-3 mr-2">
+      <input type="radio" name="view" value="staff" {% if view_type == 'staff' %}checked{% endif %}>
+      Staff Timesheets
+    </label>
 
+    {% if view_type == 'staff' %}<input type="text" name="search" value="{{ search_query }}" class="form-control form-control-sm ml-3" placeholder="Search by name or ID">{% endif %}
+    <button type="submit" class="btn btn-sm btn-primary ml-2">Filter</button>
+  </form>
+</div>
+{% endif %}
+
+
+  <table id="example1" class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>#</th>
+        {% if view_type == 'staff' %}<th>Employee</th> {% endif %}
+        <th>Project</th>
+        <th>Task</th>
+        <th>Date</th>
+        <th>Start Time</th>
+        <th>End Time</th>
+        <th>Hours</th>
+        <th>Description</th>
+        <th>Attachment</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for entry in timesheets %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        {% if view_type == 'staff' %} <td> {{ entry.employee.full_name }} </td> {% endif %}
+        <td>{{ entry.project.name }}</td>
+        <td>{{ entry.task.name }}</td>
+        <td>{{ entry.date }}</td>
+        <td>{{ entry.start_time }}</td>
+        <td>{{ entry.end_time }}</td>
+        <td>
+          {% if entry.hours %}
+          {{ entry.hours }} hrs
+          {% else %}
+          N/A
+          {% endif %}
+        </td>
+        <td>{{ entry.description }}</td>
+        <td>
+          {% if entry.attachment %}
+          <a href="{{ entry.attachment.url }}" target="_blank">View</a>
+          {% else %}
+          N/A
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
             </div>
           </div>
         </div>

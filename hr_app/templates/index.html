@@ -49,6 +49,7 @@
   <div class="dashboard-cards">
     <!-- Card: Total Employees -->
     {% if request.session.role != "Employee" %}
+    <a href="{% url 'employees' %}" class="text-decoration-none text-dark">
     <div class="card-box">
       <div class="icon-box bg-blue"><i class="fas fa-users"></i></div>
       <div class="info">
@@ -56,8 +57,10 @@
         <div class="count" data-count="{{total_employees}}">{{total_employees}}</div>
       </div>
     </div>
+    </a>
     {% endif %}
     <!-- Card: Total Projects -->
+    <a href="{% url 'widgets' %}" class="text-decoration-none text-dark">
     <div class="card-box">
       <div class="icon-box bg-green"><i class="fas fa-folder-open"></i></div>
       <div class="info">
@@ -65,16 +68,26 @@
         <div class="count" data-count="{{total_projects}}">{{total_projects}}</div>
       </div>
     </div>
-
-    <!-- Card: Ongoing Tasks -->
-    <div class="card-box">
+    </a>
+      <div class="card-box">
       <div class="icon-box bg-yellow"><i class="fas fa-tasks"></i></div>
       <div class="info">
         <div class="label">Ongoing Tasks</div>
         <div class="count" data-count="{{ongoing_tasks}}">{{ongoing_tasks}}</div>
       </div>
     </div>
+
+    <!-- Card: Ongoing Tasks -->
+    <a href="{% url 'task_list' %}" class="text-decoration-none text-dark">
+    <div class="card-box">
+      <div class="icon-box bg-blue"><i class="fas fa-tasks"></i></div>
+      <div class="info">
+        <div class="label">Total Tasks</div>
+        <div class="count" data-count="{{total_task}}">{{total_task}}</div>
+      </div>
+    </div>
     <!-- Card: Total Leave -->
+    <a href="{% url 'index2' %}" class="text-decoration-none text-dark">
     <div class="card-box">
       <div class="icon-box bg-gray"><i class="fas fa-calendar-check"></i></div>
       <div class="info">
@@ -82,7 +95,9 @@
         <div class="count" data-count="{{total_leaves}}">{{total_leaves}}</div>
       </div>
     </div>
+    </a>
     <!-- Card: Availed Leaves -->
+      <a href="{% url 'leave_dashboard' %}" class="text-decoration-none text-dark">
     <div class="card-box">
       <div class="icon-box bg-red"><i class="fas fa-clock"></i></div>
       <div class="info">
@@ -90,8 +105,9 @@
         <div class="count" data-count="{{availed_leaves}}">{{availed_leaves}}</div>
       </div>
     </div>
-
+      </a>
     <!-- Card: Remaining Leave -->
+      <a href="{% url 'index2' %}" class="text-decoration-none text-dark">
     <div class="card-box">
       <div class="icon-box bg-teal"><i class="fas fa-umbrella-beach"></i></div>
       <div class="info">
@@ -99,7 +115,7 @@
         <div class="count" data-count="{{remaining_leaves}}">{{remaining_leaves}}</div>
       </div>
     </div>
-
+      </a>
     <a href="{% url 'holiday_dashboard' %}" class="text-decoration-none text-dark">
   <div class="card-box">
     <div class="icon-box bg-red">

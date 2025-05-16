@@ -179,10 +179,21 @@
     const startDateInput = document.querySelector('input[name="start_date"]');
     const endDateInput = document.querySelector('input[name="end_date"]');
 
-    const today = new Date().toISOString().split('T')[0];
-    startDateInput.setAttribute('min', today);
-    endDateInput.setAttribute('min', today);
+    const today = new Date();
 
+    // Calculate 4 months before today
+    const fourMonthsAgo = new Date(today);
+    fourMonthsAgo.setMonth(today.getMonth() - 4);
+
+    // Format dates as YYYY-MM-DD
+    const todayStr = today.toISOString().split('T')[0];
+    const fourMonthsAgoStr = fourMonthsAgo.toISOString().split('T')[0];
+
+    // Set min attributes
+    startDateInput.setAttribute('min', fourMonthsAgoStr);
+    endDateInput.setAttribute('min', todayStr);
+
+    // Update end date min when start date changes
     startDateInput.addEventListener('change', function () {
       const selectedStart = this.value;
       endDateInput.value = '';
@@ -190,6 +201,7 @@
     });
   });
 </script>
+
   {% endif %}
 {% endblock %}
 </div>

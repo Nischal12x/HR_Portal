@@ -80,10 +80,10 @@
                 </div>
                 <div class="col-md-2">
                   <label>Status *</label>
-                  <select class="form-control" name="status" required>
+                  <select class="form-control" name="status" required {% if request.session.role != 'HR' and task.status == 'Completed' %} disabled {% endif %}>
                     <option value="Pending" {% if task.status == "Pending" %} selected {% endif %}>Pending</option>
                     <option value="Claimed Completed" {% if task.status == "Claimed Completed" %} selected {% endif %}>Claimed</option>
-                    <option value="Completed" {% if task.status == "Completed" %} selected {% endif %}>Completed</option>
+                    {% if request.session.role == 'HR' %}<option value="Completed" {% if task.status == "Completed" %} selected {% endif %}>Completed</option> {% endif %}
                   </select>
                 </div>
                 <div class="col-md-6">

@@ -19,7 +19,7 @@
         <div class="mb-3">
           <button class="btn btn-info" onclick="toggleView('table')">Table View</button>
           <button class="btn btn-success" onclick="toggleView('calendar')">Calendar View</button>
-          <button class="btn btn-primary" data-toggle="modal" data-target="#addHolidayModal">Add Holiday</button>
+          {% if request.session.role == 'HR' %} <button class="btn btn-primary" data-toggle="modal" data-target="#addHolidayModal">Add Holiday</button> {% endif %}
         </div>
 
         <!-- Calendar View -->
@@ -40,7 +40,7 @@
           <div class="card-body">
             <table class="table table-bordered">
               <thead>
-                <tr><th>Name</th><th>Date</th><th>Description</th><th>Actions</th></tr>
+                <tr><th>Name</th><th>Date</th><th>Description</th>{% if request.session.role == 'HR' %}<th>Actions</th> {% endif %}</tr>
               </thead>
               <tbody>
                 {% for holiday in holidays %}
@@ -48,10 +48,11 @@
                   <td>{{ holiday.name }}</td>
                   <td>{{ holiday.date }}</td>
                   <td>{{ holiday.description }}</td>
+                  {% if request.session.role == 'HR' %}
                   <td>
                     <a href="{% url 'delete_holiday' holiday.id %}" class="btn btn-danger btn-sm">Delete</a>
                   </td>
-                </tr>
+                </tr> {% endif %}
                 {% endfor %}
               </tbody>
             </table>

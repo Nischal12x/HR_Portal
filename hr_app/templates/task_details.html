@@ -71,14 +71,16 @@
                 </div>
 
                 <!-- Status Dropdown Styled as Interactive Box -->
+                {% if task.status == 'Completed' and request.session.role != 'HR' %} {% else %}
                 <div class="d-grid gap-2">
                   <a href="{% url 'update_task_status' %}?task_id={{ task.id }}&status=Pending"
                      class="btn btn-outline-warning btn-sm">🕑 Mark Pending</a>
                   <a href="{% url 'update_task_status' %}?task_id={{ task.id }}&status=Claimed Completed"
                      class="btn btn-outline-info btn-sm">🏁 Claim Completed</a>
-                  {% if resuest.session.role == 'HR' %}<a href="{% url 'update_task_status' %}?task_id={{ task.id }}&status=Completed"
-                     class="btn btn-outline-success btn-sm">✅ Mark Completed</a> {% endif %}
+                  {% if request.session.role == 'HR' %} {% if task.status != 'Completed' %} <a href="{% url 'update_task_status' %}?task_id={{ task.id }}&status=Completed"
+                     class="btn btn-outline-success btn-sm">✅ Mark Completed</a> {% endif %} {% endif %}
                 </div>
+                {% endif%}
               </div>
             </div>
           </div>
