@@ -1,6 +1,7 @@
 import re
 from datetime import datetime, timezone, date, timedelta
-
+from django.contrib.auth import login
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 from collections import defaultdict
@@ -767,25 +768,42 @@ def update_employee1(request, id) :
     employee = get_object_or_404(AddEmployee, id=id)
     return render(request, 'add_emp.html',{'employee': employee, 'roles' : roles} )
 # Delete Employee
-def delete_employee(request, id):
+
+def deactivate_employee(request, id):
     employee = get_object_or_404(AddEmployee, id=id)
-    employee.delete()
-    messages.success(request, "Employee deleted successfully!")
+    employee.is_active = False
+    employee.save()
+
+    # Deactivate login access too
+    if employee.user:
+        employee.user.is_active = False
+        employee.user.save()
+
+    messages.success(request, "Employee deactivated successfully!")
     return redirect('employees')
 
-
+from django.contrib.auth import authenticate, login
 def check_cred(request):
     if request.method == "POST":
         email = request.POST.get("email", '').strip()
         password = request.POST.get("password", '').strip()
 
         try:
-            # Fetch the employee from the database
             employee = AddEmployee.objects.get(email=email)
 
-            # Validate the password (replace with check_password if hashed)
-            if password == employee.employee_id:  # Replace 'employee.phone' with 'employee.password' for real passwords
-                # Set session variables
+            if not employee.is_active:
+                messages.error(request, "Your account has been deactivated.")
+                return redirect('login')
+
+            # Ensure linked User exists
+            if not employee.user or not employee.user.is_active:
+                messages.error(request, "This account doesn't support login.")
+                return redirect('login')
+
+            user = employee.user
+            if user.check_password(password):
+                login(request, user)
+
                 request.session['employee_id'] = employee.id
                 request.session['employee_email'] = employee.email
                 request.session['is_logged_in'] = True
@@ -793,17 +811,18 @@ def check_cred(request):
                 request.session['designation'] = employee.designation
                 request.session['department'] = employee.department
                 request.session['role'] = employee.role.name if employee.role else 'No Role Assigned'
+
                 if employee.attachment:
                     request.session['attachment'] = employee.attachment.url
-                # Redirect to the home page or dashboard
+
                 return redirect('index')
             else:
                 messages.error(request, "Incorrect password!")
+
         except AddEmployee.DoesNotExist:
             messages.error(request, "Email does not exist!")
 
-    # Render login page with error messages
-    return render(request, "login.html" , )
+    return render(request, "login.html")
 
 
 
@@ -1070,7 +1089,8 @@ def admins(request):
 
     # Iterate over each leave type and calculate consumed and remaining leave
     for leave in leaves:
-        total_consumed_leave, remaining_leave = calculate_leave_details(request, leave)
+        total_consumed_leave, remaining_leave= calculate_leave_details(request, leave)[:2]
+
         leave_details.append({
             'leave_type': leave,
             'total_consumed_leave': total_consumed_leave,
@@ -1079,10 +1099,27 @@ def admins(request):
     total_leaves = 0
     remaining_leaves = 0
     total_consumed_leaves = 0
+    # for leave in leave_details:
+    #     total_leaves += leave['total_consumed_leave']+leave['remaining_leave']
+    #     remaining_leaves += leave['remaining_leave']
+    #     total_consumed_leaves += leave['total_consumed_leave']
     for leave in leave_details:
-        total_leaves += leave['total_consumed_leave']+leave['remaining_leave']
-        remaining_leaves += leave['remaining_leave']
-        total_consumed_leaves += leave['total_consumed_leave']
+        try:
+            consumed = int(leave['total_consumed_leave'])
+        except ValueError:
+            print("Invalid consumed leave:", leave['total_consumed_leave'])
+            consumed = 0
+
+        try:
+            remaining = int(leave['remaining_leave'])
+        except ValueError:
+            print("Invalid remaining leave:", leave['remaining_leave'])
+            remaining = 0
+
+        total_leaves += consumed + remaining
+        remaining_leaves += remaining
+        total_consumed_leaves += consumed
+
     context = {
         'total_employees': total_employees,
         'total_projects': total_projects,
@@ -1475,7 +1512,7 @@ def calendar(request) :
     return render(request, 'calendar.html')
 def gallery(request) :
     return render(request, 'gallery.html')
-def login(request) :
+def login_view(request):
     return render(request, 'login.html')
 def register(request) :
     return render(request, 'register.html')
@@ -1581,6 +1618,12 @@ def get_tasks_by_project(request, project_id):
     tasks = Task.objects.filter(project_id=project_id).values('id', 'name')
     return JsonResponse({'tasks': list(tasks)})
 
+from django.utils.dateparse import parse_date
+from django.utils import timezone
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from .models import Timesheet, Project, Task, AddEmployee
+
 def add_daily_timesheet(request):
     employee_id = request.session.get('employee_id')
     try:
@@ -1602,48 +1645,63 @@ def add_daily_timesheet(request):
 
         errors = []
 
-        if not all([project_id, task_id, timesheet_date, start_time, end_time, description]):
-            errors.append("All fields except attachment are required.")
-
-        if start_time >= end_time:
+        if not project_id:
+            errors.append("Project selection is required.")
+        if not task_id:
+            errors.append("Task selection is required.")
+        if not timesheet_date:
+            errors.append("Date is required.")
+        if not start_time:
+            errors.append("Start time is required.")
+        if not end_time:
+            errors.append("End time is required.")
+        if not description:
+            errors.append("Description is required.")
+        if start_time and end_time and start_time >= end_time:
             errors.append("End time must be after start time.")
 
-        try:
-            project = Project.objects.get(id=project_id)
-            task = Task.objects.get(id=task_id)
-        except (Project.DoesNotExist, Task.DoesNotExist):
-            errors.append("Invalid project or task.")
+        if Timesheet.objects.filter(employee=employee, date=timesheet_date).exists():
+            errors.append("A timesheet for this date already exists.")
+
+        if not errors:
+            try:
+                project = Project.objects.get(id=project_id)
+                task = Task.objects.get(id=task_id, project_id=project_id)
+            except (Project.DoesNotExist, Task.DoesNotExist):
+                errors.append("Invalid project or task.")
 
         if errors:
             for error in errors:
                 messages.error(request, error)
-        else:
-            Timesheet.objects.create(
-                employee=employee,
-                project=project,
-                task=task,
-                date=timesheet_date,
-                start_time=start_time,
-                end_time=end_time,
-                description=description,
-                attachment=attachment,
-                day=parse_date(timesheet_date).strftime('%A')
-            )
-            messages.success(request, "Timesheet submitted successfully.")
-            return redirect('add_daily_timesheet')
+            return redirect('view_timesheet')
 
-    # GET - fetch project list depending on role
-    if employee.role_id == 1:  # HR
+        Timesheet.objects.create(
+            employee=employee,
+            project=project,
+            task=task,
+            date=timesheet_date,
+            start_time=start_time,
+            end_time=end_time,
+            description=description,
+            attachment=attachment,
+            day=parse_date(timesheet_date).strftime('%A')
+        )
+        messages.success(request, "Timesheet submitted successfully.")
+        return redirect('view_timesheet')
+
+    # GET - show form
+    if employee.role_id == 1:
         projects = Project.objects.all()
-    elif employee.role_id == 2:  # PM
+    elif employee.role_id == 2:
         projects = Project.objects.filter(leader=employee)
-    else:  # Team member
+    else:
         projects = Project.objects.filter(team_members=employee)
 
     return render(request, 'Daily_Timesheet.html', {
         'projects': projects,
         'today': today.strftime('%Y-%m-%d'),
     })
+
 
 from django.shortcuts import render
 from .models import ImageTimesheet
@@ -1819,3 +1877,59 @@ def holiday_json(request):
             'description': holiday.description,
         })
     return JsonResponse(events, safe=False)
+
+from django.core.mail import send_mail  # or use django.core.mail.EmailMessage
+from django.conf import settings
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.template.loader import render_to_string
+from django.urls import reverse
+
+def forgot_password(request):
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip()
+        if not email:
+            messages.error(request, "Please enter your email.")
+            return redirect('forgot_password')
+
+        try:
+            employee = AddEmployee.objects.get(email=email)
+
+            # Ensure User is linked (create if missing)
+            if not employee.user:
+                # Create a corresponding user object
+                username = email.split('@')[0]
+                user = User.objects.create_user(username=username, email=email)
+                employee.user = user
+                employee.save()
+
+            user = employee.user
+
+            # Generate token and reset URL
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            reset_url = request.build_absolute_uri(
+                reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token}))
+
+            # Email content
+            subject = 'Password Reset Request'
+            message = render_to_string('registration/password_reset_email.html', {
+                'user': user,
+                'reset_url': reset_url,
+            })
+
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+            messages.success(request, "Password reset instructions sent to your email.")
+            return redirect('forgot_password_done')
+
+        except AddEmployee.DoesNotExist:
+            messages.error(request, "No account found with that email.")
+            return redirect('forgot_password')
+
+    return render(request, 'forgot_password.html')
+
+
+def forgot_password_done(request):
+    # Simple page to confirm email sent
+    return render(request, 'forgot_password_done.html')

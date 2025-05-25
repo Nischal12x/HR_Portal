@@ -4,15 +4,15 @@ from . import views
 
 from django.contrib import admin
 
-from .views import update_employee, delete_employee, update_employee1
+# Removed import of non-existing views update_employee, deactivate_employee, update_employee1
 from django.conf import settings
 from django.conf.urls.static import static
-
+from django.contrib.auth import views as auth_views
 
 urlpatterns = [
-    path('update1/<int:id>',update_employee1, name='update_employee1' ),
-    path('update/<int:id>/',update_employee, name='update_employee'),
-    path('employees/delete/<int:id>/', delete_employee, name='delete_employee'),
+    path('deactivate_employee/<int:id>/', views.deactivate_employee, name='deactivate_employee'),
+    path('update1/<int:id>',views.update_employee1, name='update_employee1' ),
+    path('update/<int:id>/',views.update_employee, name='update_employee'),
     path("employee_records/", views.employee_list, name="employees"),
     path("add-emp/", views.add_employee, name="add-emp"),
     path("", views.admins, name="index"),
@@ -22,7 +22,7 @@ urlpatterns = [
     path('widgets/', views.widgets, name = 'widgets'),
     path('calendar/', views.calendar, name = 'calendar'),
     path('gallery/', views.gallery, name = 'gallery'),
-    path('login/', views.login , name = 'login' ),
+    path('login/', views.login_view, name='login'),
     path('register/', views.register, name = 'register'),
     path('add_emp/', views.add_emp, name = 'add_employees'),
     path('login-/', views.check_cred, name='check_cred'),
@@ -72,6 +72,24 @@ urlpatterns = [
     path('holidays/add/', views.add_holiday, name='add_holiday'),
     path('holidays/delete/<int:pk>/', views.delete_holiday, name='delete_holiday'),
     path('holidays/json/', views.holiday_json, name='holiday_json'),
+    path('forgot-password/', views.forgot_password, name='forgot_password'),
+    path('forgot-password/done/', views.forgot_password_done, name='forgot_password_done'),
+    path('reset_password/', auth_views.PasswordResetView.as_view(
+        template_name='registration/password_reset_form.html',
+        email_template_name='registration/password_reset_email.html',
+        subject_template_name='registration/password_reset_subject.txt'
+    ), name='reset_password'),
+    path('reset_password_sent/', auth_views.PasswordResetDoneView.as_view(
+        template_name='registration/password_reset_done.html'
+    ), name='password_reset_done'),
+
+    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
+        template_name='registration/password_reset_confirm.html'
+    ), name='password_reset_confirm'),
+
+    path('reset_password_complete/', auth_views.PasswordResetCompleteView.as_view(
+        template_name='registration/password_reset_complete.html'
+    ), name='password_reset_complete'),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

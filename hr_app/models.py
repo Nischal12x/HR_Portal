@@ -185,7 +185,7 @@ class AddEmployee(models.Model):
         default='Single',
         max_length=10
     )
-
+    is_active = models.BooleanField(default=True)
     def __str__(self):
         return f"{self.full_name} - {self.employee_id}"
 
@@ -388,3 +388,14 @@ class EmployeeHandbookAcknowledgement(models.Model):
     def __str__(self):
         return f"{self.employee.full_name} acknowledged {self.handbook.version} on {self.acknowledged_at}"
 
+# models.py
+import uuid
+from django.utils import timezone
+
+class PasswordResetToken(models.Model):
+    employee = models.ForeignKey(AddEmployee, on_delete=models.CASCADE)
+    token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_expired(self):
+        return timezone.now() > self.created_at + timezone.timedelta(hours=1)

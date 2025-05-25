@@ -11,6 +11,20 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 import os
 from pathlib import Path
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'kataranischal@gmail.com'
+EMAIL_HOST_PASSWORD = 'kvkd xxeo udzc kymm'  # Use an app-specific password
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+from django.urls import reverse_lazy
+
+LOGIN_URL = reverse_lazy('login')
+
+# LOGIN_URL = '/login/'  # or reverse('login') if using named routes
+# LOGIN_REDIRECT_URL = '/index'  # or wherever your home page is
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +39,7 @@ SECRET_KEY = 'django-insecure-xmzq8h9q=b^x1=vtl@ef!#42&x4-$af+4%+9wg69e!cv13(#+6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition

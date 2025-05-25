@@ -139,7 +139,7 @@
             <div class="col-md-4">
               <div class="section-card">
                 <h5 class="section-heading"><i class="fas fa-user-tie"></i> Team Details</h5>
-                {% if request.sesion.role == 'HR' %} <a href="{% url 'project_history' proj.id %}" class="btn btn-sm btn-info">View History</a> {% endif %}
+                {% if request.session.role == 'HR' %} <a href="{% url 'project_history' proj.id %}" class="btn btn-sm btn-info">View History</a> {% endif %}
                 <ul class="list-unstyled team-details">
                   <li><b>Project:</b> {{proj.name}}</li>
                   <li><b>Admin:</b> {{proj.admin.full_name}} ({{proj.admin.role}})</li>
