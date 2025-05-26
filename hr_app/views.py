@@ -662,7 +662,7 @@ def update_employee(request, id):
         employee.salary = request.POST.get('salary', '').strip()
         employee.employment_type = request.POST.get('employment_type', '').strip()
         employee.marital_status = request.POST.get('marital_status')
-
+        employee.role_id = request.POST.get('role')
 
         # File upload
         if 'attachment' in request.FILES:
@@ -720,7 +720,7 @@ def update_employee(request, id):
 
 def employee_history(request, id):
     employee = get_object_or_404(AddEmployee, id=id)
-    history_qs = EmployeeHistory.objects.filter(employee=employee).order_by('created_at')
+    history_qs = EmployeeHistory.objects.filter(employee=employee).order_by('-created_at')
 
     paginator = Paginator(history_qs, 10)  # Show 10 records per page
     page_number = request.GET.get('page')
@@ -1933,3 +1933,243 @@ def forgot_password(request):
 def forgot_password_done(request):
     # Simple page to confirm email sent
     return render(request, 'forgot_password_done.html')
+from django.db.models import Q, Count
+
+def dashboard(request):
+    employee_id = request.session.get('employee_id')
+    role = request.session.get('role')
+
+    if not employee_id or not role:
+        # Redirect to login or show error if session data missing
+        return redirect('login')
+
+    # Total employees count (for HR show all, else show count of accessible employees)
+    if role == 'HR':
+        total_employees = AddEmployee.objects.count()
+        projects = Project.objects.all()
+        tasks = Task.objects.all()
+        leaves = LeaveApplication.objects.all()
+    elif role == 'Project Manager':
+        total_employees = AddEmployee.objects.filter(id=employee_id).count()
+        projects = Project.objects.filter(leader_id=employee_id)
+        tasks = Task.objects.filter(Q(project__leader_id=employee_id) | Q(project__admin_id=employee_id))
+        leaves = LeaveApplication.objects.filter(employee_id=employee_id)
+    else:
+        total_employees = AddEmployee.objects.filter(id=employee_id).count()
+        projects = Project.objects.filter(team_members__id=employee_id)
+        tasks = Task.objects.filter(assignee_id=employee_id)
+        leaves = LeaveApplication.objects.filter(employee_id=employee_id)
+
+    # Pending leaves count for the user (or all if HR)
+    if role == 'HR':
+        pending_leaves = LeaveApplication.objects.filter(status='Pending').count()
+    else:
+        pending_leaves = LeaveApplication.objects.filter(employee_id=employee_id, status='Pending').count()
+
+    # Total projects count based on role
+    total_projects = projects.count()
+
+    # Total tasks count based on role
+    total_tasks = tasks.count()
+
+    context = {
+        'total_employees': total_employees,
+        'pending_leaves': pending_leaves,
+        'total_projects': total_projects,
+        'total_tasks': total_tasks,
+        'projects': projects,
+        'tasks': tasks,
+        'leaves': leaves,
+    }
+
+    return render(request, 'dashboard.html', context)
+
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Count, Sum
+
+def api_employees(request):
+    employee_id = request.session.get('employee_id')
+    role = request.session.get('role')
+
+    if role == 'HR':
+        employees = AddEmployee.objects.all()
+    else:
+        employees = AddEmployee.objects.filter(id=employee_id)
+
+    data = [{
+        'id': emp.id,
+        'full_name': emp.full_name,
+        'email': emp.email,
+        'department': emp.department,
+        'designation': emp.designation,
+    } for emp in employees]
+
+    return JsonResponse(data, safe=False)
+
+def api_leaves(request):
+    employee_id = request.session.get('employee_id')
+    role = request.session.get('role')
+
+    if role == 'HR':
+        leaves = LeaveApplication.objects.all()
+    else:
+        leaves = LeaveApplication.objects.filter(employee_id=employee_id)
+
+    data = [{
+        'id': leave.id,
+        'employee_name': leave.employee.full_name,
+        'leave_type': leave.leave_type.leavetype if leave.leave_type else '',
+        'from_date': leave.from_date.strftime('%Y-%m-%d') if leave.from_date else '',
+        'till_date': leave.till_date.strftime('%Y-%m-%d') if leave.till_date else '',
+        'status': leave.status,
+        'reason': leave.reason,
+    } for leave in leaves]
+
+    return JsonResponse(data, safe=False)
+
+def api_projects(request):
+    employee_id = request.session.get('employee_id')
+    role = request.session.get('role')
+
+    if role == 'HR':
+        projects = Project.objects.all()
+    elif role == 'Project Manager':
+        projects = Project.objects.filter(leader_id=employee_id)
+    else:
+        projects = Project.objects.filter(team_members__id=employee_id)
+
+    data = [{
+        'id': project.id,
+        'name': project.name,
+        'status': getattr(project, 'status', 'N/A'),
+        'priority': project.priority,
+        'leader_name': project.leader.full_name if project.leader else '',
+        'team_count': project.team_members.count(),
+    } for project in projects]
+
+    return JsonResponse(data, safe=False)
+
+def api_tasks(request):
+    employee_id = request.session.get('employee_id')
+    role = request.session.get('role')
+
+    assignee_filter = request.GET.get('assignee')
+    status_filter = request.GET.get('status')
+
+    if role == 'HR':
+        tasks = Task.objects.all()
+    elif role == 'Project Manager':
+        tasks = Task.objects.filter(
+            Q(project__leader_id=employee_id) | Q(project__admin_id=employee_id)
+        )
+    else:
+        tasks = Task.objects.filter(assignee_id=employee_id)
+
+    if assignee_filter:
+        tasks = tasks.filter(assignee_id=assignee_filter)
+    if status_filter:
+        tasks = tasks.filter(status=status_filter)
+
+    data = [{
+        'id': task.id,
+        'project_name': task.project.name if task.project else '',
+        'name': task.name,
+        'assignee_name': task.assignee.full_name if task.assignee else '',
+        'status': task.status,
+        'priority': task.priority,
+    } for task in tasks]
+
+    return JsonResponse(data, safe=False)
+
+def api_timesheets_week(request):
+    employee_id = request.session.get('employee_id')
+    role = request.session.get('role')
+
+    from datetime import datetime, timedelta
+    from django.utils import timezone
+
+    today = timezone.now().date()
+    start_of_week = today - timedelta(days=today.weekday())
+    end_of_week = start_of_week + timedelta(days=6)
+
+    if role == 'HR':
+        timesheets = Timesheet.objects.filter(date__range=[start_of_week, end_of_week])
+    else:
+        timesheets = Timesheet.objects.filter(employee_id=employee_id, date__range=[start_of_week, end_of_week])
+
+    # Group timesheets by date
+    grouped = {}
+    for ts in timesheets:
+        day_name = ts.date.strftime('%A')
+        date_str = ts.date.strftime('%Y-%m-%d')
+        if date_str not in grouped:
+            grouped[date_str] = {
+                'date': date_str,
+                'day': day_name,
+                'entries': []
+            }
+        grouped[date_str]['entries'].append({
+            'task_name': ts.task.name if ts.task else '',
+            'hours': round((ts.end_time.hour + ts.end_time.minute/60) - (ts.start_time.hour + ts.start_time.minute/60), 2) if ts.start_time and ts.end_time else 0,
+            'attachment': ts.attachment.url if ts.attachment else ''
+        })
+
+    data = list(grouped.values())
+    return JsonResponse(data, safe=False)
+
+@csrf_exempt
+def api_timesheets_upload(request):
+    if request.method == 'POST':
+        employee_id = request.session.get('employee_id')
+        if not employee_id:
+            return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+        employee = AddEmployee.objects.get(id=employee_id)
+        file = request.FILES.get('file')
+        if not file:
+            return JsonResponse({'error': 'No file uploaded'}, status=400)
+
+        # Save the file as a Timesheet entry (simplified)
+        Timesheet.objects.create(
+            employee=employee,
+            date=timezone.now().date(),
+            description='Uploaded timesheet file',
+            attachment=file
+        )
+        return JsonResponse({'success': True})
+
+    return JsonResponse({'error': 'Invalid method'}, status=405)
+
+def api_reports_leave_types(request):
+    # Aggregate leave types count
+    leave_counts = Leave_Type.objects.annotate(
+        total=Count('leaveapplication')
+    ).values('leavetype', 'total')
+
+    labels = [item['leavetype'] for item in leave_counts]
+    data = [item['total'] for item in leave_counts]
+
+    return JsonResponse({'labels': labels, 'data': data})
+
+def api_reports_timesheet_hours(request):
+    # Aggregate timesheet hours by project
+    from django.db.models import F, ExpressionWrapper, DurationField
+    from django.db.models.functions import ExtractHour, ExtractMinute
+
+    timesheets = Timesheet.objects.all()
+    project_hours = {}
+
+    for ts in timesheets:
+        if ts.start_time and ts.end_time:
+            start = ts.start_time.hour + ts.start_time.minute / 60
+            end = ts.end_time.hour + ts.end_time.minute / 60
+            hours = end - start
+            project_name = ts.project.name if ts.project else 'Unknown'
+            project_hours[project_name] = project_hours.get(project_name, 0) + hours
+
+    labels = list(project_hours.keys())
+    data = [round(h, 2) for h in project_hours.values()]
+
+    return JsonResponse({'labels': labels, 'data': data})

@@ -8,8 +8,9 @@ from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
-
+from .views import *
 urlpatterns = [
+    path('dashboardV2/', views.dashboard, name='dashboardV2'),
     path('deactivate_employee/<int:id>/', views.deactivate_employee, name='deactivate_employee'),
     path('update1/<int:id>',views.update_employee1, name='update_employee1' ),
     path('update/<int:id>/',views.update_employee, name='update_employee'),
@@ -90,6 +91,14 @@ urlpatterns = [
     path('reset_password_complete/', auth_views.PasswordResetCompleteView.as_view(
         template_name='registration/password_reset_complete.html'
     ), name='password_reset_complete'),
+    path('api/employees/', api_employees),
+    path('api/leaves/', api_leaves),
+    path('api/projects/', api_projects),
+    path('api/tasks/', api_tasks),
+    path('api/timesheets/week/', api_timesheets_week),
+    path('api/timesheets/upload/', api_timesheets_upload),
+    path('api/reports/leave-types/', api_reports_leave_types),
+    path('api/reports/timesheet-hours/', api_reports_timesheet_hours),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -4,26 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>HR Portal Dashboard</title>
-    <!-- Bootstrap 5 CSS -->
+    <!-- Bootstrap 5 CSS (already used, AdminLTE 3 is BS4 based but can often work) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <!-- FontAwesome for icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <!-- AdminLTE CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {
-            padding: 20px;
-        }
-        .tab-content {
-            margin-top: 20px;
-        }
+        /* Custom styles from original, reviewed for AdminLTE compatibility */
         .table-responsive {
-            max-height: 400px;
+            max-height: 400px; /* Consider if AdminLTE's .card-body scroll is preferred */
             overflow-y: auto;
         }
         .chart-container {
-            max-width: 600px;
+            max-width: 600px; /* Can be adjusted within card body */
             margin: auto;
+            padding: 1rem;
         }
         .timesheet-day {
             border: 1px solid #dee2e6;
@@ -37,602 +35,734 @@
         .file-upload {
             margin-top: 10px;
         }
+        /* AdminLTE small box icon adjustment */
+        .small-box .icon {
+            font-size: 70px; /* Make icons a bit smaller if default is too large */
+            top: 10px;
+        }
+        .small-box h3 {
+            font-size: 2.2rem; /* Adjust heading size in small box if needed */
+        }
+        .page-section {
+            padding-top: 20px; /* Add some padding for non-card sections */
+        }
+        .main-sidebar .nav-link p {
+            white-space: normal; /* Allow text wrapping for longer sidebar items */
+        }
     </style>
 </head>
-<body>
-    <h1 class="mb-4">HR Portal Dashboard</h1>
-    <ul class="nav nav-tabs" id="hrTab" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab" aria-controls="dashboard" aria-selected="true">
-                <i class="fas fa-tachometer-alt"></i> Dashboard
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="employees-tab" data-bs-toggle="tab" data-bs-target="#employees" type="button" role="tab" aria-controls="employees" aria-selected="false">
-                <i class="fas fa-users"></i> Employees
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="leave-tab" data-bs-toggle="tab" data-bs-target="#leave" type="button" role="tab" aria-controls="leave" aria-selected="false">
-                <i class="fas fa-calendar-alt"></i> Leave Management
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="projects-tab" data-bs-toggle="tab" data-bs-target="#projects" type="button" role="tab" aria-controls="projects" aria-selected="false">
-                <i class="fas fa-briefcase"></i> Projects
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tasks-tab" data-bs-toggle="tab" data-bs-target="#tasks" type="button" role="tab" aria-controls="tasks" aria-selected="false">
-                <i class="fas fa-tasks"></i> Tasks
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="timesheets-tab" data-bs-toggle="tab" data-bs-target="#timesheets" type="button" role="tab" aria-controls="timesheets" aria-selected="false">
-                <i class="fas fa-clock"></i> Timesheets
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab" aria-controls="reports" aria-selected="false">
-                <i class="fas fa-chart-bar"></i> Reports / Analytics
-            </button>
-        </li>
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <!-- Left navbar links -->
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+      </li>
+      <li class="nav-item d-none d-sm-inline-block">
+        <a href="#" class="nav-link">Home</a>
+      </li>
     </ul>
-    <div class="tab-content" id="hrTabContent">
-        <!-- Dashboard Tab -->
-        <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
-            <div class="row text-center">
-                <div class="col-md-3 mb-3">
-                    <div class="card bg-primary text-white p-3">
-                        <h5>Total Employees</h5>
-            <h3 id="totalEmployees">{{ total_employees }}</h3>
-                    </div>
+    <!-- Right navbar links (optional) -->
+  </nav>
+  <!-- /.navbar -->
+
+  <!-- Main Sidebar Container -->
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <!-- Brand Logo -->
+    <a href="#" class="brand-link">
+      <!-- <img src="dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8"> -->
+      <span class="brand-text font-weight-light">HR Portal</span>
+    </a>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Sidebar Menu -->
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+          <li class="nav-item">
+            <a href="#" class="nav-link active" data-target="#dashboard-content">
+              <i class="nav-icon fas fa-tachometer-alt"></i>
+              <p>Dashboard</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-target="#employees-content">
+              <i class="nav-icon fas fa-users"></i>
+              <p>Employees</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-target="#leave-content">
+              <i class="nav-icon fas fa-calendar-alt"></i>
+              <p>Leave Management</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-target="#projects-content">
+              <i class="nav-icon fas fa-briefcase"></i>
+              <p>Projects</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-target="#tasks-content">
+              <i class="nav-icon fas fa-tasks"></i>
+              <p>Tasks</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-target="#timesheets-content">
+              <i class="nav-icon fas fa-clock"></i>
+              <p>Timesheets</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-target="#reports-content">
+              <i class="nav-icon fas fa-chart-bar"></i>
+              <p>Reports / Analytics</p>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <!-- /.sidebar-menu -->
+    </div>
+    <!-- /.sidebar -->
+  </aside>
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0" id="pageTitle">Dashboard</h1>
+          </div><!-- /.col -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Home</a></li>
+              <li class="breadcrumb-item active" id="breadcrumbPageTitle">Dashboard</li>
+            </ol>
+          </div><!-- /.col -->
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+
+        <!-- Dashboard Section (Small Boxes) -->
+        <div id="dashboard-content" class="page-section">
+          <div class="row">
+            <div class="col-lg-3 col-6">
+              <div class="small-box bg-primary">
+                <div class="inner">
+                  <h3 id="totalEmployees">{{ total_employees }}</h3>
+                  <p>Total Employees</p>
                 </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card bg-warning text-dark p-3">
-                        <h5>Pending Leaves</h5>
-            <h3 id="pendingLeaves">{{ pending_leaves }}</h3>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card bg-success text-white p-3">
-                        <h5>Projects</h5>
-            <h3 id="totalProjects">{{ total_projects }}</h3>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card bg-info text-white p-3">
-                        <h5>Tasks</h5>
-            <h3 id="totalTasks">{{ total_tasks }}</h3>
-                    </div>
-                </div>
+                <div class="icon"><i class="fas fa-users"></i></div>
+                <a href="#" class="small-box-footer" onclick="navigateToSection('#employees-content', this, true)">More info <i class="fas fa-arrow-circle-right"></i></a>
+              </div>
             </div>
+            <div class="col-lg-3 col-6">
+              <div class="small-box bg-warning">
+                <div class="inner">
+                  <h3 id="pendingLeaves">{{ pending_leaves }}</h3>
+                  <p>Pending Leaves</p>
+                </div>
+                <div class="icon"><i class="fas fa-calendar-check"></i></div>
+                <a href="#" class="small-box-footer" onclick="navigateToSection('#leave-content', this, true)">More info <i class="fas fa-arrow-circle-right"></i></a>
+              </div>
+            </div>
+            <div class="col-lg-3 col-6">
+              <div class="small-box bg-success">
+                <div class="inner">
+                  <h3 id="totalProjects">{{ total_projects }}</h3>
+                  <p>Projects</p>
+                </div>
+                <div class="icon"><i class="fas fa-briefcase"></i></div>
+                <a href="#" class="small-box-footer" onclick="navigateToSection('#projects-content', this, true)">More info <i class="fas fa-arrow-circle-right"></i></a>
+              </div>
+            </div>
+            <div class="col-lg-3 col-6">
+              <div class="small-box bg-info">
+                <div class="inner">
+                  <h3 id="totalTasks">{{ total_tasks }}</h3>
+                  <p>Tasks</p>
+                </div>
+                <div class="icon"><i class="fas fa-tasks"></i></div>
+                <a href="#" class="small-box-footer" onclick="navigateToSection('#tasks-content', this, true)">More info <i class="fas fa-arrow-circle-right"></i></a>
+              </div>
+            </div>
+          </div>
         </div>
-        <!-- Employees Tab -->
-        <div class="tab-pane fade" id="employees" role="tabpanel" aria-labelledby="employees-tab">
-            <div class="table-responsive">
+
+        <!-- Employees Section -->
+        <div id="employees-content" class="page-section" style="display:none;">
+          <div class="card">
+            <div class="card-header"><h3 class="card-title">Employee List</h3></div>
+            <div class="card-body">
+              <div class="table-responsive">
                 <table class="table table-striped table-hover align-middle">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Department</th>
-                            <th>Designation</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="employeesTableBody">
-                        <!-- Employee rows populated by JS -->
-                    </tbody>
+                  <thead class="table-dark">
+                    <tr><th>Name</th><th>Email</th><th>Department</th><th>Designation</th><th>Actions</th></tr>
+                  </thead>
+                  <tbody id="employeesTableBody"></tbody>
                 </table>
+              </div>
             </div>
+          </div>
         </div>
-        <!-- Leave Management Tab -->
-        <div class="tab-pane fade" id="leave" role="tabpanel" aria-labelledby="leave-tab">
-            <div class="mb-3 d-flex justify-content-between align-items-center">
-                <div>
-                    <label for="leaveFilterEmployee" class="form-label me-2">Filter by Employee:</label>
+
+        <!-- Leave Management Section -->
+        <div id="leave-content" class="page-section" style="display:none;">
+          <div class="card">
+            <div class="card-header"><h3 class="card-title">Leave Management</h3></div>
+            <div class="card-body">
+              <div class="mb-3 d-flex flex-wrap justify-content-between align-items-center">
+                <div class="p-1">
+                    <label for="leaveFilterEmployee" class="form-label me-2">Employee:</label>
                     <select id="leaveFilterEmployee" class="form-select d-inline-block w-auto"></select>
                 </div>
-                <div>
-                    <label for="leaveFilterStatus" class="form-label me-2">Filter by Status:</label>
+                <div class="p-1">
+                    <label for="leaveFilterStatus" class="form-label me-2">Status:</label>
                     <select id="leaveFilterStatus" class="form-select d-inline-block w-auto">
-                        <option value="">All</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Rejected">Rejected</option>
-                        <option value="Withdrawn">Withdrawn</option>
+                        <option value="">All</option><option value="Pending">Pending</option><option value="Approved">Approved</option><option value="Rejected">Rejected</option><option value="Withdrawn">Withdrawn</option>
                     </select>
                 </div>
-                <div>
-                    <label for="leaveFilterDate" class="form-label me-2">Filter by Date:</label>
+                <div class="p-1">
+                    <label for="leaveFilterDate" class="form-label me-2">Date:</label>
                     <input type="date" id="leaveFilterDate" class="form-control d-inline-block w-auto" />
                 </div>
-                <button class="btn btn-primary" id="btnApplyLeave">Apply Leave</button>
-            </div>
-            <div class="table-responsive">
+                <div class="p-1">
+                    <button class="btn btn-primary" id="btnApplyLeave">Apply Leave</button>
+                </div>
+              </div>
+              <div class="table-responsive">
                 <table class="table table-bordered table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Employee</th>
-                            <th>Leave Type</th>
-                            <th>From</th>
-                            <th>Till</th>
-                            <th>Status</th>
-                            <th>Reason</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaveTableBody">
-                        <!-- Leave rows populated by JS -->
-                    </tbody>
+                  <thead class="table-light">
+                    <tr><th>Employee</th><th>Leave Type</th><th>From</th><th>Till</th><th>Status</th><th>Reason</th><th>Actions</th></tr>
+                  </thead>
+                  <tbody id="leaveTableBody"></tbody>
                 </table>
+              </div>
             </div>
-            <!-- Leave Application Modal -->
-            <div class="modal fade" id="leaveApplicationModal" tabindex="-1" aria-labelledby="leaveApplicationModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <form id="leaveApplicationForm" class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="leaveApplicationModalLabel">Apply for Leave</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <label for="leaveTypeSelect" class="form-label">Leave Type</label>
-                                <select id="leaveTypeSelect" name="leave_type" class="form-select" required></select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="leaveFromDate" class="form-label">From Date</label>
-                                <input type="date" id="leaveFromDate" name="from_date" class="form-control" required />
-                            </div>
-                            <div class="mb-3">
-                                <label for="leaveTillDate" class="form-label">Till Date</label>
-                                <input type="date" id="leaveTillDate" name="till_date" class="form-control" required />
-                            </div>
-                            <div class="mb-3">
-                                <label for="leaveReason" class="form-label">Reason</label>
-                                <textarea id="leaveReason" name="reason" class="form-control" rows="3" required></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary">Submit Application</button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <!-- Leave Approval Modal -->
-            <div class="modal fade" id="leaveApprovalModal" tabindex="-1" aria-labelledby="leaveApprovalModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <form id="leaveApprovalForm" class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="leaveApprovalModalLabel">Approve Leave</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p id="approvalLeaveInfo"></p>
-                            <div class="mb-3">
-                                <label for="approvalStatusSelect" class="form-label">Status</label>
-                                <select id="approvalStatusSelect" name="status" class="form-select" required>
-                                    <option value="Approved">Approve</option>
-                                    <option value="Rejected">Reject</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="submit" class="btn btn-success">Submit</button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        </div>
-                    </form>
+          </div>
+        </div>
+
+        <!-- Projects Section -->
+        <div id="projects-content" class="page-section" style="display:none;">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Projects List</h3></div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle">
+                            <thead class="table-dark">
+                                <tr><th>Name</th><th>Status</th><th>Priority</th><th>Leader</th><th>Team Count</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody id="projectsTableBody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
-        <!-- Projects Tab -->
-        <div class="tab-pane fade" id="projects" role="tabpanel" aria-labelledby="projects-tab">
-            <div class="table-responsive">
-                <table class="table table-striped table-hover align-middle">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Name</th>
-                            <th>Status</th>
-                            <th>Priority</th>
-                            <th>Leader</th>
-                            <th>Team Count</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="projectsTableBody">
-                        <!-- Project rows populated by JS -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <!-- Tasks Tab -->
-        <div class="tab-pane fade" id="tasks" role="tabpanel" aria-labelledby="tasks-tab">
-            <div class="mb-3 d-flex justify-content-between align-items-center">
-                <div>
-                    <label for="taskFilterAssignee" class="form-label me-2">Filter by Assignee:</label>
-                    <select id="taskFilterAssignee" class="form-select d-inline-block w-auto"></select>
-                </div>
-                <div>
-                    <label for="taskFilterStatus" class="form-label me-2">Filter by Status:</label>
-                    <select id="taskFilterStatus" class="form-select d-inline-block w-auto">
-                        <option value="">All</option>
-                        <option value="Pending">Pending</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Completed">Completed</option>
-                    </select>
+
+        <!-- Tasks Section -->
+        <div id="tasks-content" class="page-section" style="display:none;">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Tasks List</h3></div>
+                <div class="card-body">
+                    <div class="mb-3 d-flex flex-wrap justify-content-between align-items-center">
+                         <div class="p-1">
+                            <label for="taskFilterAssignee" class="form-label me-2">Assignee:</label>
+                            <select id="taskFilterAssignee" class="form-select d-inline-block w-auto"></select>
+                        </div>
+                         <div class="p-1">
+                            <label for="taskFilterStatus" class="form-label me-2">Status:</label>
+                            <select id="taskFilterStatus" class="form-select d-inline-block w-auto">
+                                <option value="">All</option><option value="Pending">Pending</option><option value="In Progress">In Progress</option><option value="Completed">Completed</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle">
+                            <thead class="table-light">
+                                <tr><th>Project</th><th>Task</th><th>Assignee</th><th>Status</th><th>Priority</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody id="tasksTableBody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Project</th>
-                            <th>Task</th>
-                            <th>Assignee</th>
-                            <th>Status</th>
-                            <th>Priority</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tasksTableBody">
-                        <!-- Task rows populated by JS -->
-                    </tbody>
-                </table>
+        </div>
+
+        <!-- Timesheets Section -->
+        <div id="timesheets-content" class="page-section" style="display:none;">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Timesheets</h3></div>
+                <div class="card-body">
+                    <div id="timesheetWeekView" class="mb-3 row">
+                        <!-- Weekly timesheet days populated by JS - AdminLTE cards could be used here -->
+                    </div>
+                    <div class="file-upload mt-3 p-3 border rounded">
+                        <label for="timesheetFileUpload" class="form-label">Upload Timesheet File</label>
+                        <input type="file" id="timesheetFileUpload" class="form-control" />
+                        <button class="btn btn-primary mt-2" id="btnUploadTimesheet">Upload</button>
+                    </div>
+                </div>
             </div>
         </div>
-        <!-- Timesheets Tab -->
-        <div class="tab-pane fade" id="timesheets" role="tabpanel" aria-labelledby="timesheets-tab">
-            <div id="timesheetWeekView" class="mb-3">
-                <!-- Weekly timesheet days populated by JS -->
-            </div>
-            <div class="file-upload">
-                <label for="timesheetFileUpload" class="form-label">Upload Timesheet File</label>
-                <input type="file" id="timesheetFileUpload" class="form-control" />
-                <button class="btn btn-primary mt-2" id="btnUploadTimesheet">Upload</button>
+
+        <!-- Reports / Analytics Section -->
+        <div id="reports-content" class="page-section" style="display:none;">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header"><h3 class="card-title">Leave Types Distribution</h3></div>
+                        <div class="card-body chart-container">
+                            <canvas id="leaveTypesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header"><h3 class="card-title">Timesheet Hours by Project</h3></div>
+                        <div class="card-body chart-container">
+                            <canvas id="timesheetHoursChart"></canvas>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <!-- Reports / Analytics Tab -->
-        <div class="tab-pane fade" id="reports" role="tabpanel" aria-labelledby="reports-tab">
-            <div class="chart-container mb-4">
-                <canvas id="leaveTypesChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <canvas id="timesheetHoursChart"></canvas>
-            </div>
-        </div>
+
+      </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+
+  <footer class="main-footer">
+    <strong>Copyright © 2023-2024 <a href="#">HR Portal</a>.</strong>
+    All rights reserved.
+    <div class="float-right d-none d-sm-inline-block">
+      <b>Version</b> 1.0.0
     </div>
+  </footer>
 
-    <!-- Bootstrap 5 JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Sample data placeholders - replace with actual data from backend via AJAX or templating
-        // const totalEmployees = {{ employee_count|default:"0" }};
-        // const pendingLeaves = {{ pending_leaves_count|default:"0" }};
-        // const totalProjects = {{ project_count|default:"0" }};
-        // const totalTasks = {{ task_count|default:"0" }};
+</div>
+<!-- ./wrapper -->
 
-        // Populate dashboard stats
-        // document.getElementById('totalEmployees').textContent = totalEmployees;
-        // document.getElementById('pendingLeaves').textContent = pendingLeaves;
-        // document.getElementById('totalProjects').textContent = totalProjects;
-        // document.getElementById('totalTasks').textContent = totalTasks;
+<!-- Modals (kept from original, should work with Bootstrap 5) -->
+<!-- Leave Application Modal -->
+<div class="modal fade" id="leaveApplicationModal" tabindex="-1" aria-labelledby="leaveApplicationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="leaveApplicationForm" class="modal-content">
+            <div class="modal-header"><h5 class="modal-title" id="leaveApplicationModalLabel">Apply for Leave</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+            <div class="modal-body">
+                <div class="mb-3"><label for="leaveTypeSelect" class="form-label">Leave Type</label><select id="leaveTypeSelect" name="leave_type" class="form-select" required></select></div>
+                <div class="mb-3"><label for="leaveFromDate" class="form-label">From Date</label><input type="date" id="leaveFromDate" name="from_date" class="form-control" required /></div>
+                <div class="mb-3"><label for="leaveTillDate" class="form-label">Till Date</label><input type="date" id="leaveTillDate" name="till_date" class="form-control" required /></div>
+                <div class="mb-3"><label for="leaveReason" class="form-label">Reason</label><textarea id="leaveReason" name="reason" class="form-control" rows="3" required></textarea></div>
+            </div>
+            <div class="modal-footer"><button type="submit" class="btn btn-primary">Submit Application</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button></div>
+        </form>
+    </div>
+</div>
+<!-- Leave Approval Modal -->
+<div class="modal fade" id="leaveApprovalModal" tabindex="-1" aria-labelledby="leaveApprovalModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="leaveApprovalForm" class="modal-content">
+            <div class="modal-header"><h5 class="modal-title" id="leaveApprovalModalLabel">Approve Leave</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+            <div class="modal-body">
+                <p id="approvalLeaveInfo"></p>
+                <div class="mb-3"><label for="approvalStatusSelect" class="form-label">Status</label><select id="approvalStatusSelect" name="status" class="form-select" required><option value="Approved">Approve</option><option value="Rejected">Reject</option></select></div>
+            </div>
+            <div class="modal-footer"><button type="submit" class="btn btn-success">Submit</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button></div>
+        </form>
+    </div>
+</div>
 
-        // Employees Tab - sample data fetch and populate
-        async function loadEmployees() {
-            try {
-                const response = await fetch('/api/employees/');
-                const data = await response.json();
-                const tbody = document.getElementById('employeesTableBody');
-                tbody.innerHTML = '';
-                data.forEach(emp => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${emp.full_name}</td>
-                        <td>${emp.email}</td>
-                        <td>${emp.department}</td>
-                        <td>${emp.designation}</td>
-                        <td>
-                            <button class="btn btn-sm btn-info me-1" onclick="viewEmployee(${emp.id})">View</button>
-                            <button class="btn btn-sm btn-warning me-1" onclick="editEmployee(${emp.id})">Edit</button>
-                            <button class="btn btn-sm btn-secondary" onclick="viewHistory(${emp.id})">History</button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } catch (error) {
-                console.error('Error loading employees:', error);
-            }
+<!-- REQUIRED SCRIPTS -->
+<!-- jQuery (AdminLTE dependency) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Bootstrap 5 JS Bundle (from original dashboard) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE App -->
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+<script>
+    // Function to handle navigation between sections
+    function navigateToSection(targetSectionId, clickedElement, isSmallBoxLink = false) {
+        // Hide all page sections
+        document.querySelectorAll('.page-section').forEach(section => {
+            section.style.display = 'none';
+        });
+
+        // Show the target section
+        const target = document.querySelector(targetSectionId);
+        if (target) {
+            target.style.display = 'block';
         }
 
-        // Leave Management Tab - sample data fetch and populate
-        async function loadLeaves() {
-            try {
-                const response = await fetch('/api/leaves/');
-                const data = await response.json();
-                const tbody = document.getElementById('leaveTableBody');
-                tbody.innerHTML = '';
-                data.forEach(leave => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${leave.employee_name}</td>
-                        <td>${leave.leave_type}</td>
-                        <td>${leave.from_date}</td>
-                        <td>${leave.till_date}</td>
-                        <td>${leave.status}</td>
-                        <td>${leave.reason}</td>
-                        <td>
-                            ${leave.status === 'Pending' ? `<button class="btn btn-sm btn-success me-1" onclick="approveLeave(${leave.id})">Approve</button>
-                            <button class="btn btn-sm btn-danger" onclick="rejectLeave(${leave.id})">Reject</button>` : ''}
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } catch (error) {
-                console.error('Error loading leaves:', error);
-            }
+        // Update page title and breadcrumb
+        let pageTitleText = 'Dashboard'; // Default
+        let sidebarLinkToActivate = null;
+
+        if (isSmallBoxLink) { // Clicked from a "More info" link in a small box
+            const smallBox = clickedElement.closest('.small-box');
+            pageTitleText = smallBox.querySelector('.inner p').textContent.trim();
+            // Find corresponding sidebar link by data-target
+            sidebarLinkToActivate = document.querySelector(`.nav-sidebar .nav-link[data-target="${targetSectionId}"]`);
+        } else if (clickedElement && clickedElement.classList.contains('nav-link')) { // Clicked from sidebar
+            pageTitleText = clickedElement.querySelector('p').textContent.trim();
+            sidebarLinkToActivate = clickedElement;
+        } else if (targetSectionId === '#dashboard-content') { // Defaulting to dashboard
+             pageTitleText = "Dashboard";
+             sidebarLinkToActivate = document.querySelector('.nav-sidebar .nav-link[data-target="#dashboard-content"]');
         }
 
-        // Projects Tab - sample data fetch and populate
-        async function loadProjects() {
-            try {
-                const response = await fetch('/api/projects/');
-                const data = await response.json();
-                const tbody = document.getElementById('projectsTableBody');
-                tbody.innerHTML = '';
-                data.forEach(proj => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${proj.name}</td>
-                        <td>${proj.status || 'N/A'}</td>
-                        <td>${proj.priority}</td>
-                        <td>${proj.leader_name}</td>
-                        <td>${proj.team_count}</td>
-                        <td><button class="btn btn-sm btn-primary" onclick="viewProject(${proj.id})">View</button></td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } catch (error) {
-                console.error('Error loading projects:', error);
-            }
+        document.getElementById('pageTitle').textContent = pageTitleText;
+        document.getElementById('breadcrumbPageTitle').textContent = pageTitleText;
+
+        // Update active state in sidebar
+        document.querySelectorAll('.nav-sidebar .nav-link').forEach(link => link.classList.remove('active'));
+        if (sidebarLinkToActivate) {
+            sidebarLinkToActivate.classList.add('active');
         }
+    }
 
-        // Tasks Tab - sample data fetch and populate with filters
-        async function loadTasks() {
-            try {
-                const assigneeFilter = document.getElementById('taskFilterAssignee').value;
-                const statusFilter = document.getElementById('taskFilterStatus').value;
-                let url = '/api/tasks/?';
-                if (assigneeFilter) url += `assignee=${assigneeFilter}&`;
-                if (statusFilter) url += `status=${statusFilter}&`;
+    document.addEventListener('DOMContentLoaded', () => {
+        // Setup sidebar navigation
+        document.querySelectorAll('.nav-sidebar .nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetSectionId = this.getAttribute('data-target');
+                navigateToSection(targetSectionId, this);
+            });
+        });
 
-                const response = await fetch(url);
-                const data = await response.json();
-                const tbody = document.getElementById('tasksTableBody');
-                tbody.innerHTML = '';
-                data.forEach(task => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${task.project_name}</td>
-                        <td>${task.name}</td>
-                        <td>${task.assignee_name}</td>
-                        <td>${task.status}</td>
-                        <td>${task.priority}</td>
-                        <td><button class="btn btn-sm btn-primary" onclick="viewTask(${task.id})">View</button></td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } catch (error) {
-                console.error('Error loading tasks:', error);
-            }
+        // Show initial section (Dashboard)
+        navigateToSection('#dashboard-content', document.querySelector('.nav-sidebar .nav-link[data-target="#dashboard-content"]'));
+
+        // Original data loading functions
+        loadEmployees();
+        loadLeaves();
+        loadProjects();
+        loadTasks();
+        loadTimesheetWeek();
+        loadReports();
+    });
+
+    // --- Existing JavaScript functions from original file (loadEmployees, loadLeaves, etc.) ---
+    // Employees Tab - sample data fetch and populate
+    async function loadEmployees() {
+        try {
+            const response = await fetch('/api/employees/');
+            const data = await response.json();
+            const tbody = document.getElementById('employeesTableBody');
+            tbody.innerHTML = '';
+            data.forEach(emp => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${emp.full_name}</td>
+                    <td>${emp.email}</td>
+                    <td>${emp.department}</td>
+                    <td>${emp.designation}</td>
+                    <td>
+                        <button class="btn btn-xs btn-info me-1" onclick="viewEmployee(${emp.id})"><i class="fas fa-eye"></i></button>
+                        <button class="btn btn-xs btn-warning me-1" onclick="editEmployee(${emp.id})"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-xs btn-secondary" onclick="viewHistory(${emp.id})"><i class="fas fa-history"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (error) {
+            console.error('Error loading employees:', error);
         }
+    }
 
-        // Timesheets Tab - weekly view and file upload
-        async function loadTimesheetWeek() {
-            try {
-                const response = await fetch('/api/timesheets/week/');
-                const data = await response.json();
-                const container = document.getElementById('timesheetWeekView');
-                container.innerHTML = '';
-                data.forEach(day => {
-                    const div = document.createElement('div');
-                    div.className = 'timesheet-day';
-                    div.innerHTML = `
-                        <h6>${day.date} (${day.day})</h6>
-                        <ul>
-                            ${day.entries.map(entry => `<li>${entry.task_name} - ${entry.hours} hrs
-                                ${entry.attachment ? `<a href="${entry.attachment}" target="_blank">View File</a>` : ''}
-                            </li>`).join('')}
-                        </ul>
-                    `;
-                    container.appendChild(div);
-                });
-            } catch (error) {
-                console.error('Error loading timesheets:', error);
-            }
+    // Leave Management Tab - sample data fetch and populate
+    async function loadLeaves() {
+        try {
+            const response = await fetch('/api/leaves/');
+            const data = await response.json();
+            const tbody = document.getElementById('leaveTableBody');
+            tbody.innerHTML = '';
+            data.forEach(leave => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${leave.employee_name}</td>
+                    <td>${leave.leave_type}</td>
+                    <td>${leave.from_date}</td>
+                    <td>${leave.till_date}</td>
+                    <td><span class="badge bg-${leave.status === 'Approved' ? 'success' : leave.status === 'Rejected' ? 'danger' : leave.status === 'Pending' ? 'warning' : 'secondary'}">${leave.status}</span></td>
+                    <td>${leave.reason}</td>
+                    <td>
+                        ${leave.status === 'Pending' ? `<button class="btn btn-xs btn-success me-1" onclick="approveLeave(${leave.id})">Approve</button>
+                        <button class="btn btn-xs btn-danger" onclick="rejectLeave(${leave.id})">Reject</button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (error) {
+            console.error('Error loading leaves:', error);
         }
+    }
 
-        // Upload timesheet file
-        document.getElementById('btnUploadTimesheet').addEventListener('click', async () => {
-            const fileInput = document.getElementById('timesheetFileUpload');
-            if (fileInput.files.length === 0) {
-                alert('Please select a file to upload.');
+    // Projects Tab - sample data fetch and populate
+    async function loadProjects() {
+        try {
+            const response = await fetch('/api/projects/');
+            const data = await response.json();
+            const tbody = document.getElementById('projectsTableBody');
+            tbody.innerHTML = '';
+            data.forEach(proj => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${proj.name}</td>
+                    <td><span class="badge bg-info">${proj.status || 'N/A'}</span></td>
+                    <td>${proj.priority}</td>
+                    <td>${proj.leader_name}</td>
+                    <td>${proj.team_count}</td>
+                    <td><button class="btn btn-xs btn-primary" onclick="viewProject(${proj.id})"><i class="fas fa-eye"></i> View</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (error) {
+            console.error('Error loading projects:', error);
+        }
+    }
+
+    // Tasks Tab - sample data fetch and populate with filters
+    async function loadTasks() {
+        try {
+            const assigneeFilter = document.getElementById('taskFilterAssignee').value;
+            const statusFilter = document.getElementById('taskFilterStatus').value;
+            let url = '/api/tasks/?';
+            if (assigneeFilter) url += `assignee=${assigneeFilter}&`;
+            if (statusFilter) url += `status=${statusFilter}&`;
+
+            const response = await fetch(url);
+            const data = await response.json();
+            const tbody = document.getElementById('tasksTableBody');
+            tbody.innerHTML = '';
+            data.forEach(task => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${task.project_name}</td>
+                    <td>${task.name}</td>
+                    <td>${task.assignee_name}</td>
+                    <td><span class="badge bg-${task.status === 'Completed' ? 'success' : task.status === 'In Progress' ? 'primary' : 'warning'}">${task.status}</span></td>
+                    <td>${task.priority}</td>
+                    <td><button class="btn btn-xs btn-primary" onclick="viewTask(${task.id})"><i class="fas fa-eye"></i> View</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (error) {
+            console.error('Error loading tasks:', error);
+        }
+    }
+
+    // Timesheets Tab - weekly view and file upload
+    async function loadTimesheetWeek() {
+        try {
+            const response = await fetch('/api/timesheets/week/');
+            const data = await response.json(); // Expects an array of day objects
+            const container = document.getElementById('timesheetWeekView');
+            container.innerHTML = ''; // Clear previous entries
+
+            if (data.length === 0) {
+                container.innerHTML = '<p class="col-12 text-muted">No timesheet entries for the current week.</p>';
                 return;
             }
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-            try {
-                const response = await fetch('/api/timesheets/upload/', {
-                    method: 'POST',
-                    body: formData
-                });
-                if (response.ok) {
-                    alert('File uploaded successfully.');
-                    loadTimesheetWeek();
-                } else {
-                    alert('File upload failed.');
-                }
-            } catch (error) {
-                console.error('Error uploading file:', error);
-                alert('Error uploading file.');
+
+            data.forEach(day => {
+                const dayCard = `
+                    <div class="col-md-4 mb-3">
+                        <div class="card timesheet-day">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">${day.date} (${day.day})</h6>
+                            </div>
+                            <ul class="list-group list-group-flush">
+                                ${day.entries.length > 0 ? day.entries.map(entry => `
+                                    <li class="list-group-item">
+                                        ${entry.task_name || 'N/A'} - ${entry.hours} hrs
+                                        ${entry.attachment ? `<a href="${entry.attachment}" target="_blank" class="float-end"><i class="fas fa-paperclip"></i></a>` : ''}
+                                    </li>`).join('') : '<li class="list-group-item text-muted">No entries</li>'}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += dayCard;
+            });
+        } catch (error) {
+            console.error('Error loading timesheets:', error);
+            document.getElementById('timesheetWeekView').innerHTML = '<p class="col-12 text-danger">Error loading timesheet data.</p>';
+        }
+    }
+
+
+    // Upload timesheet file
+    document.getElementById('btnUploadTimesheet').addEventListener('click', async () => {
+        const fileInput = document.getElementById('timesheetFileUpload');
+        if (fileInput.files.length === 0) {
+            alert('Please select a file to upload.');
+            return;
+        }
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        try {
+            const response = await fetch('/api/timesheets/upload/', {
+                method: 'POST',
+                body: formData
+                // Add CSRF token if your Django setup requires it for POST via fetch
+            });
+            if (response.ok) {
+                alert('File uploaded successfully.');
+                loadTimesheetWeek(); // Refresh the view
+            } else {
+                const errorData = await response.json().catch(() => null);
+                alert(`File upload failed: ${errorData ? errorData.error : response.statusText}`);
             }
-        });
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            alert('Error uploading file.');
+        }
+    });
 
-        // Reports / Analytics - Chart.js setup
-        async function loadReports() {
-            try {
-                const leaveResponse = await fetch('/api/reports/leave-types/');
-                const leaveData = await leaveResponse.json();
-                const timesheetResponse = await fetch('/api/reports/timesheet-hours/');
-                const timesheetData = await timesheetResponse.json();
+    // Reports / Analytics - Chart.js setup
+    async function loadReports() {
+        try {
+            const leaveResponse = await fetch('/api/reports/leave-types/');
+            const leaveData = await leaveResponse.json();
+            const timesheetResponse = await fetch('/api/reports/timesheet-hours/');
+            const timesheetData = await timesheetResponse.json();
 
-                // Leave Types Pie Chart
-                const leaveCtx = document.getElementById('leaveTypesChart').getContext('2d');
-                new Chart(leaveCtx, {
-                    type: 'pie',
-                    data: {
-                        labels: leaveData.labels,
-                        datasets: [{
-                            data: leaveData.data,
-                            backgroundColor: ['#007bff', '#dc3545', '#ffc107', '#28a745', '#6c757d']
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: { position: 'bottom' },
-                            title: { display: true, text: 'Leave Types Distribution' }
-                        }
-                    }
-                });
+            // Leave Types Pie Chart
+            if (window.leaveTypesPieChart instanceof Chart) { window.leaveTypesPieChart.destroy(); }
+            const leaveCtx = document.getElementById('leaveTypesChart').getContext('2d');
+            window.leaveTypesPieChart = new Chart(leaveCtx, {
+                type: 'pie',
+                data: {
+                    labels: leaveData.labels,
+                    datasets: [{ data: leaveData.data, backgroundColor: ['#007bff', '#dc3545', '#ffc107', '#28a745', '#6c757d', '#17a2b8', '#fd7e14'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Leave Types Distribution' } } }
+            });
 
-                // Timesheet Hours Bar Chart
-                const timesheetCtx = document.getElementById('timesheetHoursChart').getContext('2d');
-                new Chart(timesheetCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: timesheetData.labels,
-                        datasets: [{
-                            label: 'Hours',
-                            data: timesheetData.data,
-                            backgroundColor: '#17a2b8'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: { beginAtZero: true }
-                        },
-                        plugins: {
-                            legend: { display: false },
-                            title: { display: true, text: 'Timesheet Hours by Project' }
-                        }
-                    }
-                });
-            } catch (error) {
-                console.error('Error loading reports:', error);
+            // Timesheet Hours Bar Chart
+            if (window.timesheetHoursBarChart instanceof Chart) { window.timesheetHoursBarChart.destroy(); }
+            const timesheetCtx = document.getElementById('timesheetHoursChart').getContext('2d');
+            window.timesheetHoursBarChart = new Chart(timesheetCtx, {
+                type: 'bar',
+                data: {
+                    labels: timesheetData.labels,
+                    datasets: [{ label: 'Hours', data: timesheetData.data, backgroundColor: '#17a2b8' }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false }, title: { display: true, text: 'Timesheet Hours by Project' } } }
+            });
+        } catch (error) {
+            console.error('Error loading reports:', error);
+        }
+    }
+
+    // Event listeners for filters and buttons
+    document.getElementById('leaveFilterEmployee').addEventListener('change', loadLeaves);
+    document.getElementById('leaveFilterStatus').addEventListener('change', loadLeaves);
+    document.getElementById('leaveFilterDate').addEventListener('change', loadLeaves);
+    document.getElementById('taskFilterAssignee').addEventListener('change', loadTasks);
+    document.getElementById('taskFilterStatus').addEventListener('change', loadTasks);
+
+
+    document.getElementById('btnApplyLeave').addEventListener('click', () => {
+        // Ensure existing form fields are reset (if modal is reused)
+        document.getElementById('leaveApplicationForm').reset();
+        // Populate leave types if not already done or if they can change
+        // For now, assuming leave types are static or loaded elsewhere
+        // If dynamic:
+        // fetch('/api/leave-types-for-select/').then(res => res.json()).then(data => {
+        //     const select = document.getElementById('leaveTypeSelect');
+        //     select.innerHTML = data.map(lt => `<option value="${lt.id}">${lt.name}</option>`).join('');
+        // });
+        const modal = new bootstrap.Modal(document.getElementById('leaveApplicationModal'));
+        modal.show();
+    });
+
+    // Leave application form submission
+    document.getElementById('leaveApplicationForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        // Add any necessary headers like CSRF token if using Django forms/sessions
+        try {
+            const response = await fetch('/api/leaves/apply/', { method: 'POST', body: formData });
+            if (response.ok) {
+                alert('Leave application submitted.');
+                form.reset();
+                bootstrap.Modal.getInstance(document.getElementById('leaveApplicationModal')).hide();
+                loadLeaves(); // Refresh leave list
+            } else {
+                const errorData = await response.json().catch(() => null);
+                alert(`Failed to submit leave application: ${errorData ? errorData.error : response.statusText}`);
             }
+        } catch (error) {
+            console.error('Error submitting leave application:', error);
+            alert('Error submitting leave application.');
         }
+    });
 
-        // Event listeners for filters and buttons
-        document.getElementById('leaveFilterEmployee').addEventListener('change', loadLeaves);
-        document.getElementById('leaveFilterStatus').addEventListener('change', loadLeaves);
-        document.getElementById('leaveFilterDate').addEventListener('change', loadLeaves);
-        document.getElementById('btnApplyLeave').addEventListener('click', () => {
-            const modal = new bootstrap.Modal(document.getElementById('leaveApplicationModal'));
-            modal.show();
-        });
-
-        // Leave application form submission
-        document.getElementById('leaveApplicationForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const form = e.target;
-            const formData = new FormData(form);
-            try {
-                const response = await fetch('/api/leaves/apply/', {
-                    method: 'POST',
-                    body: formData
-                });
-                if (response.ok) {
-                    alert('Leave application submitted.');
-                    form.reset();
-                    bootstrap.Modal.getInstance(document.getElementById('leaveApplicationModal')).hide();
-                    loadLeaves();
-                } else {
-                    alert('Failed to submit leave application.');
-                }
-            } catch (error) {
-                console.error('Error submitting leave application:', error);
-                alert('Error submitting leave application.');
+    // Leave approval form submission
+    document.getElementById('leaveApprovalForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        try {
+            const leaveId = form.dataset.leaveId;
+            const response = await fetch(`/api/leaves/approve/${leaveId}/`, { method: 'POST', body: formData });
+            if (response.ok) {
+                alert('Leave status updated.');
+                bootstrap.Modal.getInstance(document.getElementById('leaveApprovalModal')).hide();
+                loadLeaves(); // Refresh leave list
+            } else {
+                const errorData = await response.json().catch(() => null);
+                alert(`Failed to update leave status: ${errorData ? errorData.error : response.statusText}`);
             }
-        });
+        } catch (error) {
+            console.error('Error updating leave status:', error);
+            alert('Error updating leave status.');
+        }
+    });
 
-        // Leave approval form submission
-        document.getElementById('leaveApprovalForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const form = e.target;
-            const formData = new FormData(form);
-            try {
-                const leaveId = form.dataset.leaveId;
-                const response = await fetch(`/api/leaves/approve/${leaveId}/`, {
-                    method: 'POST',
-                    body: formData
-                });
-                if (response.ok) {
-                    alert('Leave status updated.');
-                    bootstrap.Modal.getInstance(document.getElementById('leaveApprovalModal')).hide();
-                    loadLeaves();
-                } else {
-                    alert('Failed to update leave status.');
-                }
-            } catch (error) {
-                console.error('Error updating leave status:', error);
-                alert('Error updating leave status.');
-            }
-        });
+    // Approve leave button handler
+    function approveLeave(leaveId) {
+        const modal = new bootstrap.Modal(document.getElementById('leaveApprovalModal'));
+        const form = document.getElementById('leaveApprovalForm');
+        form.dataset.leaveId = leaveId; // Store leaveId on the form for submission
+        // Optionally fetch leave details to display in modal:
+        // fetch(`/api/leaves/${leaveId}/details/`).then(res=>res.json()).then(data => {
+        //    document.getElementById('approvalLeaveInfo').textContent = `Leave for ${data.employee_name} from ${data.from_date} to ${data.till_date}`;
+        // });
+        document.getElementById('approvalLeaveInfo').textContent = `Review leave application ID: ${leaveId}`;
+        document.getElementById('approvalStatusSelect').value = 'Approved'; // Default to Approve
+        modal.show();
+    }
 
-        // Approve leave button handler
-        function approveLeave(leaveId) {
-            const modal = new bootstrap.Modal(document.getElementById('leaveApprovalModal'));
-            const form = document.getElementById('leaveApprovalForm');
-            form.dataset.leaveId = leaveId;
-            document.getElementById('approvalLeaveInfo').textContent = `Approve or reject leave ID: ${leaveId}`;
-            modal.show();
-        }
+    // Reject leave button handler (calls approveLeave to open same modal but sets status to Rejected)
+    function rejectLeave(leaveId) {
+        approveLeave(leaveId); // Opens the modal
+        document.getElementById('approvalStatusSelect').value = 'Rejected'; // Set default to Reject
+    }
 
-        // Reject leave button handler
-        function rejectLeave(leaveId) {
-            approveLeave(leaveId);
-            document.getElementById('approvalStatusSelect').value = 'Rejected';
-        }
-
-        // Placeholder functions for employee actions
-        function viewEmployee(id) {
-            alert('View employee ' + id);
-        }
-        function editEmployee(id) {
-            alert('Edit employee ' + id);
-        }
-        function viewHistory(id) {
-            alert('View history for employee ' + id);
-        }
-        function viewProject(id) {
-            alert('View project ' + id);
-        }
-        function viewTask(id) {
-            alert('View task ' + id);
-        }
-
-        // Load initial data on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            loadEmployees();
-            loadLeaves();
-            loadProjects();
-            loadTasks();
-            loadTimesheetWeek();
-            loadReports();
-        });
-    </script>
+    // Placeholder functions for employee actions
+    function viewEmployee(id) { alert('View employee ' + id); /* Implement actual view logic, e.g., redirect or modal */ }
+    function editEmployee(id) { alert('Edit employee ' + id); /* Implement actual edit logic */ }
+    function viewHistory(id) { alert('View history for employee ' + id); /* Implement actual history view */ }
+    function viewProject(id) { alert('View project ' + id); /* Implement actual project view */ }
+    function viewTask(id) { alert('View task ' + id); /* Implement actual task view */ }
+</script>
 </body>
 </html>

@@ -49,6 +49,12 @@
                         <p>Dashboard</p>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a href="{% url 'dashboardV2' %}" class="nav-link {% if request.path == '/dashboard/' %} active {% endif %}">
+                        <i class="nav-icon fas fa-tachometer-alt"></i>
+                        <p>Dashboard V2</p>
+                    </a>
+                </li>
 
                 <li class="nav-item">
                     <a href="{% url 'widgets' %}" class="nav-link {% if request.path == '/Projects' %} active {% endif %}">

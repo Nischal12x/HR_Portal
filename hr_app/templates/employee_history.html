@@ -37,7 +37,9 @@
                       <th>Email</th>
                       <th>Phone</th>
                       <th>Department</th>
-                      <th>Designation</th>
+                      <th>Role</th>
+                      <th>Address</th>
+                      <th>Salary</th>
                       <th>Recorded At</th>
                     </tr>
                   </thead>
@@ -49,7 +51,9 @@
                       <td>{{ history.email }}</td>
                       <td>{{ history.phone }}</td>
                       <td>{{ history.department }}</td>
-                      <td>{{ history.designation }}</td>
+                      <td>{{ history.role }}</td>
+                      <td>{{ history.address }}</td>
+                      <td>{{ history.salary }}</td>
                       <td>
                         {{ history.created_at|date:"Y-m-d H:i" }}<br/>
                         {% if history.until %}
