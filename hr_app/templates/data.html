@@ -81,14 +81,14 @@
                       <td>${{ emp.salary }}</td>
                       <td>
                         <!-- Quick Update Button -->
-                        <button class="btn btn-info btn-sm quick-update-btn"
-                                data-id="{{ emp.id }}"
-                                data-name="{{ emp.full_name }}"
-                                data-url="{% url 'update_employee1' 0 %}"
-                                data-toggle="tooltip"
-                                title="Quick Update">
-                          <i class="fas fa-edit"></i> Update
-                        </button>
+<!--                        <button class="btn btn-info btn-sm quick-update-btn"-->
+<!--                                data-id="{{ emp.id }}"-->
+<!--                                data-name="{{ emp.full_name }}"-->
+<!--                                data-url="{% url 'update_employee1' 0 %}"-->
+<!--                                data-toggle="tooltip"-->
+<!--                                title="Quick Update">-->
+<!--                          <i class="fas fa-edit"></i> Update-->
+<!--                        </button>-->
 
                         <!-- Edit Full Details Button -->
                         <a href="{% url 'update_employee1' emp.id %}" class="btn btn-warning btn-sm" data-toggle="tooltip" title="Edit Full Details">
@@ -96,7 +96,7 @@
                         </a>
 
                         <!-- Delete Button -->
-                        <a href="{% url 'deactivate_employee' emp.id %}" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Delete Employee" onclick="return confirm('Are you sure you want to delete this employee?');">
+                        <a href="{% url 'deactivate_employee' emp.id %}" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Deactivate Employee" onclick="return confirm('Are you sure you want to deactivate this employee?');">
                           <i class="fas fa-trash-alt"></i>
                         </a>
                       </td>
@@ -120,46 +120,46 @@
 </div><!-- /.wrapper -->
 
 <!-- Quick Update Modal -->
-<div class="modal fade" id="quickUpdateModal" tabindex="-1" role="dialog" aria-labelledby="quickUpdateModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <form method="POST" id="quickUpdateForm" action="">
-      {% csrf_token %}
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="quickUpdateModalLabel">Quick Update - <span id="employeeName"></span></h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
+<!--<div class="modal fade" id="quickUpdateModal" tabindex="-1" role="dialog" aria-labelledby="quickUpdateModalLabel" aria-hidden="true">-->
+<!--  <div class="modal-dialog" role="document">-->
+<!--    <form method="POST" id="quickUpdateForm" action="">-->
+<!--      {% csrf_token %}-->
+<!--      <div class="modal-content">-->
+<!--        <div class="modal-header">-->
+<!--          <h5 class="modal-title" id="quickUpdateModalLabel">Quick Update - <span id="employeeName"></span></h5>-->
+<!--          <button type="button" class="close" data-dismiss="modal" aria-label="Close">-->
+<!--            <span aria-hidden="true">&times;</span>-->
+<!--          </button>-->
+<!--        </div>-->
 
-        <div class="modal-body">
-          <input type="hidden" name="employee_id" id="employeeIdField">
+<!--        <div class="modal-body">-->
+<!--          <input type="hidden" name="employee_id" id="employeeIdField">-->
 
-          <div class="form-group">
-            <label for="fieldSelect">Select Field to Update:</label>
-            <select class="form-control" id="fieldSelect" name="action" required>
-              <option value="" disabled selected>Select field</option>
-              <option value="department">Department</option>
-              <option value="designation">Designation</option>
-              <option value="salary">Salary</option>
-            </select>
-          </div>
+<!--          <div class="form-group">-->
+<!--            <label for="fieldSelect">Select Field to Update:</label>-->
+<!--            <select class="form-control" id="fieldSelect" name="action" required>-->
+<!--              <option value="" disabled selected>Select field</option>-->
+<!--              <option value="department">Department</option>-->
+<!--              <option value="designation">Designation</option>-->
+<!--              <option value="salary">Salary</option>-->
+<!--            </select>-->
+<!--          </div>-->
 
-          <div id="newValueInput" class="form-group d-none">
-            <label id="newValueLabel"></label>
-            <div id="inputArea"></div>
-          </div>
+<!--          <div id="newValueInput" class="form-group d-none">-->
+<!--            <label id="newValueLabel"></label>-->
+<!--            <div id="inputArea"></div>-->
+<!--          </div>-->
 
-        </div>
+<!--        </div>-->
 
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-success">Update</button>
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-        </div>
-      </div>
-    </form>
-  </div>
-</div>
+<!--        <div class="modal-footer">-->
+<!--          <button type="submit" class="btn btn-success">Update</button>-->
+<!--          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </form>-->
+<!--  </div>-->
+<!--</div>-->
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {

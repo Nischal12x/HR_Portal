@@ -19,6 +19,9 @@ EMAIL_HOST_USER = 'kataranischal@gmail.com'
 EMAIL_HOST_PASSWORD = 'kvkd xxeo udzc kymm'  # Use an app-specific password
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
+# Custom setting for the log archive recipient
+LOG_ARCHIVE_RECIPIENT_EMAIL = 'kataranischal@gmail.com'
+
 from django.urls import reverse_lazy
 
 LOGIN_URL = reverse_lazy('login')
@@ -29,7 +32,10 @@ LOGIN_URL = reverse_lazy('login')
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+LOGS_DIR = os.path.join(BASE_DIR, 'logs')
+USER_LOGS_BASE_DIR = os.path.join(LOGS_DIR, 'user_activity')
 
+LOG_ARCHIVE_PERIOD_DEFAULT = 'weekly' # 'weekly', 'monthly', 'yearly'
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 

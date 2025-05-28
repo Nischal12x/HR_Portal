@@ -24,6 +24,10 @@ from .models import Project
 from django.utils.dateparse import parse_date
 
 from .models import EmployeeHandbook, EmployeeHandbookAcknowledgement, AddEmployee
+import logging # Import Python's logging
+# Assuming logging_utils.py is in the same app directory
+from .logging_utils import log_user_action, get_user_logger
+
 
 def employee_handbook_view(request):
     employee_id = request.session.get('employee_id')
@@ -37,6 +41,9 @@ def employee_handbook_view(request):
         employee_id=employee_id,
         handbook=handbook
     ).exists()
+    employee_email = request.session.get('employee_email')
+    if employee_id and employee_email:
+        log_user_action(employee_id, employee_email, f"{name} Accessed the Handbook.")
 
     return render(request, 'Handbook.html', {
         'acknowledged': acknowledged,
@@ -67,6 +74,9 @@ def acknowledge_handbook(request):
             handbook=handbook
         )
 
+        employee_email = request.session.get('employee_email')
+        if employee_id and employee_email:
+            log_user_action(employee_id, employee_email, f" {employee.full_name} Acknowledged the Handbook.")
         return JsonResponse({'status': 'Acknowledged', 'created': created})
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
@@ -74,6 +84,10 @@ def acknowledge_handbook(request):
 
 def manage_handbooks(request):
     if request.session.get('role') != 'HR':
+        employee_id = request.session.get('employee_id')
+        employee_email = request.session.get('employee_email')
+        if employee_id and employee_email:
+            log_user_action(employee_id, employee_email, "Unauthorized access !")
         return JsonResponse({'error': 'Access denied'}, status=403)
 
     if request.method == 'POST':
@@ -87,6 +101,10 @@ def manage_handbooks(request):
                 version=version,
                 file=file
             )
+            employee_id = request.session.get('employee_id')
+            employee_email = request.session.get('employee_email')
+            if employee_id and employee_email:
+                log_user_action(employee_id, employee_email, f"Added New Handbook.")
             return redirect('manage_handbooks')
 
     handbooks = EmployeeHandbook.objects.all().order_by('-uploaded_at')
@@ -135,7 +153,7 @@ def project(request, project_id):
 @csrf_exempt
 
 
-def archive_project(project):
+def archive_project(request, project): # added request for log
     # Get the most recent history entry
     last_history = ProjectHistory.objects.filter(project=project).order_by('-created_at').first()
 
@@ -161,6 +179,10 @@ def archive_project(project):
         document=project.document,
         created_at=now(),
     )
+    employee_id = request.session.get('employee_id')
+    employee_email = request.session.get('employee_email')
+    if employee_id and employee_email:
+        log_user_action(employee_id, employee_email, f"Project {project.name} history updated")
 
 @csrf_exempt
 def add_project(request, p_id=0):
@@ -240,8 +262,16 @@ def add_project(request, p_id=0):
         # Add to project history (on both create and update)
         archive_project(project)
         # Success response for AJAX
+        employee_id = request.session.get('employee_id')
+        employee_email = request.session.get('employee_email')
+        if employee_id and employee_email:
+            log_user_action(employee_id, employee_email, f"Accessed {leave} related employees.")
         if p_id != 0 :
+            if employee_id and employee_email:
+                log_user_action(employee_id, employee_email, f"Project {project} Updated")
             return JsonResponse({'success': True, 'message': "Project Updated successfully!"})
+        if employee_id and employee_email:
+            log_user_action(employee_id, employee_email, f"Project {project} with {p_id} Added")
         return JsonResponse({'success': True, 'message': "Project saved successfully!"})
 
     # Context for the form (used in the template)
@@ -260,7 +290,10 @@ def project_history(request, project_id):
     paginator = Paginator(history_qs, 10)  # 10 records per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-
+    employee_id = request.session.get('employee_id')
+    employee_email = request.session.get('employee_email')
+    if employee_id and employee_email:
+        log_user_action(employee_id, employee_email, f"Accessed Project History of {project}.")
     context = {
         'project': project,
         'page_obj': page_obj,
@@ -274,11 +307,18 @@ def toggle_leave_status(request, leave_id):
         leave.is_active = not leave.is_active
         leave.save()
         messages.success(request, f"{leave.leavetype} has been {'activated' if leave.is_active else 'deactivated'}.")
+        employee_id = request.session.get('employee_id')
+        employee_email = request.session.get('employee_email')
+        if employee_id and employee_email:
+            log_user_action(employee_id, employee_email, f"{leave.leavetype} has been {'activated' if leave.is_active else 'deactivated'}")
     return redirect('leaves_sys')
 
 def leave_details(request, leave_id):
     leave = get_object_or_404(Leave_Type, id=leave_id)
-
+    employee_id = request.session.get('employee_id')
+    employee_email = request.session.get('employee_email')
+    if employee_id and employee_email:
+        log_user_action(employee_id, employee_email, f"Accessed {leave} related employees.")
     applications = LeaveApplication.objects.filter(
         leave_type=leave.id,
         status='Approved'
@@ -364,7 +404,7 @@ def editing_leaves(request):
 
         # Fetch existing leave by code or name (choose based on your model)
         leave_obj = Leave_Type.objects.get(leave_code=leave_code)
-
+        old_leave_name = leave_obj.leavetype
         if not leave_obj:
             messages.error(request, "Leave entry not found.")
             return redirect('leave_settings')
@@ -389,6 +429,10 @@ def editing_leaves(request):
         leave_obj.count_holidays = count_holidays
 
         leave_obj.save()
+        employee_id = request.session.get('employee_id')
+        employee_email = request.session.get('employee_email')
+        if employee_id and employee_email:
+            log_user_action(employee_id, employee_email, f"existing leave {old_leave_name} is modified")
         messages.success(request, "Changes applied successfully.")
         return redirect('leaves_sys')
 
@@ -451,7 +495,11 @@ def apply_leave(request):
         )
         lt = Leave_Type.objects.get(id=leave_type)
         leave_days = leave.save(half_day_map=half_day_map, sandwich=lt.count_weekends)
+        employee_id = request.session.get('employee_id')
+        employee_email = request.session.get('employee_email')
         if compensation == '1' :
+            if employee_id and employee_email:
+                log_user_action(employee_id, employee_email, f"Applied Compensation Leave for {leave_days}")
             pass
         else :
             if lt.count_holidays == 1:
@@ -467,6 +515,8 @@ def apply_leave(request):
 
             leave.leave_days = leave_days
         leave.save()
+        if employee_id and employee_email:
+            log_user_action(employee_id, employee_email, f"Applied Leave for {leave_days}")
         messages.success(request, "Leave applied successfully!")
         return redirect('index')
 
@@ -610,6 +660,10 @@ def add_employee(request):
             created_at=now(),
             until=None  # this remains null until next update
         )
+        employee_id = request.session.get('employee_id')
+        employee_email = request.session.get('employee_email')
+        if employee_id and employee_email:
+            log_user_action(employee_id, employee_email, f" Employee with {emp.employee_id} added successfully!")
         messages.success(request, "Employee added successfully!")
         return redirect('index')
 
@@ -771,6 +825,9 @@ def update_employee1(request, id) :
 
 def deactivate_employee(request, id):
     employee = get_object_or_404(AddEmployee, id=id)
+    if request.user.is_authenticated and hasattr(request.user, 'addemployee'):
+        employee1 = request.user.addemployee
+        log_user_action(employee1.id, employee1.email, f"{employee} deactivated ")
     employee.is_active = False
     employee.save()
 
@@ -783,27 +840,57 @@ def deactivate_employee(request, id):
     return redirect('employees')
 
 from django.contrib.auth import authenticate, login
+
+MAX_FAILED_ATTEMPTS = 3
+LOCKOUT_DURATION_HOURS = 2
+
+
 def check_cred(request):
     if request.method == "POST":
         email = request.POST.get("email", '').strip()
         password = request.POST.get("password", '').strip()
-
+        ip_address = request.META.get('REMOTE_ADDR', 'N/A')  # Get IP address
         try:
             employee = AddEmployee.objects.get(email=email)
+            user_logger = get_user_logger(employee.id, employee.email)  # Get logger instance
 
+            # 1. Check if account is currently locked
+            if employee.is_locked():
+                remaining_time = employee.time_until_unlock()
+                messages.error(request, f"Your account is locked. Please try again in approximately {remaining_time}.")
+                msg = f"Account locked. Try again in {remaining_time}. IP: {ip_address}"
+                log_user_action(employee.id, employee.email, f"Login attempt on locked account. IP: {ip_address}",
+                                level=logging.WARNING)
+                return redirect('login')
+
+            # 2. Check if employee account is active
             if not employee.is_active:
                 messages.error(request, "Your account has been deactivated.")
+                log_user_action(employee.id, employee.email, f"Login attempt on deactivated account. IP: {ip_address}",
+                                level=logging.WARNING)
                 return redirect('login')
 
-            # Ensure linked User exists
+            # 3. Ensure linked User exists and is active
             if not employee.user or not employee.user.is_active:
-                messages.error(request, "This account doesn't support login.")
+                # This case implies an admin might have deactivated the Django User
+                # or the link wasn't properly established.
+                messages.error(request, "Login is not supported for this account or the linked user is inactive.")
+                log_user_action(employee.id, employee.email,
+                                f"Login attempt on account with no active linked user. IP: {ip_address}",
+                                level=logging.WARNING)
                 return redirect('login')
 
-            user = employee.user
-            if user.check_password(password):
-                login(request, user)
+            user = employee.user  # Get the associated Django User
 
+            # 4. Check password
+            if user.check_password(password):
+                # Successful login: reset failed attempts and lockout
+                employee.failed_login_attempts = 0
+                employee.lockout_until = None
+                employee.save()
+
+                login(request, user)  # Login the Django User
+                log_user_action(employee.id, employee.email, f"Login successful. IP: {ip_address}")
                 request.session['employee_id'] = employee.id
                 request.session['employee_email'] = employee.email
                 request.session['is_logged_in'] = True
@@ -815,16 +902,60 @@ def check_cred(request):
                 if employee.attachment:
                     request.session['attachment'] = employee.attachment.url
 
+                # Optional: Log successful login attempt
+                # print(f"Successful login for {email} at {timezone.now()}")
                 return redirect('index')
             else:
-                messages.error(request, "Incorrect password!")
+                # Incorrect password: increment failed attempts
+                employee.failed_login_attempts += 1
+                if employee.failed_login_attempts >= MAX_FAILED_ATTEMPTS:
+                    employee.lockout_until = timezone.now() + timedelta(hours=LOCKOUT_DURATION_HOURS)
+                    # Optional: You might want to reset failed_login_attempts to 0 here
+                    # or leave it, so an admin can see how many times it happened before lockout.
+                    # For this logic, resetting is cleaner if the lockout itself is the state.
+                    employee.failed_login_attempts = 0  # Reset for next cycle after lockout expires
+                    employee.save()
+                    msg = f"Incorrect password. Account locked for {LOCKOUT_DURATION_HOURS} hours. IP: {ip_address}"
+                    messages.error(request,
+                                   f"Incorrect password. Your account has been locked for {LOCKOUT_DURATION_HOURS} hours due to multiple failed attempts.")
+                    log_user_action(employee.id, employee.email, msg, level=logging.WARNING)
+                else:
+                    employee.save()
+                    remaining_attempts = MAX_FAILED_ATTEMPTS - employee.failed_login_attempts
+                    msg = f"Incorrect password. {remaining_attempts} attempt(s) remaining. IP: {ip_address}"
+                    messages.error(request,
+                                   f"Incorrect password! You have {remaining_attempts} attempt{'s' if remaining_attempts > 1 else ''} remaining.")
+                    log_user_action(employee.id, employee.email, msg, level=logging.INFO)
+                # Optional: Log failed login attempt
+                # print(f"Failed login attempt for {email} at {timezone.now()}. Attempt: {employee.failed_login_attempts}")
+                return redirect('login')
 
         except AddEmployee.DoesNotExist:
-            messages.error(request, "Email does not exist!")
+            # To prevent username enumeration, you could log this attempt
+            # but give a generic message to the user.
+            # For simplicity here, we'll just show the message.
+            # print(f"Login attempt for non-existent email: {email} at {timezone.now()}")
+            messages.error(request, "Invalid email or password.")  # Generic message
+            # messages.error(request, "Email does not exist!") # Specific message (as in original code)
+            # Or, if you want to log this under a generic "system" user log:
+            log_user_action("system", "N/A", f"Login attempt for non-existent email: {email}. IP: {ip_address}",
+                            level=logging.INFO)
+            return redirect('login')
 
     return render(request, "login.html")
 
 
+from django.contrib.auth import logout as auth_logout
+
+
+def custom_logout(request):
+    if request.user.is_authenticated and hasattr(request.user, 'addemployee'):  # Check if AddEmployee profile exists
+        employee = request.user.addemployee
+        log_user_action(employee.id, employee.email, "User logged out.")
+
+    auth_logout(request)
+    messages.success(request, "You have been logged out.")
+    return redirect('login')
 
 from collections import defaultdict
 from django.db.models import Sum
@@ -2173,3 +2304,248 @@ def api_reports_timesheet_hours(request):
     data = [round(h, 2) for h in project_hours.values()]
 
     return JsonResponse({'labels': labels, 'data': data})
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import AddEmployee, ExitRequest, Role  # Assuming Role model exists
+from .forms import ResignationApplyForm, ExitChecklistForm, ExitApprovalFormRM, ExitApprovalFormHR
+from django.utils import timezone
+from dateutil.relativedelta import relativedelta
+
+
+# Helper function (you might have this elsewhere)
+def get_employee_profile(user):
+    try:
+        return AddEmployee.objects.get(user=user)
+    except AddEmployee.DoesNotExist:
+        return None
+
+
+@login_required
+def apply_resignation(request):
+    employee_profile = get_employee_profile(request.user)
+    if not employee_profile:
+        messages.error(request, "Employee profile not found.")
+        return redirect('index')  # Or appropriate error page
+
+    # Check if already resigned
+    existing_request = ExitRequest.objects.filter(employee=employee_profile).exclude(
+        status__in=['WITHDRAWN', 'REJECTED_BY_HR', 'REJECTED_BY_RM']).first()
+    if existing_request:
+        messages.info(request,
+                      f"You already have an active exit request (Status: {existing_request.get_status_display()}).")
+        return redirect('view_my_exit_request')
+
+    # Calculate expected LWD for display
+    apply_date = timezone.now().date()
+    notice_period = employee_profile.exit_requests.model()._meta.get_field(
+        'notice_period_months').default  # Get default
+    # You could also have notice_period per employee or role
+    expected_lwd = apply_date + relativedelta(months=+notice_period)
+
+    if request.method == 'POST':
+        form = ResignationApplyForm(request.POST)
+        if form.is_valid():
+            exit_req = form.save(commit=False)
+            exit_req.employee = employee_profile
+            exit_req.resignation_apply_date = apply_date  # Ensure it's today
+            # The save method of ExitRequest will calculate expected_last_working_day
+            exit_req.save()
+            messages.success(request, "Your resignation request has been submitted.")
+            # TODO: Notify reporting manager
+            return redirect('view_my_exit_request')
+    else:
+        form = ResignationApplyForm(initial={'resignation_apply_date': apply_date})
+
+    context = {
+        'form': form,
+        'expected_lwd': expected_lwd,
+        'notice_period': notice_period,
+        'content_title': 'Apply for Resignation',  # For your AdminLTE template
+    }
+    return render(request, 'employee/apply_resignation.html', context)
+
+
+@login_required
+def view_my_exit_request(request):
+    employee_profile = get_employee_profile(request.user)
+    if not employee_profile:
+        messages.error(request, "Employee profile not found.")
+        return redirect('index')
+
+    exit_request = ExitRequest.objects.filter(employee=employee_profile).order_by('-created_at').first()
+    context = {
+        'exit_request': exit_request,
+        'content_title': 'My Exit Request Status',
+    }
+    return render(request, 'employee/view_my_exit_request.html', context)
+
+
+@login_required
+def withdraw_resignation(request, request_id):
+    employee_profile = get_employee_profile(request.user)
+    exit_request = get_object_or_404(ExitRequest, id=request_id, employee=employee_profile)
+
+    # Allow withdrawal only if in certain states (e.g., before final HR approval)
+    if exit_request.status not in ['PENDING_RM_APPROVAL', 'PENDING_HR_APPROVAL']:
+        messages.error(request, "Resignation cannot be withdrawn at this stage.")
+        return redirect('view_my_exit_request')
+
+    if request.method == 'POST':  # Confirmation step
+        exit_request.status = 'WITHDRAWN'
+        exit_request.save()
+        messages.success(request, "Your resignation request has been withdrawn.")
+        # TODO: Notify relevant parties (RM, HR)
+        return redirect('view_my_exit_request')
+
+    context = {
+        'exit_request': exit_request,
+        'content_title': 'Confirm Resignation Withdrawal'
+    }
+    return render(request, 'employee/confirm_withdraw_resignation.html', context)
+
+
+# --- Views for Reporting Manager ---
+@login_required
+def manage_exit_requests_rm(request):
+    # Assuming user is a reporting manager. Implement role/permission check.
+    # For example, if the user themselves is an employee with a 'Manager' role.
+    manager_profile = get_employee_profile(request.user)
+    if not manager_profile or manager_profile.role.name != 'Manager':  # Example role check
+        messages.error(request, "You are not authorized to view this page.")
+        return redirect('index')
+
+    # Get requests for employees reporting to this manager
+    # This requires AddEmployee.reporting_manager to be set to request.user
+    pending_requests = ExitRequest.objects.filter(
+        employee__reporting_manager=request.user,
+        status='PENDING_RM_APPROVAL'
+    )
+    other_requests = ExitRequest.objects.filter(
+        employee__reporting_manager=request.user
+    ).exclude(status='PENDING_RM_APPROVAL')
+
+    context = {
+        'pending_requests': pending_requests,
+        'other_requests': other_requests,
+        'content_title': 'Manage Team Exit Requests',
+    }
+    return render(request, 'employee/manage_exit_requests_rm.html', context)
+
+
+@login_required
+def approve_reject_exit_rm(request, request_id):
+    manager_profile = get_employee_profile(request.user)
+    # Add robust permission checks: is this user the RM for this request?
+    exit_request = get_object_or_404(ExitRequest, id=request_id, employee__reporting_manager=request.user)
+
+    if exit_request.status != 'PENDING_RM_APPROVAL':
+        messages.error(request, "This request is not pending your approval or has already been processed.")
+        return redirect('manage_exit_requests_rm')
+
+    form = ExitApprovalFormRM(request.POST or None, instance=exit_request)
+    action = request.POST.get("action")  # 'approve' or 'reject'
+
+    if request.method == 'POST' and form.is_valid() and action:
+        exit_req = form.save(commit=False)
+        if action == "approve":
+            exit_req.status = 'PENDING_HR_APPROVAL'
+            messages.success(request, f"Exit request for {exit_req.employee.full_name} approved and sent to HR.")
+        elif action == "reject":
+            exit_req.status = 'REJECTED_BY_RM'
+            messages.warning(request, f"Exit request for {exit_req.employee.full_name} rejected.")
+
+        exit_req.reporting_manager_approved_at = timezone.now()  # Or cleared if rejected
+        exit_req.save()
+        # TODO: Notify employee and HR
+        return redirect('manage_exit_requests_rm')
+
+    context = {
+        'form': form,
+        'exit_request': exit_request,
+        'content_title': 'Approve/Reject Exit Request'
+    }
+    return render(request, 'employee/approve_reject_exit_form.html', context)  # Generic form template
+
+
+# --- Views for HR ---
+@login_required
+def manage_exit_requests_hr(request):
+    # Implement HR role check
+    hr_profile = get_employee_profile(request.user)
+    if not hr_profile or hr_profile.role.name != 'HR_Admin':  # Example role name
+        messages.error(request, "You are not authorized to view this page.")
+        return redirect('index')
+
+    pending_hr_approval = ExitRequest.objects.filter(status='PENDING_HR_APPROVAL')
+    all_other_requests = ExitRequest.objects.exclude(status='PENDING_HR_APPROVAL')
+
+    context = {
+        'pending_hr_approval': pending_hr_approval,
+        'all_other_requests': all_other_requests,
+        'content_title': 'Manage All Exit Requests (HR)',
+    }
+    return render(request, 'employee/manage_exit_requests_hr.html', context)
+
+
+@login_required
+def process_exit_request_hr(request, request_id):
+    # Implement HR role check
+    hr_profile = get_employee_profile(request.user)  # For logging/audit if needed
+    if not hr_profile or hr_profile.role.name != 'HR_Admin':
+        messages.error(request, "Unauthorized.")
+        return redirect('index')
+
+    exit_request = get_object_or_404(ExitRequest, id=request_id)
+
+    # HR can process requests pending their approval, or view/update checklist for already approved ones
+    if exit_request.status not in ['PENDING_HR_APPROVAL', 'APPROVED']:
+        messages.info(request,
+                      "This request is not in a state that HR can currently process further for approval/rejection.")
+        # Still might allow checklist update below
+
+    approval_form = ExitApprovalFormHR(request.POST or None, instance=exit_request, prefix="approval")
+    checklist_form = ExitChecklistForm(request.POST or None, instance=exit_request, prefix="checklist")
+    action = request.POST.get("action")  # 'approve_hr', 'reject_hr', or 'update_checklist'
+
+    if request.method == 'POST':
+        if action == "approve_hr" and approval_form.is_valid() and exit_request.status == 'PENDING_HR_APPROVAL':
+            exit_req = approval_form.save(commit=False)
+            exit_req.status = 'APPROVED'
+            exit_req.hr_approved_at = timezone.now()
+            exit_req.save()
+            # If actual_last_working_day was updated via form, it's saved.
+            messages.success(request, f"Exit request for {exit_req.employee.full_name} has been approved.")
+            # TODO: Notify employee
+            return redirect('manage_exit_requests_hr')
+
+        elif action == "reject_hr" and approval_form.is_valid() and exit_request.status == 'PENDING_HR_APPROVAL':
+            exit_req = approval_form.save(commit=False)
+            exit_req.status = 'REJECTED_BY_HR'
+            exit_req.save()
+            messages.warning(request, f"Exit request for {exit_req.employee.full_name} has been rejected by HR.")
+            # TODO: Notify employee
+            return redirect('manage_exit_requests_hr')
+
+        elif action == "update_checklist" and checklist_form.is_valid():
+            checklist_form.save()
+            messages.success(request, f"Exit checklist for {exit_request.employee.full_name} updated.")
+            # Stay on the same page or redirect
+            return redirect('process_exit_request_hr', request_id=exit_request.id)
+        else:
+            # Handle invalid forms if specific actions were intended
+            if action in ["approve_hr", "reject_hr"] and not approval_form.is_valid():
+                messages.error(request, "Please correct the errors in the approval section.")
+            if action == "update_checklist" and not checklist_form.is_valid():
+                messages.error(request, "Please correct the errors in the checklist section.")
+
+    context = {
+        'approval_form': approval_form,
+        'checklist_form': checklist_form,
+        'exit_request': exit_request,
+        'content_title': f'Process Exit: {exit_request.employee.full_name}',
+        'can_approve_reject': exit_request.status == 'PENDING_HR_APPROVAL',  # For template logic
+    }
+    return render(request, 'employee/process_exit_request_hr.html', context)

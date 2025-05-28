@@ -9,6 +9,8 @@ from datetime import timedelta
 # models.py
 from django.db import models
 from django.contrib.auth.models import User  # Import the User model
+from dateutil.relativedelta import relativedelta
+
 
 
 
@@ -140,6 +142,16 @@ class AddEmployee(models.Model):
     nationality = models.CharField(max_length=50)
     dob = models.DateField()
     role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True)
+    failed_login_attempts = models.IntegerField(default=0)
+    lockout_until = models.DateTimeField(null=True, blank=True)
+    reporting_manager = models.ForeignKey(
+        User,  # Assuming managers are also Users
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reportees',
+        help_text="The manager this employee reports to."
+    )
     MARITAL_CHOICES = [
         ('Single', 'Single'),
         ('Married', 'Married'),
@@ -186,10 +198,90 @@ class AddEmployee(models.Model):
         max_length=10
     )
     is_active = models.BooleanField(default=True)
+
+    def is_locked(self):
+        """Checks if the account is currently locked."""
+        if self.lockout_until and self.lockout_until > timezone.now():
+            return True
+        return False
+
+    def time_until_unlock(self):
+        """Returns a human-readable string of how long until unlock, or None."""
+        if self.is_locked():
+            remaining_time = self.lockout_until - timezone.now()
+            # Format remaining_time as needed (e.g., "1 hour 30 minutes")
+            total_seconds = int(remaining_time.total_seconds())
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            seconds = total_seconds % 60
+            parts = []
+            if hours > 0:
+                parts.append(f"{hours} hour{'s' if hours > 1 else ''}")
+            if minutes > 0:
+                parts.append(f"{minutes} minute{'s' if minutes > 1 else ''}")
+            if not parts and seconds > 0:  # Only show seconds if no hours/minutes
+                parts.append(f"{seconds} second{'s' if seconds > 1 else ''}")
+            if not parts:  # Should not happen if is_locked is true, but as a fallback
+                return "soon"
+            return ", ".join(parts)
+        return None
     def __str__(self):
         return f"{self.full_name} - {self.employee_id}"
 
 
+# employee/models.py (continued)
+
+class ExitRequest(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING_RM_APPROVAL', 'Pending Reporting Manager Approval'),
+        ('PENDING_HR_APPROVAL', 'Pending HR Approval'),
+        ('APPROVED', 'Approved'),
+        ('REJECTED_BY_RM', 'Rejected by Reporting Manager'),
+        ('REJECTED_BY_HR', 'Rejected by HR'),
+        ('WITHDRAWN', 'Withdrawn by Employee'),
+    ]
+
+    employee = models.ForeignKey(AddEmployee, on_delete=models.CASCADE, related_name='exit_requests')
+    resignation_apply_date = models.DateField(default=timezone.now)
+    reason_for_resignation = models.TextField()
+    expected_last_working_day = models.DateField()  # Calculated on submission
+    actual_last_working_day = models.DateField(null=True, blank=True)  # Can be adjusted by HR/Manager
+
+    notice_period_months = models.PositiveIntegerField(default=3, help_text="Default notice period in months")
+
+    # Checklist items (can be expanded)
+    company_assets_returned = models.BooleanField(default=False,
+                                                  verbose_name="Company Assets Returned (Laptop, ID, etc.)")
+    knowledge_transfer_complete = models.BooleanField(default=False,
+                                                      verbose_name="Knowledge Transfer / Handover Complete")
+    final_settlement_processed = models.BooleanField(default=False, verbose_name="Final Settlement Processed")
+    exit_interview_conducted = models.BooleanField(default=False, verbose_name="Exit Interview Conducted")
+    # Add more checklist items as needed
+    # Example: access_revoked = models.BooleanField(default=False, verbose_name="System Access Revoked")
+
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='PENDING_RM_APPROVAL')
+
+    # Approval tracking
+    reporting_manager_remarks = models.TextField(null=True, blank=True)
+    reporting_manager_approved_at = models.DateTimeField(null=True, blank=True)
+    hr_remarks = models.TextField(null=True, blank=True)
+    hr_approved_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.pk and not self.expected_last_working_day:  # If creating and LWD not set
+            # Calculate last working day: apply date + notice period
+            self.expected_last_working_day = self.resignation_apply_date + relativedelta(
+                months=+self.notice_period_months)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Exit Request for {self.employee.full_name} - {self.status}"
+
+    class Meta:
+        ordering = ['-created_at']
 
 class Holiday(models.Model):
     name = models.CharField(max_length=100)

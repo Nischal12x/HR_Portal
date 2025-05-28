@@ -1,0 +1,42 @@
+{% extends "base_exit_management.html" %}
+{% block title %}My Exit Request{% endblock %}
+{% block content %}
+  <section class="content-header">
+    <div class="container-fluid"><h1>{{ content_title }}</h1></div>
+  </section>
+  <section class="content">
+    <div class="container-fluid">
+      {% if exit_request %}
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">Details for {{ exit_request.employee.full_name }}</h3></div>
+          <div class="card-body">
+            <p><strong>Application Date:</strong> {{ exit_request.resignation_apply_date|date:"D, d M Y" }}</p>
+            <p><strong>Reason:</strong> {{ exit_request.reason_for_resignation|linebreaksbr }}</p>
+            <p><strong>Expected LWD:</strong> {{ exit_request.expected_last_working_day|date:"D, d M Y" }}</p>
+            <p><strong>Actual LWD:</strong> {{ exit_request.actual_last_working_day|date:"D, d M Y"|default:"Not set" }}</p>
+            <p><strong>Status:</strong> <span class="badge bg-info">{{ exit_request.get_status_display }}</span></p>
+            
+            <h4>Checklist Status:</h4>
+            <ul>
+                <li>Company Assets Returned: {% if exit_request.company_assets_returned %}Yes{% else %}No{% endif %}</li>
+                <li>Knowledge Transfer Complete: {% if exit_request.knowledge_transfer_complete %}Yes{% else %}No{% endif %}</li>
+                <li>Final Settlement Processed: {% if exit_request.final_settlement_processed %}Yes{% else %}No{% endif %}</li>
+                <li>Exit Interview Conducted: {% if exit_request.exit_interview_conducted %}Yes{% else %}No{% endif %}</li>
+            </ul>
+
+            {% if exit_request.status == 'PENDING_RM_APPROVAL' or exit_request.status == 'PENDING_HR_APPROVAL' %}
+            <hr>
+            <form method="post" action="{% url 'withdraw_resignation' exit_request.id %}" onsubmit="return confirm('Are you sure you want to withdraw your resignation?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-warning">Withdraw Resignation</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+      {% else %}
+        <p>You have not submitted any exit requests yet.</p>
+        <a href="{% url 'apply_resignation' %}" class="btn btn-primary">Apply for Resignation</a>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

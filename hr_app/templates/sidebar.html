@@ -270,6 +270,46 @@
                         <p>Exit Management System</p>
                     </a>
                 </li>
+                {% if user.is_authenticated %}
+  {% comment %} Assuming you have a way to get employee_profile in context or via a template tag {% endcomment %}
+  {% with employee_profile=request.user.addemployee %} {# Adjust if this isn't how you access it #}
+
+    <li class="nav-item">
+      <a href="{% url 'apply_resignation' %}" class="nav-link {% if request.resolver_match.url_name == 'apply_resignation' %}active{% endif %}">
+        <i class="nav-icon fas fa-sign-out-alt"></i>
+        <p>Apply Resignation</p>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="{% url 'view_my_exit_request' %}" class="nav-link {% if request.resolver_match.url_name == 'view_my_exit_request' %}active{% endif %}">
+        <i class="nav-icon fas fa-file-contract"></i>
+        <p>My Exit Status</p>
+      </a>
+    </li>
+
+    {% if employee_profile.role.name == 'Manager' %} {# Example Role Check #}
+      <li class="nav-header">MANAGER ACTIONS</li>
+      <li class="nav-item">
+        <a href="{% url 'manage_exit_requests_rm' %}" class="nav-link {% if 'manage_exit_requests_rm' in request.resolver_match.url_name %}active{% endif %}">
+          <i class="nav-icon fas fa-users-cog"></i>
+          <p>Team Exit Requests</p>
+        </a>
+      </li>
+    {% endif %}
+
+    {% if employee_profile.role.name == 'HR_Admin' %} {# Example Role Check #}
+      <li class="nav-header">HR ACTIONS</li>
+      <li class="nav-item">
+        <a href="{% url 'manage_exit_requests_hr' %}" class="nav-link {% if 'manage_exit_requests_hr' in request.resolver_match.url_name %}active{% endif %}">
+          <i class="nav-icon fas fa-cogs"></i>
+          <p>All Exit Requests (HR)</p>
+        </a>
+      </li>
+    {% endif %}
+
+  {% endwith %}
+{% endif %}
+<!-- ... -->
                 <li class="nav-item">
                     <a href="#" class="nav-link">
                         <i class="nav-icon fas fa-qrcode"></i>

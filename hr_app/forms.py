@@ -2,6 +2,7 @@ from django import forms
 from .models import AddEmployee
 import datetime
 import re
+from django.utils import timezone
 
 class EmployeeForm(forms.ModelForm):
     class Meta:
@@ -113,3 +114,56 @@ class EmployeeForm(forms.ModelForm):
             raise forms.ValidationError("Password must contain at least one special character.")
 
         return employee_id
+
+from django import forms
+from .models import ExitRequest
+
+class ResignationApplyForm(forms.ModelForm):
+    resignation_apply_date = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control', 'readonly': 'readonly'}),
+        initial=timezone.now().date()
+    )
+    # expected_last_working_day will be calculated and shown in the template, not directly editable here.
+
+    class Meta:
+        model = ExitRequest
+        fields = ['resignation_apply_date', 'reason_for_resignation']
+        widgets = {
+            'reason_for_resignation': forms.Textarea(attrs={'rows': 4, 'class': 'form-control', 'placeholder': 'Please state your reason for resignation.'}),
+        }
+
+class ExitChecklistForm(forms.ModelForm):
+    class Meta:
+        model = ExitRequest
+        fields = [
+            'company_assets_returned',
+            'knowledge_transfer_complete',
+            'final_settlement_processed',
+            'exit_interview_conducted',
+            'actual_last_working_day', # Allow HR/RM to adjust this
+            # Add other checklist fields here
+        ]
+        widgets = {
+            'actual_last_working_day': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        }
+        # To make BooleanFields render as Yes/No select or better checkboxes with AdminLTE:
+        # You might need to customize widget rendering or use a third-party library like django-widget-tweaks
+        # For simplicity, default checkbox rendering is assumed here.
+
+class ExitApprovalFormRM(forms.ModelForm): # For Reporting Manager
+    class Meta:
+        model = ExitRequest
+        fields = ['reporting_manager_remarks']
+        widgets = {
+            'reporting_manager_remarks': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+        }
+
+class ExitApprovalFormHR(forms.ModelForm): # For HR
+    class Meta:
+        model = ExitRequest
+        fields = ['hr_remarks', 'actual_last_working_day'] # HR can also set final LWD
+        widgets = {
+            'hr_remarks': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'actual_last_working_day': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        }
+

@@ -28,7 +28,7 @@ urlpatterns = [
     path('add_emp/', views.add_emp, name = 'add_employees'),
     path('login-/', views.check_cred, name='check_cred'),
     path('leave-dashboard/', views.leave_dashboard, name ='leave_dashboard'),
-    path('log_in', views.logout_view, name="log_out"),
+    path('log_in', views.custom_logout, name="log_out"),
     path('withdraw-leave/<int:leave_id>/', views.withdraw_leave, name='withdraw_leave'),
     path('leave-dashboard1/<int:val>/',views.leave_dashboard, name='leave_dashboard1'  ),
     path('update-leave-status/<int:applicant_id>/', views.update_leave_status, name='update_leave_status'),
@@ -99,6 +99,19 @@ urlpatterns = [
     path('api/timesheets/upload/', api_timesheets_upload),
     path('api/reports/leave-types/', api_reports_leave_types),
     path('api/reports/timesheet-hours/', api_reports_timesheet_hours),
+
+    path('exit/apply/', views.apply_resignation, name='apply_resignation'),
+    path('exit/my-request/', views.view_my_exit_request, name='view_my_exit_request'),
+    path('exit/withdraw/<int:request_id>/', views.withdraw_resignation, name='withdraw_resignation'),
+
+    # Reporting Manager URLs for Exit Management
+    path('exit/team-requests/', views.manage_exit_requests_rm, name='manage_exit_requests_rm'),
+    path('exit/approve-rm/<int:request_id>/', views.approve_reject_exit_rm, name='approve_reject_exit_rm'),
+
+    # HR URLs for Exit Management
+    path('exit/hr-manage/', views.manage_exit_requests_hr, name='manage_exit_requests_hr'),
+    path('exit/hr-process/<int:request_id>/', views.process_exit_request_hr, name='process_exit_request_hr'),
+
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
