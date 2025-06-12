@@ -2698,7 +2698,7 @@ def withdraw_resignation(request, request_id):
         exit_request.save()
         messages.success(request, "Your resignation request has been withdrawn.")
         # TODO: Notify relevant parties (RM, HR)
-        return redirect('view_my_exit_request')
+        return redirect('resignation_status')
 
     context = {
         'exit_request': exit_request,
