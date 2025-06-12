@@ -1,0 +1,146 @@
+{% extends 'main1.html' %}
+{% load static %}
+
+{% block title %}HR Exit Management{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+    {% include 'navbar.html' %}
+    {% include 'sidebar.html' %}
+
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <section class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1>HR Exit Management Dashboard</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+                            <li class="breadcrumb-item active">HR Exit Management</li>
+                        </ol>
+                    </div>
+                </div>
+            </div><!-- /.container-fluid -->
+        </section>
+
+        <!-- Main content -->
+        <section class="content">
+            <div class="container-fluid">
+
+                <!-- PENDING HR APPROVAL Card -->
+                <div class="card card-danger card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title font-weight-bold">
+                            <i class="fas fa-hourglass-half mr-2"></i>
+                            Requests Pending HR Approval
+                        </h3>
+                        <div class="card-tools">
+                            <span class="badge badge-danger" style="font-size: 1rem;">{{ pending_hr_approval.count }}</span>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Employee Name</th>
+                                    <th>Apply Date</th>
+                                    <th>Manager</th>
+                                    <th class="text-center">Status</th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in pending_hr_approval %}
+                                <tr>
+                                    <td>{{ request.employee.full_name }}</td>
+                                    <td>{{ request.resignation_apply_date|date:"d M, Y" }}</td>
+                                    <td>{{ request.employee.reporting_manager.get_full_name|default:"N/A" }}</td>
+                                    <td class="text-center">
+                                        <span class="badge badge-info">{{ request.get_status_display }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="{% url 'process_exit_request_hr' request.id %}" class="btn btn-danger btn-sm">
+                                            <i class="fas fa-cogs mr-1"></i> Process Request
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">No requests are currently pending HR approval.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ALL OTHER REQUESTS Card -->
+                <div class="card card-secondary card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title font-weight-bold">
+                            <i class="fas fa-history mr-2"></i>
+                            Processed & Historical Requests
+                        </h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-hover">
+                           <thead>
+                                <tr>
+                                    <th>Employee Name</th>
+                                    <th>Apply Date</th>
+                                    <th>Final Last Day</th>
+                                    <th class="text-center">Final Status</th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in all_other_requests %}
+                                <tr>
+                                    <td>{{ request.employee.full_name }}</td>
+                                    <td>{{ request.resignation_apply_date|date:"d M, Y" }}</td>
+                                    <td>
+                                        <!-- Show the actual last day if set by HR, otherwise fall back to the expected one -->
+                                        {% if request.actual_last_working_day %}
+                                            {{ request.actual_last_working_day|date:"d M, Y" }}
+                                        {% else %}
+                                            {{ request.expected_last_working_day|date:"d M, Y" }}
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if request.status == 'APPROVED' %}
+                                            <span class="badge badge-success">{{ request.get_status_display }}</span>
+                                        {% elif 'REJECTED' in request.status %}
+                                            <span class="badge badge-danger">{{ request.get_status_display }}</span>
+                                        {% elif request.status == 'WITHDRAWN' %}
+                                            <span class="badge badge-secondary">{{ request.get_status_display }}</span>
+                                        {% else %}
+                                            <!-- Fallback for any other statuses -->
+                                            <span class="badge badge-light text-dark">{{ request.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <!-- HR can still view the details and checklist of processed requests -->
+                                        <a href="{% url 'process_exit_request_hr' request.id %}" class="btn btn-outline-info btn-sm">
+                                            <i class="fas fa-search mr-1"></i> View Details
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">No historical request data found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    {% include 'footer.html' %}
+</div>
+{% endblock %}

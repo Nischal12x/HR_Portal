@@ -16,7 +16,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'kataranischal@gmail.com'
-EMAIL_HOST_PASSWORD = 'kvkd xxeo udzc kymm'  # Use an app-specific password
+EMAIL_HOST_PASSWORD = 'hmtu akqy thxi zcfw'  # Use an app-specific password
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # Custom setting for the log archive recipient
@@ -49,6 +49,13 @@ ALLOWED_HOSTS = ['*']
 
 
 # Application definition
+from django.utils.translation import gettext_lazy as _
+
+LANGUAGES = [
+    ('en', _('English')),
+    ('es', _('Spanish')), # Example
+    # Add other languages your app supports
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -60,9 +67,14 @@ INSTALLED_APPS = [
     'hr_app',
 ]
 
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',    
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -136,7 +148,7 @@ USE_I18N = True
 
 USE_TZ = True
 
-
+USE_L10N = True # For Django < 5.0
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 

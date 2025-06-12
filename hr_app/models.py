@@ -242,6 +242,8 @@ class ExitRequest(models.Model):
     ]
 
     employee = models.ForeignKey(AddEmployee, on_delete=models.CASCADE, related_name='exit_requests')
+    email_subject = models.CharField(max_length=255, null=True, blank=True,
+                                     help_text="The subject line of the resignation email.")
     resignation_apply_date = models.DateField(default=timezone.now)
     reason_for_resignation = models.TextField()
     expected_last_working_day = models.DateField()  # Calculated on submission
@@ -269,6 +271,11 @@ class ExitRequest(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    #form submission
+    selected_elsewhere = models.BooleanField(default=False)
+    bond_over = models.BooleanField(default=False)
+    advance_salary = models.BooleanField(default=False)
+    any_dues = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if not self.pk and not self.expected_last_working_day:  # If creating and LWD not set
@@ -491,3 +498,103 @@ class PasswordResetToken(models.Model):
 
     def is_expired(self):
         return timezone.now() > self.created_at + timezone.timedelta(hours=1)
+
+from django.db import models
+import uuid
+from django.utils import timezone
+from django.core.exceptions import ValidationError
+from django.core.validators import MinLengthValidator, MaxLengthValidator, FileExtensionValidator
+from datetime import timedelta
+
+class Attendance(models.Model):
+    STATUS_CHOICES = [
+        ('P', 'Present'),
+        ('A', 'Absent'),
+        ('L', 'Leave'),
+        ('H', 'Holiday'),
+    ]
+    leave_days = models.FloatField(default=0)
+    approved_by = models.CharField(max_length=100, null=True, blank=True)
+
+    employee = models.ForeignKey('AddEmployee', on_delete=models.CASCADE)
+    date = models.DateField()
+    status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='P')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.employee.full_name} - {self.date} - {self.project.name if self.project else 'No Project'}"
+
+    def clean(self):
+        if self.start_time >= self.end_time:
+            raise ValidationError("Start time must be before end time.")
+
+    class Meta:
+        unique_together = ('employee', 'date')
+        ordering = ['-date']
+
+from django.db import models
+from django.conf import settings # To link to the User model
+
+class CalendarEvent(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)
+    start = models.DateTimeField()
+    end = models.DateTimeField(null=True, blank=True) # Optional end time
+    all_day = models.BooleanField(default=False)
+    description = models.TextField(blank=True, null=True) # Optional description
+    color = models.CharField(max_length=20, default='#3c8dbc') # Increased max_length to 20 to fix Data too long error
+
+    def __str__(self):
+        return f"{self.title} ({self.user.username})"
+
+    class Meta:
+        verbose_name = "Calendar Event"
+        verbose_name_plural = "Calendar Events"
+
+from django.db import models
+from decimal import Decimal
+
+
+class SalaryData(models.Model):
+    # If you have an Employee model and want a ForeignKey relationship
+    employee_identifier = models.ForeignKey(AddEmployee, on_delete=models.CASCADE, related_name='salary_records')
+
+    # If you are just storing the employee identifier from the CSV directly
+    # employee_identifier = models.CharField(max_length=100) # Match this with employee_id_str
+
+    month = models.PositiveSmallIntegerField()
+    year = models.PositiveSmallIntegerField()
+    payslip_code = models.CharField(max_length=50, blank=True, null=True)
+    basic_salary = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    hra = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    da = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    total_salary = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+
+    present_days = models.PositiveSmallIntegerField(default=0)
+    paid_leaves = models.PositiveSmallIntegerField(default=0)
+    unpaid_leaves = models.PositiveSmallIntegerField(default=0)
+    # Earnings and deductions
+    project_incentive = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    variable_pay = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    esi = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    pf = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    tds = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+
+    class Meta:
+        unique_together = ('employee_identifier', 'month', 'year') # Ensures one record per employee per month/year
+        verbose_name = "Salary Data"
+        verbose_name_plural = "Salary Data"
+
+    def __str__(self):
+        return f"Salary for {self.employee_identifier} - {self.month:02d}/{self.year}"
+
+# You will need a new model to track activity on a request.
+# Add this to your models.py
+class ExitActivityLog(models.Model):
+    exit_request = models.ForeignKey(ExitRequest, on_delete=models.CASCADE, related_name='activity_logs')
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    action = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.action} on {self.exit_request.employee.full_name} at {self.timestamp}'

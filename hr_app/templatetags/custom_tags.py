@@ -1,5 +1,5 @@
 from django import template
-
+import calendar
 register = template.Library()
 
 @register.simple_tag
@@ -39,3 +39,13 @@ def get_badge_class(status):
         'Claimed Completed': 'bg-info text-dark'
     }
     return status_map.get(status, 'bg-secondary text-white')
+
+@register.filter
+def currency_format(value):
+    try:
+        return f"Rs.{float(value):,.2f}"
+    except (ValueError, TypeError):
+        return "Rs.0.00"
+@register.filter
+def month_name(month_number):
+    return calendar.month_name[int(month_number)]

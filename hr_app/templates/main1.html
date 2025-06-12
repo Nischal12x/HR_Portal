@@ -6,8 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}BISP Solutions{% endblock %}</title>
 <!-- FullCalendar CSS -->
-<!--<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/main.min.css" rel="stylesheet">-->
-
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/main.min.css" rel="stylesheet">
+<!-- fullCalendar -->
+  <link rel="stylesheet" href="{% static 'plugins/fullcalendar/main.css' %}">
 <link rel="stylesheet" href="{% static 'plugins/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -18,6 +19,7 @@
     <link rel="stylesheet" href="{% static 'plugins/datatables-responsive/css/responsive.bootstrap4.min.css' %}">
     <link rel="stylesheet" href="{% static 'plugins/datatables-buttons/css/buttons.bootstrap4.min.css' %}">
     <!-- Theme style -->
+
     <link rel="stylesheet" href="{% static 'css/adminlte.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -47,7 +49,58 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
   <style>
+    .up {
+      padding : 0px ;
+    }
+    .activity-timeline {
+    list-style: none;
+    padding-left: 0;
+    position: relative;
+  }
+  .activity-timeline::before {
+    content: '';
+    background: #e9ecef;
+    width: 2px;
+    position: absolute;
+    top: 5px;
+    bottom: 5px;
+    left: 19px; /* Aligns with the center of the 40px icon */
+  }
+  .timeline-item-wrapper {
+    position: relative;
+    display: flex;
+    gap: 1.25rem; /* Space between icon and content */
+    margin-bottom: 1.5rem;
+  }
+  .timeline-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    z-index: 1; /* Sits on top of the vertical line */
+    flex-shrink: 0; /* Prevents icon from shrinking */
+  }
+  .checklist-item.completed .item-label {
+    text-decoration: line-through;
+    opacity: 0.7;
+  }
+  .checklist-item .form-check-input {
+    /* Hides the default checkbox, as we use status badges instead */
+    display: none;
+  }
+  .checklist-item .status-badge {
+    cursor: pointer; /* Indicates the badge/label area is clickable */
+  }
 
+a#btn_add_emp {
+  margin-left: auto ;
+}
+.us-p {
+  padding : 0 ;
+}
   .text-end {
     text-align: right;
     margin-top: 10px; /* Optional spacing */

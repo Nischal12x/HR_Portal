@@ -1,30 +1,214 @@
 {% extends "base_exit_management.html" %}
 {% load static %}
 
-{% block title_tag %}{{ content_title }} - BISP Solutions{% endblock %}
+{% block title_tag %}Apply Resignation - BISP Solutions{% endblock %}
+{% block page_title %}Resignation Form{% endblock %}
+{% block breadcrumb_current %}Apply Resignation{% endblock %}
 
-{% block page_title %}{{ content_title }}{% endblock %}
-{% block breadcrumb_current %}{{ content_title }}{% endblock %}
-
-{% block content %}
-<div class="card card-primary">
-    <div class="card-header">
-        <h3 class="card-title">Resignation Application Form</h3>
+{% block extra_head %}
+<style>
+    /* Style for read-only fields to look like static text but maintain form alignment */
+    .form-control-plaintext {
+        background-color: #e9ecef; /* Light grey background like in the image */
+        opacity: 1;
+        border: 1px solid #ced4da;
+    }
+    .section-box {
+        border: 1px solid #e3e6f0;
+        border-radius: .35rem;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        background-color: #fff;
+    }
+    .required-asterisk {
+        color: red;
+    }
+    /* This style ensures readonly fields have the light grey background as seen in the image */
+    .form-control[readonly] {
+        background-color: #e9ecef;
+        opacity: 1;
+    }
+     /* Optional: Add a subtle lift effect to the primary button on hover for a more dynamic feel */
+    .btn-primary {
+        transition: all .2s ease-in-out;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+{% block content%}
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Resignation Application</h6>
     </div>
-    <form method="post">
-        {% csrf_token %}
-        <div class="card-body">
-            {{ form.as_p }}  <!-- Assuming your form is passed as 'form' -->
-            <p>Your expected last working day based on the default notice period of {{ notice_period }} months will be approximately: <strong>{{ expected_lwd|date:"D, d M Y" }}</strong>. This may be adjusted by HR.</p>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <!-- Personal Detail Section -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header py-3" style="background-color: transparent;">
+        <h6 class="m-0 font-weight-bold">Personal Detail</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <!-- First Row of Details -->
+            <div class="col-md-4 form-group">
+                <label class="font-weight-bold">Name</label>
+                <input type="text" class="form-control" value="{{ employee.full_name|default:'!' }}" readonly>
+            </div>
+            <div class="col-md-4 form-group">
+                <label class="font-weight-bold">Employee ID</label>
+                <input type="text" class="form-control" value="{{ employee.id }}" readonly>
+            </div>
+            <div class="col-md-4 form-group">
+                <label class="font-weight-bold">Department</label>
+                <input type="text" class="form-control" value="{{ employee.role|default:'!' }}" readonly>
+            </div>
+
+            <!-- Second Row of Details -->
+            <div class="col-md-4 form-group">
+                <label class="font-weight-bold">Designation</label>
+                <input type="text" class="form-control" value="{{ employee.department|default:'!' }}" readonly>
+            </div>
+            <div class="col-md-4 form-group">
+                <label class="font-weight-bold">Reporting Manager</label>
+                <input type="text" class="form-control" value="{{ employee.reporting_manager|default:'not assigned' }}" readonly>
+            </div>
+            <div class="col-md-4 form-group">
+                <label class="font-weight-bold">Date of Joining</label>
+                <input type="text" class="form-control" value="{{ employee.joining_date|date:'d-m-Y' }}" readonly>
+            </div>
         </div>
-        <div class="card-footer">
-            <button type="submit" class="btn btn-primary">Submit Resignation</button>
-            <a href="{% url 'view_my_exit_request' %}" class="btn btn-secondary">Cancel</a>
-        </div>
-    </form>
+    </div>
+</div>
+
+
+            <!-- Resignation Detail Section -->
+            <div class="section-box">
+                <h5 class="mb-4 font-weight-bold">Resignation Detail</h5>
+                <div class="row">
+                    <div class="col-md-4 form-group">
+                        <label for="resignationApplyDate">Resignation Apply Date <span class="required-asterisk">*</span></label>
+                        <div class="input-group date" id="resignationDatepicker" data-target-input="nearest">
+                            <input type="text" class="form-control datetimepicker-input" data-target="#resignationDatepicker" name="resignation_apply_date" id="resignationApplyDate" placeholder="dd-mm-yyyy" required>
+                            <div class="input-group-append" data-target="#resignationDatepicker" data-toggle="datetimepicker">
+                                <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label for="lastWorkingDate">Last Working Date <span class="required-asterisk">*</span></label>
+                        <input type="text" class="form-control" name="last_working_date" id="lastWorkingDate" placeholder="dd-mm-yyyy" readonly>
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label for="reasonForResignation">Reason Of Resignation <span class="required-asterisk">*</span></label>
+                        <textarea class="form-control" name="reason" id="reasonForResignation" rows="1" required></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exit Checklist Section -->
+            <div class="section-box">
+                <div class="form-group mb-4">
+                    <label class="font-weight-bold d-block mb-2">1. If selected anywhere else kindly furnish details.</label>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="selected_elsewhere" id="selectedYes" value="yes">
+                        <label class="form-check-label" for="selectedYes">Yes</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="selected_elsewhere" id="selectedNo" value="no" checked>
+                        <label class="form-check-label" for="selectedNo">No</label>
+                    </div>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label class="font-weight-bold d-block mb-2">2. Whether bond period is over.</label>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="bond_over" id="bondYes" value="yes">
+                        <label class="form-check-label" for="bondYes">Yes</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="bond_over" id="bondNo" value="no" checked>
+                        <label class="form-check-label" for="bondNo">No</label>
+                    </div>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label class="font-weight-bold d-block mb-2">3. Advance salary.</label>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="advance_salary" id="salaryYes" value="yes">
+                        <label class="form-check-label" for="salaryYes">Yes</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="advance_salary" id="salaryNo" value="no" checked>
+                        <label class="form-check-label" for="salaryNo">No</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="font-weight-bold d-block mb-2">4. Any dues pending.</label>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="any_dues" id="duesYes" value="yes">
+                        <label class="form-check-label" for="duesYes">Yes</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="any_dues" id="duesNo" value="no" checked>
+                        <label class="form-check-label" for="duesNo">No</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer bg-white border-top px-4 py-3">
+    <div class="d-flex justify-content-end">
+        <!-- A lighter "Cancel" button to de-emphasize it -->
+        <a href="#" class="btn btn-light mr-2">Cancel</a>
+
+        <!-- The primary action button remains strong -->
+        <button type="submit" name="resignation_submit_step" value="show_email_form" class="btn btn-info">Next</button>
+    </div>
+</div>
+
+        </form>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
-<!-- Add any page-specific JavaScript here -->
+<!-- You will need a datepicker library like Tempus Dominus for Bootstrap 4 or bootstrap-datepicker -->
+<!-- Make sure to include the necessary JS and CSS files in your base template -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.39.0/js/tempusdominus-bootstrap-4.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.39.0/css/tempusdominus-bootstrap-4.min.css"/>
+
+<script>
+$(function () {
+    // Initialize the datepicker
+    $('#resignationDatepicker').datetimepicker({
+        format: 'DD-MM-YYYY',
+        useCurrent: false // Important for not setting a default date on page load
+    });
+
+    // Listen for the date change event
+    $("#resignationDatepicker").on("change.datetimepicker", function (e) {
+        if (e.date) {
+            // Get the selected date from the event
+            let applyDate = e.date;
+
+            // Clone the date object to avoid modifying the original
+            let lastWorkingDate = applyDate.clone().add(3, 'months');
+
+            // Format the new date to DD-MM-YYYY
+            let formattedDate = lastWorkingDate.format('DD-MM-YYYY');
+
+            // Set the value of the Last Working Date input
+            $('#lastWorkingDate').val(formattedDate);
+        } else {
+            // Clear the last working date if the apply date is cleared
+            $('#lastWorkingDate').val('');
+        }
+    });
+});
+</script>
 {% endblock %}

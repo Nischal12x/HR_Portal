@@ -1,0 +1,125 @@
+{% extends "main1.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}Send Exit Email{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+  {% include 'navbar.html' %}
+  {% include 'sidebar.html' %}
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Send Exit Email</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+              <li class="breadcrumb-item active">Email Alert</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Send Exit Email</h3>
+          </div>
+
+          <form method="POST" action="{% url 'apply_resignation' %}">
+            {% csrf_token %}
+            <!-- Hidden Fields to Retain Previous Form Data -->
+            <input type="hidden" name="reason" value="{{ reason }}">
+            <input type="hidden" name="resignation_apply_date" value="{{ resignation_apply_date }}">
+            <input type="hidden" name="selected_elsewhere" value="{{ selected_elsewhere }}">
+            <input type="hidden" name="bond_over" value="{{ bond_over }}">
+            <input type="hidden" name="advance_salary" value="{{ advance_salary }}">
+            <input type="hidden" name="any_dues" value="{{ any_dues }}">
+
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>From</label>
+                    <input type="email" class="form-control" name="from" value="{{employee.email}}" readonly>
+                  </div>
+                  <div class="form-group">
+                    <label>CC</label>
+                    <input type="email" class="form-control" name="cc">
+                  </div>
+                  <div class="form-group">
+                    <label>Subject</label>
+                    <input type="text" class="form-control" name="subject" value='Resignation Notice – {{ employee.full_name }}'>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>To</label>
+                    <input type="email" class="form-control" name="to" value="kataranischal@gmail.com" readonly>
+                  </div>
+                  <div class="form-group">
+                    <label>BCC</label>
+                    <input type="email" class="form-control" name="bcc" value="{{employee.reporting_manager}}" readonly>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Message</label>
+                <textarea name="message" id="editor" rows="10" class="form-control" required></textarea>
+              </div>
+            </div>
+            <div class="card-footer">
+              <button type="submit" name="resignation_submit_step" value="send_email" class="btn btn-primary">Send Email</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  {% include 'footer.html' %}
+</div>
+
+<!-- CKEditor Script -->
+<script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/classic/ckeditor.js"></script>
+<!-- CKEditor Script -->
+<script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/classic/ckeditor.js"></script>
+<script>
+  ClassicEditor
+    .create(document.querySelector('#editor'), {
+      toolbar: {
+        items: [
+          'heading', '|',
+          'bold', 'italic', 'underline', 'strikethrough', '|',
+          'bulletedList', 'numberedList', '|',
+          'blockQuote', 'link', '|',
+          'undo', 'redo'
+        ]
+      },
+      height: 300
+    })
+    .then(editor => {
+      // Find the submit button
+      const submitButton = document.querySelector('button[name="resignation_submit_step"]');
+
+      // Add a 'click' listener to the button
+      submitButton.addEventListener('click', () => {
+        // Update the original textarea with CKEditor's content right before submission
+        document.querySelector('#editor').value = editor.getData();
+      });
+    })
+    .catch(error => {
+      console.error(error);
+    });
+</script>
+
+{% endblock %}

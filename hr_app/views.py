@@ -2,7 +2,8 @@ import re
 from datetime import datetime, timezone, date, timedelta
 from django.contrib.auth import login
 from django.contrib.auth.models import User
-from django.db import models
+from django.db import models, transaction
+from django.db import IntegrityError
 from django.utils import timezone
 from collections import defaultdict
 from django.core.paginator import Paginator
@@ -12,7 +13,14 @@ from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.shortcuts import render, redirect
-
+import csv
+import io
+from decimal import Decimal, InvalidOperation
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required # Optional
+# from django.db import transaction # If you save multiple records atomically
+# from .models import Employee, SalaryData # Import your actual models
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.utils.dateparse import parse_date
@@ -55,6 +63,12 @@ def employee_handbook_view(request):
 import json
 
 def acknowledge_handbook(request):
+    employee_id = request.session.get('employee_id')
+    try:
+        employee = AddEmployee.objects.get(id=employee_id)
+    except AddEmployee.DoesNotExist:
+        messages.error(request, "Employee not found.")
+        return redirect('login')
     if request.method == 'POST':
         employee_id = request.session.get('employee_id')
 
@@ -83,6 +97,12 @@ def acknowledge_handbook(request):
 
 
 def manage_handbooks(request):
+    employee_id = request.session.get('employee_id')
+    try:
+        employee = AddEmployee.objects.get(id=employee_id)
+    except AddEmployee.DoesNotExist:
+        messages.error(request, "Employee not found.")
+        return redirect('login')
     if request.session.get('role') != 'HR':
         employee_id = request.session.get('employee_id')
         employee_email = request.session.get('employee_email')
@@ -124,6 +144,12 @@ def manage_handbooks(request):
 
 
 def update_project(request, project_id):
+    employee_id = request.session.get('employee_id')
+    try:
+        employee = AddEmployee.objects.get(id=employee_id)
+    except AddEmployee.DoesNotExist:
+        messages.error(request, "Employee not found.")
+        return redirect('login')
     project = get_object_or_404(Project, id=project_id)
     selected_team_member_ids = list(project.team_members.values_list('id', flat=True))
     context = {
@@ -159,7 +185,7 @@ def archive_project(request, project): # added request for log
 
     # Update the 'until' field of the last history record
     if last_history and last_history.until is None:
-        last_history.until = now()
+        last_history.until = timezone.now()
         last_history.save()
 
     # Create new history record with current data
@@ -177,7 +203,7 @@ def archive_project(request, project): # added request for log
         admin=project.admin,
         description=project.description,
         document=project.document,
-        created_at=now(),
+        created_at=timezone.now(),
     )
     employee_id = request.session.get('employee_id')
     employee_email = request.session.get('employee_email')
@@ -218,7 +244,6 @@ def add_project(request, p_id=0):
             errors['project_leader'] = "Project leader is required."
         if not admin_id:
             errors['admin'] = "Project admin is required."
-
         if project_name and Project.objects.filter(name__iexact=project_name).exists() and p_id == 0:
             errors['project_name'] = "A project with this name already exists."
 
@@ -260,12 +285,12 @@ def add_project(request, p_id=0):
         project.save()  # Make sure to save again after updating the many-to-many field
 
         # Add to project history (on both create and update)
-        archive_project(project)
+        archive_project(request, project)
         # Success response for AJAX
         employee_id = request.session.get('employee_id')
         employee_email = request.session.get('employee_email')
         if employee_id and employee_email:
-            log_user_action(employee_id, employee_email, f"Accessed {leave} related employees.")
+            log_user_action(employee_id, employee_email, f"Project {project.name} accessed or modified.")
         if p_id != 0 :
             if employee_id and employee_email:
                 log_user_action(employee_id, employee_email, f"Project {project} Updated")
@@ -375,6 +400,8 @@ def edit_leave(request, leave_id):
     }
     return render(request, 'leave_settings.html', context)
 
+from django.shortcuts import get_object_or_404
+
 def editing_leaves(request):
     if request.method == 'POST':
         leave_name = request.POST.get('leaveName')
@@ -403,11 +430,13 @@ def editing_leaves(request):
         count_holidays = True if request.POST.get('count_holidays') == 'True' else False
 
         # Fetch existing leave by code or name (choose based on your model)
-        leave_obj = Leave_Type.objects.get(leave_code=leave_code)
-        old_leave_name = leave_obj.leavetype
-        if not leave_obj:
+        try:
+            leave_obj = Leave_Type.objects.get(leave_code=leave_code)
+        except Leave_Type.DoesNotExist:
             messages.error(request, "Leave entry not found.")
             return redirect('leave_settings')
+
+        old_leave_name = leave_obj.leavetype
 
         leave_obj.leavetype = leave_name
         leave_obj.leave_code = code
@@ -421,22 +450,6 @@ def editing_leaves(request):
         leave_obj.effective_after = effective_after
         leave_obj.time_unit = time_unit
         leave_obj.from_date_reference = from_date_reference
-        leave_obj.accrual_enabled = accrual_enabled
-        leave_obj.leave_time = leave_time
-        leave_obj.leave_time_unit = leave_time_unit
-        leave_obj.accrual_frequency = accrual_frequency
-        leave_obj.count_weekends = count_weekends
-        leave_obj.count_holidays = count_holidays
-
-        leave_obj.save()
-        employee_id = request.session.get('employee_id')
-        employee_email = request.session.get('employee_email')
-        if employee_id and employee_email:
-            log_user_action(employee_id, employee_email, f"existing leave {old_leave_name} is modified")
-        messages.success(request, "Changes applied successfully.")
-        return redirect('leaves_sys')
-
-    return redirect('leave_settings')
 
 def leave_dashboard(request, val=0):
     applicants = LeaveApplication.objects.all()
@@ -636,6 +649,8 @@ def add_employee(request):
             salary=form_data["salary"], employment_type=form_data["employment_type"],
             attachment=attachment, role_id = request.POST.get('role')
         )
+        user = User.objects.create_user(username=form_data['full_name'], email=form_data['email'], password=form_data['password'])
+        emp.user = user
         emp.save()
         # Create new history with current employee data
         employee = get_object_or_404(AddEmployee, id=emp.id)
@@ -650,7 +665,7 @@ def add_employee(request):
             marital_status=employee.marital_status,
             gender=employee.gender,
             address=employee.address,
-            employee_id=employee.id,
+            employee_id=employee.employee_id,
             department=employee.department,
             designation=employee.designation,
             joining_date=employee.joining_date,
@@ -676,7 +691,7 @@ def add_employee(request):
 
 
 def employee_list(request):
-    employees = AddEmployee.objects.all()  # Fetch all employees
+    employees = AddEmployee.objects.filter(is_active=True)  # Fetch only active employees
     return render(request, "data.html", {"employees": employees})
 
 
@@ -700,7 +715,7 @@ def update_employee(request, id):
 
         # Close the previous history period
         if last_history and last_history.until is None:
-            last_history.until = now()
+            last_history.until = timezone.now()
             last_history.save()
 
         # Update employee data from form
@@ -741,6 +756,11 @@ def update_employee(request, id):
             messages.error(request, "Invalid DOB format.")
             return redirect("employees")
 
+        # Update linked User password to employee_id
+        if employee.user:
+            employee.user.set_password(employee.employee_id)
+            employee.user.save()
+
         # Save updated data
         employee.save()
 
@@ -756,14 +776,14 @@ def update_employee(request, id):
             marital_status=employee.marital_status,
             gender=employee.gender,
             address=employee.address,
-            employee_id=employee.id,
+            employee_id=employee.employee_id,
             department=employee.department,
             designation=employee.designation,
             joining_date=employee.joining_date,
             salary=employee.salary,
             employment_type=employee.employment_type,
             attachment=employee.attachment,
-            created_at=now(),
+            created_at=timezone.now(),
             until=None  # this remains null until next update
         )
 
@@ -838,6 +858,27 @@ def deactivate_employee(request, id):
 
     messages.success(request, "Employee deactivated successfully!")
     return redirect('employees')
+
+
+def activate_employee(request, id):
+    employee = get_object_or_404(AddEmployee, id=id)
+    if request.user.is_authenticated and hasattr(request.user, 'addemployee'):
+        employee1 = request.user.addemployee
+        log_user_action(employee1.id, employee1.email, f"{employee} activated ")
+    employee.is_active = True
+    employee.save()
+
+    # Activate login access too
+    if employee.user:
+        employee.user.is_active = True
+        employee.user.save()
+
+    messages.success(request, "Employee activated successfully!")
+    return redirect('inactive_employees')
+
+def inactive_employees(request):
+    employees = AddEmployee.objects.filter(is_active=False)
+    return render(request, "activate_employee.html", {"employees": employees})
 
 from django.contrib.auth import authenticate, login
 
@@ -1311,7 +1352,7 @@ def add_weekly_timesheet(request):
         employee = AddEmployee.objects.get(id=employee_id)
     except AddEmployee.DoesNotExist:
         messages.error(request, "Employee record not found.")
-        return redirect('timesheet')
+        return redirect('login')
 
     today = timezone.now()
     start_of_week = today - timedelta(days=today.weekday())
@@ -2313,6 +2354,202 @@ from .models import AddEmployee, ExitRequest, Role  # Assuming Role model exists
 from .forms import ResignationApplyForm, ExitChecklistForm, ExitApprovalFormRM, ExitApprovalFormHR
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
+from datetime import datetime, timedelta
+from django.db.models import Q
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import Attendance, LeaveApplication, Leave_Type, Holiday, AddEmployee
+
+@login_required
+def attendance_overview(request):
+    # Get month and year from request GET params or default to current month/year
+    month = int(request.GET.get('month', timezone.now().month))
+    year = int(request.GET.get('year', timezone.now().year))
+
+    # Get all active employees only
+    employees = AddEmployee.objects.filter(is_active=True).order_by('full_name')
+
+    # Get holidays effective from their added date onward
+    holidays = Holiday.objects.filter(date__year=year, date__month=month, date__lte=timezone.now().date())
+
+    # Get leaves approved for the month
+    leaves = LeaveApplication.objects.filter(
+        status='Approved',
+        from_date__year=year,
+        from_date__month=month
+    )
+
+    # Prepare attendance data per employee per day
+    days_in_month = (datetime(year, month % 12 + 1, 1) - timedelta(days=1)).day
+    attendance_data = {}
+
+    for employee in employees:
+        attendance_data[employee.id] = {}
+        for day in range(1, days_in_month + 1):
+            date = datetime(year, month, day).date()
+            # Default status is Present
+            status = 'P'
+
+            # Check if date is a holiday and holiday date is <= today
+            if holidays.filter(date=date).exists():
+                status = 'H'
+
+            # Check if employee has approved leave on this date
+            if leaves.filter(employee=employee, from_date__lte=date, till_date__gte=date).exists():
+                status = 'L'
+
+            # Check if manual attendance record exists
+            attendance_record = Attendance.objects.filter(employee=employee, date=date).first()
+            if attendance_record:
+                status = attendance_record.get_status_display()
+
+            attendance_data[employee.id][date] = status
+
+    # Prepare table_rows for template
+    table_rows = []
+    for employee in employees:
+        statuses = []
+        for day in range(1, days_in_month + 1):
+            date = datetime(year, month, day).date()
+            statuses.append(attendance_data[employee.id].get(date, '-'))
+        table_rows.append({'employee': employee, 'statuses': statuses})
+
+    context = {
+        'employees': employees,
+        'attendance_data': attendance_data,
+        'month': month,
+        'year': year,
+        'days_in_month': range(1, days_in_month + 1),
+        'table_rows': table_rows,
+    }
+    return render(request, 'attendance_overview.html', context)
+
+@login_required
+def mark_absent(request):
+    if request.session.get('role') != 'HR':
+        messages.error(request, "Unauthorized access.")
+        return redirect('attendance_overview')
+
+    if request.method == 'POST':
+        employee_id = request.POST.get('employee_id')
+        date_str = request.POST.get('date')
+        try:
+            date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            employee = AddEmployee.objects.get(id=employee_id)
+        except (ValueError, AddEmployee.DoesNotExist):
+            messages.error(request, "Invalid data.")
+            return redirect('attendance_overview')
+
+        # Create or update attendance record as Absent
+        attendance_record, created = Attendance.objects.update_or_create(
+            employee=employee,
+            date=date,
+            defaults={'status': 'A'}
+        )
+        messages.success(request, f"Marked {employee.full_name} as absent on {date}.")
+        return redirect('attendance_overview')
+
+    # For GET request, show form to mark absent
+    employees = AddEmployee.objects.filter(is_active=True).order_by('full_name')
+    context = {
+        'employees': employees,
+        'today': timezone.now().date(),
+    }
+    return render(request, 'mark_absent.html', context)
+from datetime import datetime, timedelta
+from django.db.models import Q
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import Attendance, LeaveApplication, Leave_Type, Holiday, AddEmployee
+
+@login_required
+def attendance_overview(request):
+    # Get month and year from request GET params or default to current month/year
+    month = int(request.GET.get('month', timezone.now().month))
+    year = int(request.GET.get('year', timezone.now().year))
+
+    # Get all employees (active and inactive)
+    employees = AddEmployee.objects.all().order_by('full_name')
+
+    # Get holidays effective from their added date onward
+    holidays = Holiday.objects.filter(date__year=year, date__month=month, date__lte=timezone.now().date())
+
+    # Get leaves approved for the month
+    leaves = LeaveApplication.objects.filter(
+        status='Approved',
+        from_date__year=year,
+        from_date__month=month
+    )
+
+    # Prepare attendance data per employee per day
+    days_in_month = (datetime(year, month % 12 + 1, 1) - timedelta(days=1)).day
+    attendance_data = {}
+
+    for employee in employees:
+        attendance_data[employee.id] = {}
+        for day in range(1, days_in_month + 1):
+            date = datetime(year, month, day).date()
+            # Default status is Present
+            status = 'P'
+
+            # Check if date is a holiday and holiday date is <= today
+            if holidays.filter(date=date).exists():
+                status = 'H'
+
+            # Check if employee has approved leave on this date
+            if leaves.filter(employee=employee, from_date__lte=date, till_date__gte=date).exists():
+                status = 'L'
+
+            # Check if manual attendance record exists
+            attendance_record = Attendance.objects.filter(employee=employee, date=date).first()
+            if attendance_record:
+                status = attendance_record.get_status_display()
+
+            attendance_data[employee.id][date] = status
+
+    context = {
+        'employees': employees,
+        'attendance_data': attendance_data,
+        'month': month,
+        'year': year,
+        'days_in_month': range(1, days_in_month + 1),
+    }
+    return render(request, 'attendance_overview.html', context)
+
+@login_required
+def mark_absent(request):
+    if request.session.get('role') != 'HR':
+        messages.error(request, "Unauthorized access.")
+        return redirect('attendance_overview')
+
+    if request.method == 'POST':
+        employee_id = request.POST.get('employee_id')
+        date_str = request.POST.get('date')
+        try:
+            date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            employee = AddEmployee.objects.get(id=employee_id)
+        except (ValueError, AddEmployee.DoesNotExist):
+            messages.error(request, "Invalid data.")
+            return redirect('attendance_overview')
+
+        # Create or update attendance record as Absent
+        attendance_record, created = Attendance.objects.update_or_create(
+            employee=employee,
+            date=date,
+            defaults={'status': 'A'}
+        )
+        messages.success(request, f"Marked {employee.full_name} as absent on {date}.")
+        return redirect('attendance_overview')
+
+    # For GET request, show form to mark absent
+    employees = AddEmployee.objects.filter(is_active=True).order_by('full_name')
+    context = {
+        'employees': employees,
+        'today': timezone.now().date(),
+    }
+    return render(request, 'mark_absent.html', context)
 
 
 # Helper function (you might have this elsewhere)
@@ -2323,49 +2560,112 @@ def get_employee_profile(user):
         return None
 
 
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 @login_required
+def resignation_status(request):
+    employee_id = request.session.get('employee_id')
+    if not employee_id:
+        messages.error(request, "Session expired. Please log in again.")
+        return redirect('login')
+
+    employee = AddEmployee.objects.get(id=employee_id)
+    exit_request = ExitRequest.objects.filter(employee=employee).order_by('-created_at').first()
+
+    return render(request, 'employee/resignation_status.html', {
+        'employee': employee,
+        'exit_request': exit_request
+    })
+
+from django.utils.dateparse import parse_date
+from dateutil.relativedelta import relativedelta
+
+from .models import ExitRequest
+
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
+
 def apply_resignation(request):
-    employee_profile = get_employee_profile(request.user)
-    if not employee_profile:
-        messages.error(request, "Employee profile not found.")
-        return redirect('index')  # Or appropriate error page
+    employee_id = request.session.get('employee_id')
+    if not employee_id:
+        messages.error(request, "Session expired. Please log in again.")
+        return redirect('login')
 
-    # Check if already resigned
-    existing_request = ExitRequest.objects.filter(employee=employee_profile).exclude(
-        status__in=['WITHDRAWN', 'REJECTED_BY_HR', 'REJECTED_BY_RM']).first()
-    if existing_request:
-        messages.info(request,
-                      f"You already have an active exit request (Status: {existing_request.get_status_display()}).")
-        return redirect('view_my_exit_request')
+    employee = get_object_or_404(AddEmployee, id=employee_id)
 
-    # Calculate expected LWD for display
-    apply_date = timezone.now().date()
-    notice_period = employee_profile.exit_requests.model()._meta.get_field(
-        'notice_period_months').default  # Get default
-    # You could also have notice_period per employee or role
-    expected_lwd = apply_date + relativedelta(months=+notice_period)
+    # Prevent duplicate requests
+    if ExitRequest.objects.filter(employee=employee, status='PENDING_RM_APPROVAL').exists():
+        messages.warning(request, "You have already submitted a resignation request.")
+        return redirect('resignation_status')
+    elif ExitRequest.objects.filter(employee=employee, status='Approved').exists():
+        messages.warning(request, "You Resignation is already Confirmed.")
+        return redirect('resignation_status')
 
     if request.method == 'POST':
-        form = ResignationApplyForm(request.POST)
-        if form.is_valid():
-            exit_req = form.save(commit=False)
-            exit_req.employee = employee_profile
-            exit_req.resignation_apply_date = apply_date  # Ensure it's today
-            # The save method of ExitRequest will calculate expected_last_working_day
-            exit_req.save()
-            messages.success(request, "Your resignation request has been submitted.")
-            # TODO: Notify reporting manager
-            return redirect('view_my_exit_request')
-    else:
-        form = ResignationApplyForm(initial={'resignation_apply_date': apply_date})
+        print("POST received")  # Debug
+        step = request.POST.get('resignation_submit_step')
+        print("Step:", step)  # Debug
 
-    context = {
-        'form': form,
-        'expected_lwd': expected_lwd,
-        'notice_period': notice_period,
-        'content_title': 'Apply for Resignation',  # For your AdminLTE template
-    }
-    return render(request, 'employee/apply_resignation.html', context)
+        if step == 'send_email':
+            # Final submit: Save and send email
+            resignation_apply_date = timezone.now().date()
+            reason = request.POST.get('reason')
+            subject = request.POST.get('subject')
+            message_body = request.POST.get('message')
+            selected_elsewhere = request.POST.get('selected_elsewhere') == 'yes'
+            bond_over = request.POST.get('bond_over') == 'yes'
+            advance_salary = request.POST.get('advance_salary') == 'yes'
+            any_dues = request.POST.get('any_dues') == 'yes'
+            to_email = request.POST.get('to')
+            cc = request.POST.get('cc')
+            bcc = request.POST.get('bcc')
+            #Validate email
+            if not to_email or not subject or not message_body:
+                messages.error(request, "To, Subject, and Message fields are required.")
+                return redirect('resignation_status')
+
+            exit_request = ExitRequest.objects.create(
+                employee=employee,
+                resignation_apply_date=resignation_apply_date,
+                reason_for_resignation=reason,
+                selected_elsewhere=selected_elsewhere,
+                bond_over=bond_over,
+                advance_salary=advance_salary,
+                any_dues=any_dues,
+                status='PENDING_RM_APPROVAL',
+                company_assets_returned=False,
+                email_subject=subject
+            )
+
+            email = EmailMessage(
+                subject=subject,
+                body=message_body,
+                from_email=employee.email,
+                to=[to_email],
+                cc=[cc] if cc else [],
+                bcc=[bcc] if bcc else [],
+            )
+            email.content_subtype = "html"
+            email.send()
+
+            messages.success(request, "Resignation request submitted and email sent.")
+            return redirect('resignation_status')
+
+        elif step == 'show_email_form':
+            # Intermediate step: show email form with pre-filled data
+            context = {
+                'employee': employee,
+                'reason': request.POST.get('reason'),
+                'resignation_apply_date': request.POST.get('resignation_apply_date'),
+                'last_working_date': request.POST.get('last_working_date'),
+                'selected_elsewhere': request.POST.get('selected_elsewhere'),
+                'bond_over': request.POST.get('bond_over'),
+                'advance_salary': request.POST.get('advance_salary'),
+                'any_dues': request.POST.get('any_dues'),
+            }
+            return render(request, 'employee/resignation_email_form.html', context)
+
+    return render(request, 'employee/apply_resignation.html', {'employee': employee})
 
 
 @login_required
@@ -2410,27 +2710,27 @@ def withdraw_resignation(request, request_id):
 # --- Views for Reporting Manager ---
 @login_required
 def manage_exit_requests_rm(request):
-    # Assuming user is a reporting manager. Implement role/permission check.
-    # For example, if the user themselves is an employee with a 'Manager' role.
-    manager_profile = get_employee_profile(request.user)
-    if not manager_profile or manager_profile.role.name != 'Manager':  # Example role check
-        messages.error(request, "You are not authorized to view this page.")
-        return redirect('index')
+    """
+       Displays a list of all exit requests for the employees
+       reporting to the currently logged-in manager.
+       """
+    # Get the current logged-in user, who is the manager
+    manager = request.user
+    print(request.session.get('employee_id'))
+    # Fetch all exit requests for employees who report to this manager
+    # The lookup `employee__reporting_manager` traverses the foreign key relationship
+    team_requests = ExitRequest.objects.filter(employee__reporting_manager_id=request.session.get('employee_id')).select_related('employee')
 
-    # Get requests for employees reporting to this manager
-    # This requires AddEmployee.reporting_manager to be set to request.user
-    pending_requests = ExitRequest.objects.filter(
-        employee__reporting_manager=request.user,
-        status='PENDING_RM_APPROVAL'
-    )
-    other_requests = ExitRequest.objects.filter(
-        employee__reporting_manager=request.user
-    ).exclude(status='PENDING_RM_APPROVAL')
+    # Separate requests that need the manager's immediate attention
+    pending_requests = team_requests.filter(status='PENDING_RM_APPROVAL')
+
+    # Get all other requests (approved, rejected, etc.)
+    other_requests = team_requests.exclude(status='PENDING_RM_APPROVAL')
 
     context = {
         'pending_requests': pending_requests,
         'other_requests': other_requests,
-        'content_title': 'Manage Team Exit Requests',
+        'content_title': 'Team Exit Requests'  # For the breadcrumb/title
     }
     return render(request, 'employee/manage_exit_requests_rm.html', context)
 
@@ -2469,13 +2769,108 @@ def approve_reject_exit_rm(request, request_id):
     }
     return render(request, 'employee/approve_reject_exit_form.html', context)  # Generic form template
 
+from django.contrib.auth.decorators import login_required
 
+
+from .models import ExitRequest, ExitActivityLog, AddEmployee # Make sure to import your models
+
+@login_required
+def resignation_approval_view(request, request_id):
+    """
+    View for a Reporting Manager to review and FORWARD or REJECT a resignation request.
+    """
+    exit_request = get_object_or_404(ExitRequest, id=request_id)
+
+    # Permission Check (your existing logic is good)
+    manager_profile = get_employee_profile(request.user)
+    if not manager_profile or manager_profile.id != exit_request.employee.reporting_manager_id:
+        messages.error(request, "You do not have permission to process this request.")
+        return redirect('index')
+
+    # Manager can only act on requests pending their approval
+    if exit_request.status != 'PENDING_RM_APPROVAL':
+        messages.info(request, "This request is not awaiting your action.")
+         # Or wherever managers see their list
+
+    form = ExitApprovalFormRM(request.POST or None, instance=exit_request)
+
+    if request.method == 'POST':
+        if 'approve' in request.POST and form.is_valid():
+            exit_req = form.save(commit=False)
+            exit_req.status = 'PENDING_HR_APPROVAL'
+            exit_req.reporting_manager_approved_at = timezone.now()
+            exit_req.save()
+            exit_request.status = 'PENDING_HR_APPROVAL'
+            exit_request.save()
+
+            # Log the approval action
+            ExitActivityLog.objects.create(
+                exit_request=exit_request,
+                actor=request.user,
+                action=f"Resignation approved by {request.user.get_full_name()}"
+            )
+
+            # TODO: Send email notifications to HR and the employee
+            messages.success(request, f"Resignation for {exit_request.employee.full_name} has been approved.")
+
+
+        elif 'reject' in request.POST and form.is_valid():
+
+            exit_req = form.save(commit=False)
+
+            exit_req.status = 'REJECTED_BY_RM'
+
+            exit_req.save()
+
+            messages.warning(request, f"Resignation for {exit_req.employee.full_name} has been rejected.")
+
+            exit_request.status = 'REJECTED'
+            exit_request.save()
+
+            # Log the rejection action
+            ExitActivityLog.objects.create(
+                exit_request=exit_request,
+                actor=request.user,
+                action=f"Resignation rejected by {request.user.get_full_name()}"
+            )
+
+            # TODO: Send email notification to the employee
+            messages.warning(request, f"Resignation for {exit_request.employee.full_name} has been rejected.")
+
+        return redirect('resignation_approval', request_id=exit_request.id)
+
+    # Fetch all activity logs for the timeline
+    activity_logs = exit_request.activity_logs.order_by('timestamp')
+
+    context = {
+        'form': form,
+        'exit_request': exit_request,
+        'activity_logs': activity_logs, # Uncomment when you have the model
+        'content_title': 'Exit Approval'
+    }
+    return render(request, 'employee/resignation_approval.html', context)
+
+# modal for changing exit request actual_last_wking_day
+
+def change_last_working_date(request, exit_id):
+    if request.method == 'POST':
+        actual_last_working_day = request.POST.get('actual_last_working_day')
+        if actual_last_working_day:
+            exit_request = get_object_or_404(ExitRequest, id=exit_id)
+            exit_request.actual_last_working_day = actual_last_working_day
+            exit_request.save()
+            messages.success(request, "Actual last working day updated successfully.")
+            print(exit_request.employee.full_name)
+        else:
+            messages.error(request, "Please select a valid date.")
+    print(exit_request.employee.full_name)
+    return redirect('resignation_approval', request_id=exit_request.id)  # Adjust this redirect as needed
 # --- Views for HR ---
 @login_required
 def manage_exit_requests_hr(request):
     # Implement HR role check
     hr_profile = get_employee_profile(request.user)
-    if not hr_profile or hr_profile.role.name != 'HR_Admin':  # Example role name
+    if not hr_profile or hr_profile.role.name != 'HR':  # Example role name
         messages.error(request, "You are not authorized to view this page.")
         return redirect('index')
 
@@ -2490,62 +2885,503 @@ def manage_exit_requests_hr(request):
     return render(request, 'employee/manage_exit_requests_hr.html', context)
 
 
+# in your views.py
+
 @login_required
 def process_exit_request_hr(request, request_id):
-    # Implement HR role check
-    hr_profile = get_employee_profile(request.user)  # For logging/audit if needed
-    if not hr_profile or hr_profile.role.name != 'HR_Admin':
+    """
+    View for HR to give FINAL approval, manage the checklist, and set the last working day.
+    This view's logic is already correct for the new workflow.
+    """
+    hr_profile = get_employee_profile(request.user)
+    if not hr_profile or hr_profile.role.name != 'HR':
         messages.error(request, "Unauthorized.")
         return redirect('index')
 
     exit_request = get_object_or_404(ExitRequest, id=request_id)
 
-    # HR can process requests pending their approval, or view/update checklist for already approved ones
+    # This condition correctly allows HR to act on requests sent from the manager
+    # or to update checklists on already-approved requests.
     if exit_request.status not in ['PENDING_HR_APPROVAL', 'APPROVED']:
-        messages.info(request,
-                      "This request is not in a state that HR can currently process further for approval/rejection.")
-        # Still might allow checklist update below
+        messages.info(request, "This request is not in a state for HR to process.")
 
+    # These forms are correct based on your forms.py
     approval_form = ExitApprovalFormHR(request.POST or None, instance=exit_request, prefix="approval")
     checklist_form = ExitChecklistForm(request.POST or None, instance=exit_request, prefix="checklist")
-    action = request.POST.get("action")  # 'approve_hr', 'reject_hr', or 'update_checklist'
+    action = request.POST.get("action")
 
     if request.method == 'POST':
+        # This block correctly handles the final approval step
         if action == "approve_hr" and approval_form.is_valid() and exit_request.status == 'PENDING_HR_APPROVAL':
             exit_req = approval_form.save(commit=False)
-            exit_req.status = 'APPROVED'
+            exit_req.status = 'APPROVED'  # This is the FINAL approved status.
             exit_req.hr_approved_at = timezone.now()
-            exit_req.save()
-            # If actual_last_working_day was updated via form, it's saved.
-            messages.success(request, f"Exit request for {exit_req.employee.full_name} has been approved.")
-            # TODO: Notify employee
+            exit_req.save()  # Saves hr_remarks and actual_last_working_day from the form
+            messages.success(request, f"Exit request for {exit_req.employee.full_name} has been finally approved.")
             return redirect('manage_exit_requests_hr')
 
+        # Other actions (reject, update checklist) remain the same and are correct.
         elif action == "reject_hr" and approval_form.is_valid() and exit_request.status == 'PENDING_HR_APPROVAL':
             exit_req = approval_form.save(commit=False)
             exit_req.status = 'REJECTED_BY_HR'
             exit_req.save()
             messages.warning(request, f"Exit request for {exit_req.employee.full_name} has been rejected by HR.")
-            # TODO: Notify employee
             return redirect('manage_exit_requests_hr')
 
         elif action == "update_checklist" and checklist_form.is_valid():
             checklist_form.save()
             messages.success(request, f"Exit checklist for {exit_request.employee.full_name} updated.")
-            # Stay on the same page or redirect
             return redirect('process_exit_request_hr', request_id=exit_request.id)
-        else:
-            # Handle invalid forms if specific actions were intended
-            if action in ["approve_hr", "reject_hr"] and not approval_form.is_valid():
-                messages.error(request, "Please correct the errors in the approval section.")
-            if action == "update_checklist" and not checklist_form.is_valid():
-                messages.error(request, "Please correct the errors in the checklist section.")
+
+        # ... error handling ...
 
     context = {
         'approval_form': approval_form,
         'checklist_form': checklist_form,
         'exit_request': exit_request,
         'content_title': f'Process Exit: {exit_request.employee.full_name}',
-        'can_approve_reject': exit_request.status == 'PENDING_HR_APPROVAL',  # For template logic
+        'can_approve_reject': exit_request.status == 'PENDING_HR_APPROVAL',
     }
     return render(request, 'employee/process_exit_request_hr.html', context)
+
+from .models import CalendarEvent
+import json
+@login_required
+def calendar_view(request): # Assuming 'calendar' is the name of your calendar page URL
+    # You can pass initial events here if needed, but we'll load them via AJAX
+    return render(request, 'calendar.html') # Replace with your actual template name
+
+@login_required
+def get_events(request):
+    events = CalendarEvent.objects.filter(user=request.user)
+    event_list = []
+    for event in events:
+        event_list.append({
+            'id': event.id,
+            'title': event.title,
+            'start': event.start.isoformat(),
+            'end': event.end.isoformat() if event.end else None,
+            'allDay': event.all_day,
+            'color': event.color,
+            'description': event.description or ''
+        })
+    return JsonResponse(event_list, safe=False)
+
+@login_required
+@csrf_exempt # Ensure you understand CSRF implications for production
+def add_event(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            title = data.get('title')
+            start_str = data.get('start')
+            end_str = data.get('end')
+            all_day = data.get('allDay', False)
+            color = data.get('color', '#3c8dbc') # Default color
+
+            # Basic validation
+            if not title or not start_str:
+                return JsonResponse({'status': 'error', 'message': 'Title and start date are required.'}, status=400)
+
+            # Parse dates
+            # FullCalendar might send ISO 8601 strings or just date for allDay events
+            try:
+                start_dt = datetime.fromisoformat(start_str.replace('Z', '+00:00')) # Handle 'Z' for UTC
+                end_dt = datetime.fromisoformat(end_str.replace('Z', '+00:00')) if end_str else None
+            except ValueError:
+                 return JsonResponse({'status': 'error', 'message': 'Invalid date format.'}, status=400)
+
+
+            event = CalendarEvent.objects.create(
+                user=request.user,
+                title=title,
+                start=start_dt,
+                end=end_dt,
+                all_day=all_day,
+                color=color
+            )
+            return JsonResponse({'status': 'success', 'event_id': event.id, 'message': 'Event added successfully'})
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid JSON data.'}, status=400)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
+
+@login_required
+@csrf_exempt # Ensure you understand CSRF implications for production
+def update_event(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            event_id = data.get('id')
+            start_str = data.get('start')
+            end_str = data.get('end')
+            all_day = data.get('allDay', False) # FullCalendar might send this if allDay status changes
+
+            event = CalendarEvent.objects.get(id=event_id, user=request.user)
+
+            if start_str:
+                event.start = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
+            if end_str:
+                event.end = datetime.fromisoformat(end_str.replace('Z', '+00:00'))
+            else: # If end is not provided, it might mean it's an all-day event or it was cleared
+                event.end = None
+
+            event.all_day = all_day
+            # You might also want to update title or color if your UI allows it during update
+            # event.title = data.get('title', event.title)
+            # event.color = data.get('color', event.color)
+
+            event.save()
+            return JsonResponse({'status': 'success', 'message': 'Event updated successfully'})
+        except CalendarEvent.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Event not found.'}, status=404)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
+
+
+@login_required
+@csrf_exempt # Ensure you understand CSRF implications for production
+def delete_event(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            event_id = data.get('id')
+            event = CalendarEvent.objects.get(id=event_id, user=request.user)
+            event.delete()
+            return JsonResponse({'status': 'success', 'message': 'Event deleted successfully'})
+        except CalendarEvent.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Event not found.'}, status=404)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
+
+from calendar import month_name
+
+@property
+def month_year_display(self):
+    return f"{month_name[self.month]} {self.year}"
+
+
+@login_required
+def salary_details_view(request):
+    now = datetime.now()
+    current_month = now.month
+    current_year = now.year
+
+    salary_data = SalaryData.objects.filter(month=current_month, year=current_year)
+
+    context = {
+        'salary_data': salary_data,
+        'month_year_display': now.strftime('%B %Y'),
+    }
+    return render(request, 'salary_details.html', context)
+    # return HttpResponse("<h1>Salary Details Page</h1><p>This page will show employee salary information.</p>")
+
+# @login_required
+from django.shortcuts import render
+
+from django.shortcuts import render
+from django.db.models import Sum
+from .models import SalaryData
+from django.shortcuts import render
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
+from django.contrib import messages
+from .models import SalaryData
+from django.db.models import Sum
+import tempfile
+from weasyprint import HTML
+def send_monthly_report_email(payroll_data):
+    subject = "May 2025 Payroll Summary"
+    to_email = "kataranischal@gmail.com"  # Update to the head's email
+    html_content = render_to_string('emails/monthly_report_email.html', {
+        'payroll_data': payroll_data,
+        'month_year_display': 'May, 2025 Payroll'
+    })
+
+    email = EmailMessage(subject, html_content, to=[to_email])
+    email.content_subtype = "html"
+    email.send()
+
+
+def send_monthly_report_pdf(payroll_data):
+    subject = "May 2025 Payroll PDF"
+    to_email = "kataranischal@gmail.com"  # Update as needed
+
+    # Render HTML for PDF
+    html_string = render_to_string('emails/monthly_report_pdf.html', {
+        'payroll_data': payroll_data,
+        'month_year_display': 'May, 2025 Payroll'
+    })
+
+    # Generate PDF using WeasyPrint
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as pdf_file:
+        HTML(string=html_string).write_pdf(pdf_file.name)
+        pdf_file.seek(0)
+        email = EmailMessage(subject, "Attached is the payroll PDF for May 2025.", to=[to_email])
+        email.attach('May_2025_Payroll.pdf', pdf_file.read(), 'application/pdf')
+        email.send()
+
+
+
+
+def monthly_payroll_data_view(request):
+
+    from datetime import datetime
+    now = datetime.now()
+    month = request.GET.get('month', f"{now.year}-{now.month:02d}")
+
+    try:
+        year, month = map(int, month.split('-'))
+    except ValueError:
+        year, month = now.year, now.month
+
+    # Query salary data
+    payroll_data = SalaryData.objects.filter(month=month, year=year)
+
+    # Aggregated totals
+    totals = payroll_data.aggregate(
+        total_basic=Sum('basic_salary'),
+        total_hra=Sum('hra'),
+        total_da=Sum('da'),
+        total_salary=Sum('total_salary'),
+        total_present=Sum('present_days'),
+        total_paid_leave=Sum('paid_leaves'),
+        total_unpaid_leave=Sum('unpaid_leaves'),
+        total_incentive=Sum('project_incentive'),
+        total_variable=Sum('variable_pay'),
+        total_esi=Sum('esi'),
+        total_pf=Sum('pf'),
+        total_tds=Sum('tds'),
+    )
+    print(payroll_data)
+    if request.method == "POST":
+        if 'send_report_email' in request.POST:
+            send_monthly_report_email(payroll_data)
+            messages.success(request, "Monthly report sent to Head via email.")
+        elif 'send_pdf_email' in request.POST:
+            send_monthly_report_pdf(payroll_data)
+            messages.success(request, "Monthly PDF payroll sent via email.")
+    context = {
+        'payroll_data': payroll_data,
+        'totals': totals,
+        'month_year_display': datetime(year, month, 1).strftime('%B, %Y'),
+        'selected_month': f"{year}-{month:02d}",
+        'page_title': 'Monthly Payroll'
+    }
+
+    return render(request, 'monthly_payroll_data.html', context)
+
+
+# @login_required
+def payroll_settings_main_view(request):
+    # Your logic for main payroll settings (distinct from the one in Configuration if needed)
+    return HttpResponse("<h1>Payroll Settings Page (Main)</h1><p>This page will allow configuration of payroll settings.</p>")
+
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from decimal import Decimal, InvalidOperation
+from .models import SalaryData, AddEmployee  # adjust import path if needed
+import csv
+import io
+
+@login_required
+def upload_salary_csv_view(request):
+    if request.method == 'POST':
+        csv_file = request.FILES.get('csv_file')
+        month_year_str = request.POST.get('payroll_month')  # updated field name
+
+        if not csv_file:
+            messages.error(request, "No CSV file selected.")
+            return redirect('upload_salary_csv')
+
+        if not csv_file.name.endswith('.csv'):
+            messages.error(request, "Invalid file type. Please upload a .csv file.")
+            return redirect('upload_salary_csv')
+
+        if csv_file.size > 100 * 1024:
+            messages.error(request, "File size exceeds 100KB limit.")
+            return redirect('upload_salary_csv')
+
+        if not month_year_str:
+            messages.error(request, "Month and Year not selected.")
+            return redirect('upload_salary_csv')
+
+        try:
+            year_str, month_str = month_year_str.split('-')
+            year = int(year_str)
+            month = int(month_str)
+        except ValueError:
+            messages.error(request, "Invalid Month/Year format.")
+            return redirect('upload_salary_csv')
+
+        try:
+            decoded_file = csv_file.read().decode('utf-8-sig')
+            io_string = io.StringIO(decoded_file)
+            reader = csv.reader(io_string)
+            header = next(reader, None)
+
+            records_processed = 0
+            errors_in_rows = []
+
+            for row_number, row in enumerate(reader, start=2):
+                if not any(field.strip() for field in row):
+                    continue
+
+                try:
+                    (
+                        employee_name, employee_email,
+                        basic_salary_str, hra_str, da_str,
+                        present_days_str, paid_leaves_str, unpaid_leaves_str,
+                        project_incentive_str, variable_pay_str,
+                        esi_str, pf_str, tds_str
+                    ) = [field.strip() for field in row[:13]]
+
+                    # Find employee by email
+                    try:
+                        employee = AddEmployee.objects.get(email=employee_email)
+                    except AddEmployee.DoesNotExist:
+                        errors_in_rows.append(f"Row {row_number}: Employee with email '{employee_email}' not found.")
+                        continue
+                    except AddEmployee.MultipleObjectsReturned:
+                        errors_in_rows.append(f"Row {row_number}: Multiple employees found with email '{employee_email}'.")
+                        continue
+
+                    payslip_code = f"{employee.id}-{year:04d}{month:02d}"
+
+                    SalaryData.objects.update_or_create(
+                        employee_identifier=employee,
+                        month=month,
+                        year=year,
+                        defaults={
+                            'payslip_code': payslip_code,
+                            'basic_salary': Decimal(basic_salary_str or 0),
+                            'hra': Decimal(hra_str or 0),
+                            'da': Decimal(da_str or 0),
+                            'total_salary': (
+                                Decimal(basic_salary_str or 0) +
+                                Decimal(hra_str or 0) +
+                                Decimal(da_str or 0)
+                            ),
+                            'present_days': int(present_days_str or 0),
+                            'paid_leaves': int(paid_leaves_str or 0),
+                            'unpaid_leaves': int(unpaid_leaves_str or 0),
+                            'project_incentive': Decimal(project_incentive_str or 0),
+                            'variable_pay': Decimal(variable_pay_str or 0),
+                            'esi': Decimal(esi_str or 0),
+                            'pf': Decimal(pf_str or 0),
+                            'tds': Decimal(tds_str or 0),
+                        }
+                    )
+
+                    records_processed += 1
+
+                except (ValueError, InvalidOperation) as e:
+                    errors_in_rows.append(f"Row {row_number}: Invalid data format - {str(e)}")
+                except Exception as e:
+                    errors_in_rows.append(f"Row {row_number}: Unexpected error - {str(e)}")
+
+            if errors_in_rows:
+                for error in errors_in_rows:
+                    messages.warning(request, error)
+                messages.error(request, f"{records_processed} rows processed with some errors.")
+            elif records_processed == 0:
+                messages.warning(request, "No valid records found.")
+            else:
+                messages.success(request, f"{records_processed} salary records processed successfully.")
+
+            return redirect('upload_salary_csv')
+
+        except UnicodeDecodeError:
+            messages.error(request, "CSV decoding failed. Please use UTF-8 encoding.")
+        except csv.Error as e:
+            messages.error(request, f"CSV reading error: {str(e)}")
+        except Exception as e:
+            messages.error(request, f"Unexpected error: {str(e)}")
+
+        return redirect('upload_salary_csv')
+
+    return render(request, 'upload_salary_csv.html', {'page_title': 'Upload Salary CSV'})
+
+# --- Views for existing items in Configuration (if they are different from the new ones) ---
+# If 'payroll_setting' and 'employee_salary' from the Configuration menu point to
+# DIFFERENT pages than the new 'Employee Salary' dropdown items, you'll have separate views.
+# If they are meant to be the SAME, then you'd reuse the views above and ensure the
+# URL names match in the template.
+
+# For example, if the 'payroll_setting' in "Configuration" is different:
+# @login_required
+def configuration_payroll_setting_view(request):
+    return HttpResponse("<h1>Payroll Setting Page (from Configuration)</h1>")
+
+# If the 'employee_salary' in "Configuration" is different:
+# @login_required
+def configuration_employee_salary_view(request):
+    return HttpResponse("<h1>Employee Salary Page (from Configuration)</h1>")
+
+
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
+from weasyprint import HTML
+from .models import SalaryData
+
+def download_payslip_pdf(request, record_id):
+    record = get_object_or_404(SalaryData, id=record_id)
+    logo_url = request.build_absolute_uri('/static/img/logo1.png')
+    html_string = render_to_string('payslip_template.html', {
+        'record': record,
+        'logo_url': logo_url,
+    })
+    html = HTML(string=html_string)
+    pdf = html.write_pdf()
+
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename=payslip_{record.employee_identifier}.pdf'
+    return response
+
+
+from django.core.mail import EmailMessage
+from django.shortcuts import get_object_or_404, redirect
+from django.template.loader import render_to_string
+from weasyprint import HTML
+from django.contrib import messages
+from .models import SalaryData
+
+def email_payslip(request, record_id):
+    if request.method == 'POST':
+        record = get_object_or_404(SalaryData, id=record_id)
+        html_string = render_to_string('payslip_template.html', {'record': record})
+        pdf = HTML(string=html_string).write_pdf()
+
+        employee_email = record.employee_identifier.email  # assuming this exists in AddEmployee
+        employee_name = record.employee_identifier.full_name
+        month_year = record.month_year_display  # this should be a @property
+
+        email = EmailMessage(
+            subject=f"Payslip for {month_year}",
+            body="Please find your attached payslip.",
+            from_email="hr@yourcompany.com",
+            to=[employee_email],
+        )
+        email.attach(f"Payslip_{employee_name}.pdf", pdf, 'application/pdf')
+        email.send()
+
+        messages.success(request, f"Payslip sent to {employee_email}")
+        return redirect('salary_details_view')  # or your actual payroll URL name
+
+@login_required
+@login_required
+def employee_payslip_list_by_id(request, employee_id):
+    employee = get_object_or_404(AddEmployee, id=employee_id)
+    payslip_records = SalaryData.objects.filter(employee_identifier=employee).order_by('-year', '-month')
+
+    context = {
+        'employee': employee,
+        'payslip_records': payslip_records,
+    }
+    return render(request, 'employee_payslip_list.html', context)
+

@@ -1,0 +1,161 @@
+{% extends "main1.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}Upload Payroll CSV{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+  {% include 'navbar.html' %}
+  {% include 'sidebar.html' %}
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+              <li class="breadcrumb-item active">Upload CSV</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+    {% if messages %}
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        {% for message in messages %}
+            Swal.fire({
+                title: "{{ message.tags|capfirst }}",
+                text: "{{ message|escapejs }}",
+                icon: "{{ message.tags }}",
+                confirmButtonText: "OK",
+                confirmButtonColor: "{% if message.tags == 'success' %}#28a745{% else %}#dc3545{% endif %}"
+            });
+        {% endfor %}
+    });
+</script>
+
+
+{% endif %}
+
+    <section class="content">
+      <div class="container-fluid">
+        <div class="card shadow">
+          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">Payroll Data Import</h3>
+
+          </div>
+          <div class="card-body">
+            <form id="csvUploadForm" action="{% url 'upload_salary_csv' %}" method="post" enctype="multipart/form-data">
+              {% csrf_token %}
+              <div class="form-group">
+                <label for="month"><strong>Month:</strong></label>
+                <input type="month" name="payroll_month" required class="form-control" style="max-width: 200px;">
+              </div>
+              <!-- File Upload -->
+              <div class="form-group mt-2">
+                <label for="csv_file">
+                  <strong>Upload CSV File</strong>
+                  <small class="text-danger d-block mt-1">(Only .csv format, file size must be under 100KB)</small>
+                </label>
+                <input type="file" class="form-control border border-secondary" id="csv_file" name="csv_file" accept=".csv" required>
+                <p id="fileNamePreview" class="text-muted mt-2"></p>
+              </div>
+
+              <!-- Sample CSV Download -->
+              <div class="alert alert-info mt-4" style="max-width: 500px;">
+                <strong>Need help?</strong>
+                <br>
+                <a class="btn btn-sm btn-outline-primary mt-2" href="{% static 'sample_csv\sample_file.csv' %}" download>
+                  <i class="fas fa-download mr-1"></i> Download Sample CSV for Bulk Data
+                </a>
+              </div>
+
+              <!-- Submit Button + Progress -->
+              <div class="mt-4">
+                <button type="submit" id="submitBtn" class="btn btn-success px-4 py-2" disabled>
+                  <i class="fas fa-upload mr-1"></i> Upload CSV
+                </button>
+
+                <!-- Progress Bar -->
+                <div class="progress mt-3 d-none" id="uploadProgress" style="max-width: 400px;">
+                  <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                       role="progressbar" style="width: 100%">Uploading...</div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  {% include 'footer.html' %}
+</div>
+
+<!-- JavaScript for validation, preview, and progress -->
+<script>
+const form = document.getElementById("csvUploadForm");
+const fileInput = document.getElementById("csv_file");
+const submitBtn = document.getElementById("submitBtn");
+const progressBar = document.getElementById("uploadProgress");
+const fileNamePreview = document.getElementById("fileNamePreview");
+
+// Enable/disable submit based on file input
+fileInput.addEventListener("change", function () {
+  const file = this.files[0];
+
+  if (!file) {
+    submitBtn.disabled = true;
+    fileNamePreview.textContent = "";
+    return;
+  }
+
+  const fileName = file.name;
+  const extension = fileName.split('.').pop().toLowerCase();
+
+  if (extension !== "csv") {
+    alert("Only .csv files are allowed.");
+    this.value = "";  // reset input
+    submitBtn.disabled = true;
+    fileNamePreview.textContent = "";
+    return;
+  }
+
+  // Show preview name
+  fileNamePreview.textContent = "Selected file: " + fileName;
+
+  // Enable submit if valid file
+  submitBtn.disabled = false;
+});
+
+// Form submission handler
+form.addEventListener("submit", function (e) {
+  const file = fileInput.files[0];
+  const maxSizeKB = 100;
+
+  if (!file) {
+    alert("Please select a file.");
+    e.preventDefault();
+    return;
+  }
+
+  if (file.size > maxSizeKB * 1024) {
+    alert("File size exceeds 100 KB.");
+    e.preventDefault();
+    return;
+  }
+
+  // Show progress bar, disable button
+  progressBar.classList.remove("d-none");
+  submitBtn.disabled = true;
+});
+
+// Auto-hide progress bar after load (redirect or reload)
+window.addEventListener("load", () => {
+  progressBar.classList.add("d-none");
+});
+</script>
+{% endblock %}

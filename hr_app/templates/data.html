@@ -37,9 +37,14 @@
             <div class="card">
               <div class="card-header d-flex justify-content-between align-items-center">
   <h2 class="mb-0"><i class="fas fa-users icon"></i> Employee List</h2>
-  <a href="{% url 'add_employees' %}" class="btn btn-success">
+  <div class="card-header d-flex justify-content-between align-items-center" style ="margin-left : auto ;">
+  <a href="{% url 'inactive_employees' %}" class="btn btn-success" id="btn_add_emp">
+    <i class="fas fa-users "></i> Inactive Employee
+  </a>
+  <a href="{% url 'add_employees' %}" class="btn btn-success" id="btn_add_emp" style="margin-left : 10px;">
     <i class="fas fa-user-plus"></i> Add Employee
   </a>
+  </div>
 </div>
 
 {% if messages %}

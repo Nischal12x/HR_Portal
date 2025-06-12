@@ -123,16 +123,20 @@ class ResignationApplyForm(forms.ModelForm):
         widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control', 'readonly': 'readonly'}),
         initial=timezone.now().date()
     )
-    # expected_last_working_day will be calculated and shown in the template, not directly editable here.
 
     class Meta:
         model = ExitRequest
-        fields = ['resignation_apply_date', 'reason_for_resignation']
+        fields = ['resignation_apply_date', 'reason_for_resignation', 'selected_elsewhere', 'bond_over', 'advance_salary', 'any_dues']
         widgets = {
-            'reason_for_resignation': forms.Textarea(attrs={'rows': 4, 'class': 'form-control', 'placeholder': 'Please state your reason for resignation.'}),
+            'reason_for_resignation': forms.Textarea(attrs={'rows': 5, 'class': 'form-control', 'placeholder': 'Please state your reason for resignation.'}),
         }
 
 class ExitChecklistForm(forms.ModelForm):
+    """
+    Form for HR to manage the offboarding checklist items.
+    This will be the 'checklist_form' in your HR view.
+    CORRECTED: Removed 'actual_last_working_day' to avoid redundancy.
+    """
     class Meta:
         model = ExitRequest
         fields = [
@@ -140,30 +144,46 @@ class ExitChecklistForm(forms.ModelForm):
             'knowledge_transfer_complete',
             'final_settlement_processed',
             'exit_interview_conducted',
-            'actual_last_working_day', # Allow HR/RM to adjust this
-            # Add other checklist fields here
         ]
+        # Using CheckboxInput for a cleaner UI
         widgets = {
-            'actual_last_working_day': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'company_assets_returned': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'knowledge_transfer_complete': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'final_settlement_processed': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'exit_interview_conducted': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
-        # To make BooleanFields render as Yes/No select or better checkboxes with AdminLTE:
-        # You might need to customize widget rendering or use a third-party library like django-widget-tweaks
-        # For simplicity, default checkbox rendering is assumed here.
 
-class ExitApprovalFormRM(forms.ModelForm): # For Reporting Manager
+class ExitApprovalFormRM(forms.ModelForm):
     class Meta:
         model = ExitRequest
         fields = ['reporting_manager_remarks']
         widgets = {
-            'reporting_manager_remarks': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'reporting_manager_remarks': forms.Textarea(attrs={'rows': 4, 'class': 'form-control', 'placeholder': 'Provide remarks for HR (optional)...'}),
         }
 
-class ExitApprovalFormHR(forms.ModelForm): # For HR
+
+class ExitApprovalFormHR(forms.ModelForm):
+    """
+    Form for HR's main approval action: setting remarks and final LWD.
+    This will be the 'approval_form' in your HR view.
+    """
+
     class Meta:
         model = ExitRequest
-        fields = ['hr_remarks', 'actual_last_working_day'] # HR can also set final LWD
+        fields = ['hr_remarks', 'actual_last_working_day']
         widgets = {
-            'hr_remarks': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'hr_remarks': forms.Textarea(
+                attrs={'rows': 4, 'class': 'form-control', 'placeholder': 'Add final HR remarks...'}),
             'actual_last_working_day': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
         }
+        labels = {
+            'actual_last_working_day': 'Actual Last Working Day',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make the date optional as it can be set later
+        self.fields['actual_last_working_day'].required = False
+
+
 

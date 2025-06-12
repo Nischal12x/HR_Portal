@@ -1,0 +1,125 @@
+<<<<<<<
+    /* initialize the external events
+     -----------------------------------------------------------------*/
+    function ini_events(ele) {
+      ele.each(function () {
+        var eventObject = {
+          title: $.trim($(this).text()),
+          color: $(this).css('background-color'), // Store color
+          stick: true // Keep event data when navigating
+        };
+        $(this).data('eventObject', eventObject);
+        $(this).draggable({
+          zIndex: 1070,
+          revert: true,
+          revertDuration: 0
+        });
+      });
+    }
+
+    // Initial call for any pre-existing external events (if you decide to load some statically)
+    // ini_events($('#external-events div.external-event'));
+=======
+    
+>>>>>>> 
+```
+
+```
+<<<<<<<
+    new Draggable(containerEl, {
+      itemSelector: '.external-event',
+      eventData: function(eventEl) {
+        // This function is called when a draggable item is about to be dropped
+        // We will create the event on the server in the 'eventReceive' callback
+        return {
+          title: eventEl.innerText,
+          backgroundColor: $(eventEl).css('background-color'),
+          borderColor: $(eventEl).css('background-color'),
+          textColor: $(eventEl).css('color') || '#ffffff', // Ensure text color contrasts
+          // We don't set start/end here, FullCalendar does it upon drop
+        };
+      }
+    });
+=======
+    var draggable = new Draggable(containerEl, {
+      itemSelector: '.external-event',
+      eventData: function(eventEl) {
+        // This function is called when a draggable item is about to be dropped
+        // We will create the event on the server in the 'eventReceive' callback
+        return {
+          title: eventEl.innerText,
+          backgroundColor: $(eventEl).css('background-color'),
+          borderColor: $(eventEl).css('background-color'),
+          textColor: $(eventEl).css('color') || '#ffffff', // Ensure text color contrasts
+          // We don't set start/end here, FullCalendar does it upon drop
+        };
+      }
+    });
+>>>>>>> 
+```
+
+```
+<<<<<<<
+    $('#add-new-event-button').click(function (e) {
+      e.preventDefault();
+      var val = $('#new-event-title').val();
+      var color = $('#new-event-color').val();
+      if (val.length == 0) {
+        Swal.fire('Oops...', 'Please enter a title for the task!', 'warning');
+        return;
+      }
+
+      var event = $('<div />');
+      event.css({
+        'background-color': color,
+        'border-color': color,
+        'color': (color === '#ffc107' || color === '#ffffff') ? '#000000' : '#ffffff', // Basic contrast
+        'padding': '5px',
+        'margin-bottom': '5px',
+        'cursor': 'grab'
+      }).addClass('external-event');
+      event.text(val);
+      $('#external-events').prepend(event);
+
+      ini_events(event); // Make the new event draggable
+      $('#new-event-title').val(''); // Clear input
+    });
+=======
+    $('#add-new-event-button').click(function (e) {
+      e.preventDefault();
+      var val = $('#new-event-title').val();
+      var color = $('#new-event-color').val();
+      if (val.length == 0) {
+        Swal.fire('Oops...', 'Please enter a title for the task!', 'warning');
+        return;
+      }
+
+      var event = $('<div />');
+      event.css({
+        'background-color': color,
+        'border-color': color,
+        'color': (color === '#ffc107' || color === '#ffffff') ? '#000000' : '#ffffff', // Basic contrast
+        'padding': '5px',
+        'margin-bottom': '5px',
+        'cursor': 'grab'
+      }).addClass('external-event');
+      event.text(val);
+      $('#external-events').prepend(event);
+
+      // Re-initialize draggable to include the new event
+      draggable.destroy();
+      draggable = new Draggable(containerEl, {
+        itemSelector: '.external-event',
+        eventData: function(eventEl) {
+          return {
+            title: eventEl.innerText,
+            backgroundColor: $(eventEl).css('background-color'),
+            borderColor: $(eventEl).css('background-color'),
+            textColor: $(eventEl).css('color') || '#ffffff',
+          };
+        }
+      });
+
+      $('#new-event-title').val(''); // Clear input
+    });
+>>>>>>>

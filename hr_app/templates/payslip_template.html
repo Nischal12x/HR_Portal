@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+{% load custom_tags %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Payslip</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header, .footer { text-align: center; }
+        .info, .earnings, .deductions { margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #000; padding: 6px; text-align: left; }
+        .summary { margin-top: 20px; }
+        .summary td { border: none; }
+        .total { font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <img src="{{ logo_url }}" alt="Company Logo" style="height: 50px;">
+        <h2>BISP Infonet Private Limited</h2>
+        <p><strong>Website:</strong> www.bispsolutions.com |
+           <strong>Email:</strong> support@bispsolutions.com |
+           <strong>Phone:</strong> +91 997-799-7254</p>
+        <h3>Payslip Of {{ record.month_year_display }}</h3>
+    </div>
+
+    <div class="info">
+        <table>
+            <tr>
+                <td><strong>Name:</strong> {{ record.employee_identifier.full_name }}</td>
+                <td><strong>Payslip Code:</strong> Pay#{{ record.payslip_code }}</td>
+            </tr>
+            <tr>
+                <td><strong>Designation:</strong> {{ record.employee_identifier.department }}</td>
+                <td><strong>Department:</strong> {{ record.employee_identifier.role }}</td>
+            </tr>
+            <tr>
+                <td><strong>Employee Code:</strong> {{ record.employee_identifier.id }}</td>
+                <td><strong>Date of Joining:</strong> {{ record.employee_identifier.joining_date }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="earnings">
+        <h4>Earnings</h4>
+        <table>
+            <thead>
+                <tr><th>S.No</th><th>Particulars</th><th>Amount (Rs.)</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>1</td><td>Basic Salary</td><td>{{ record.basic_salary|currency_format }}</td></tr>
+                <tr><td>2</td><td>Dearness Allowance</td><td>{{ record.da|currency_format }}</td></tr>
+                <tr><td>3</td><td>HRA</td><td>{{ record.hra|currency_format }}</td></tr>
+                <tr><td>4</td><td>Conveyance Allowance</td><td>{{ record.conveyance_allowance }}</td></tr>
+                <tr><td>5</td><td>Special Allowance</td><td>{{ record.special_allowance }}</td></tr>
+                <tr><td>6</td><td>Project Incentive</td><td>{{ record.project_incentive }}</td></tr>
+                <tr><td>7</td><td>Variable Pay</td><td>{{ record.variable_pay }}</td></tr>
+                <tr class="total"><td colspan="2">Total Earning</td><td>{{ record.total_earning }}</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="deductions">
+        <h4>Deductions</h4>
+        <table>
+            <thead>
+                <tr><th>S.No</th><th>Particulars</th><th>Amount (Rs.)</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>1</td><td>PF</td><td>{{ record.pf }}</td></tr>
+                <tr><td>2</td><td>ESI</td><td>{{ record.esi }}</td></tr>
+                <tr><td>3</td><td>Salary Advance</td><td>{{ record.salary_advance }}</td></tr>
+                <tr><td>4</td><td>Negative Leave</td><td>{{ record.unpaid_leaves }}</td></tr>
+                <tr><td>5</td><td>TDS</td><td>{{ record.tds }}</td></tr>
+                <tr class="total"><td colspan="2">Total Deduction</td><td>{{ record.total_deduction }}</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="summary">
+        <table>
+            <tr><td><strong>Total Earning:</strong></td><td>{{ record.total_earning }}</td></tr>
+            <tr><td><strong>Total Deductions:</strong></td><td>{{ record.total_deduction }}</td></tr>
+            <tr class="total"><td><strong>Total Salary:</strong></td><td>{{ record.total_salary }}</td></tr>
+        </table>
+    </div>
+
+    <div class="footer">
+        <p>This is a system generated pay slip. Signature is not required.</p>
+    </div>
+
+</body>
+</html>

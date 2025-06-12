@@ -1,0 +1,242 @@
+{% extends "main1.html" %}
+{% load static %}
+
+{% block title %}Process Exit Request{% endblock %}
+
+{% block content %}
+
+<div class="wrapper">
+  {% include 'navbar.html' %}
+  {% include 'sidebar.html' %}
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>{{ content_title }}</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="{% url 'index' %}">Dashboard</a></li>
+              <li class="breadcrumb-item"><a href="{% url 'manage_exit_requests_hr' %}">Manage Exits</a></li>
+              <li class="breadcrumb-item active">Process Request</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <form method="post">
+          {% csrf_token %}
+          <div class="row">
+            <!-- Left Column: Request Details & Approval Form -->
+            <div class="col-md-8">
+              <div class="card card-primary card-outline">
+                <div class="card-header">
+                  <h3 class="card-title font-weight-bold">
+                    <i class="fas fa-file-alt mr-1"></i>
+                    Exit Request Details
+                  </h3>
+                </div>
+                <div class="card-body">
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <p><strong>Employee:</strong> {{ exit_request.employee.full_name }}</p>
+                      <p><strong>Department:</strong> {{ exit_request.employee.department }}</p>
+                      <p><strong>Designation:</strong> {{ exit_request.employee.designation }}</p>
+                      <p><strong>Resignation Date:</strong> {{ exit_request.resignation_apply_date|date:"M d, Y" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                      <p><strong>Status:</strong>
+                        {% if exit_request.status == 'PENDING_MANAGER_APPROVAL' %}
+                          <span class="badge badge-info">Pending Manager Approval</span>
+                        {% elif exit_request.status == 'PENDING_HR_APPROVAL' %}
+                          <span class="badge badge-warning">Pending HR Approval</span>
+                        {% elif exit_request.status == 'APPROVED' %}
+                          <span class="badge badge-success">Approved</span>
+                        {% elif exit_request.status == 'REJECTED_BY_MANAGER' or exit_request.status == 'REJECTED_BY_HR' %}
+                          <span class="badge badge-danger">{{ exit_request.get_status_display }}</span>
+                        {% else %}
+                          <span class="badge badge-secondary">{{ exit_request.get_status_display }}</span>
+                        {% endif %}
+                      </p>
+                      <p><strong>Expected Last Day:</strong> {{ exit_request.expected_last_working_day|date:"M d, Y" }}</p>
+                      <p><strong>Actual Last Day:</strong> 
+                        {% if exit_request.actual_last_working_day %}
+                          {{ exit_request.actual_last_working_day|date:"M d, Y" }}
+                        {% else %}
+                          <span class="text-muted">Not set</span>
+                        {% endif %}
+                      </p>
+                    </div>
+                  </div>
+                  <hr>
+                  <p><strong>Reason for Resignation:</strong></p>
+                  <p class="text-muted">{{ exit_request.reason_for_resignation|linebreaksbr }}</p>
+                  
+                  {% if exit_request.manager_remarks %}
+                    <hr>
+                    <p><strong>Manager's Remarks:</strong></p>
+                    <p class="text-muted">{{ exit_request.manager_remarks|linebreaksbr }}</p>
+                  {% endif %}
+
+                  <hr>
+                  <!-- HR Approval Form Section -->
+                  <h5 class="mt-4 font-weight-bold">HR Processing</h5>
+                  <div class="form-group">
+                      {{ approval_form.as_p }}
+                  </div>
+                </div>
+
+                {% if can_approve_reject %}
+                <div class="card-footer text-right">
+                  <button type="submit" name="action" value="reject_hr" class="btn btn-danger">Reject</button>
+                  <button type="submit" name="action" value="approve_hr" class="btn btn-success ml-2">Approve</button>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="col-md-4"
+
+<div class="card shadow-sm mb-4">
+  <div class="card-header">
+    <h3 class="card-title font-weight-bold mb-0">
+      <i class="fas fa-clipboard-list mr-2"></i>Offboarding Checklist
+    </h3>
+  </div>
+
+  <div class="card-body p-0">
+    <form method="POST">
+      {% csrf_token %}
+
+      <ul class="list-group list-group-flush">
+
+        {% for field in checklist_form %}
+          <li class="list-group-item {% if field.value %}bg-light text-muted{% endif %}">
+            <div class="form-check">
+
+              {{ field }}  {# This renders the <input type="checkbox"> #}
+
+              <label for="{{ field.id_for_label }}" class="form-check-label {% if field.value %}font-italic{% endif %}" style="{% if field.value %}text-decoration: line-through;{% endif %}">
+                {{ field.label }}
+              </label>
+
+            </div>
+          </li>
+        {% endfor %}
+
+      </ul>
+
+      <div class="card-footer text-center">
+        <button type="submit" name="action" value="update_checklist" class="btn btn-primary btn-block">
+          <i class="fas fa-save mr-1"></i> Update Checklist
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+  <!-- Activity Timeline Card -->
+  <div class="col-md-4">
+  <div class="card shadow-sm">
+    <div class="card-header">
+      <h3 class="card-title font-weight-bold mb-0">
+        <i class="fas fa-history mr-2"></i>Activity Timeline
+      </h3>
+    </div>
+    <div class="card-body">
+      <ul class="activity-timeline">
+
+        <!-- 1. Request Submitted -->
+        <li class="timeline-item-wrapper">
+          <div class="timeline-icon bg-primary">
+            <i class="fas fa-paper-plane"></i>
+          </div>
+          <div class="timeline-content">
+            <p class="mb-0"><strong>Request Submitted</strong></p>
+            <small class="text-muted">{{ exit_request.created_at|timesince }} ago</small>
+            <div class="mt-1">By {{ exit_request.employee.full_name }}</div>
+          </div>
+        </li>
+
+        <!-- 2. Manager Action -->
+        {% if exit_request.reporting_manager_approved_at %}
+          <li class="timeline-item-wrapper">
+            <div class="timeline-icon bg-info">
+              <i class="fas fa-user-check"></i>
+            </div>
+            <div class="timeline-content">
+              <p class="mb-0"><strong>Approved by Manager</strong></p>
+              <small class="text-muted">{{ exit_request.reporting_manager_approved_at|timesince }} ago</small>
+              {% if exit_request.reporting_manager_remarks %}
+                <div class="mt-2 p-2 bg-light border rounded small">
+                  <strong>Remarks:</strong> <em>"{{ exit_request.reporting_manager_remarks }}"</em>
+                </div>
+              {% endif %}
+            </div>
+          </li>
+        {% elif exit_request.status == 'REJECTED_BY_RM' %}
+          <li class="timeline-item-wrapper">
+            <div class="timeline-icon bg-danger">
+              <i class="fas fa-user-times"></i>
+            </div>
+            <div class="timeline-content">
+              <p class="mb-0"><strong>Rejected by Manager</strong></p>
+              <small class="text-muted">{{ exit_request.updated_at|timesince }} ago</small>
+              {% if exit_request.reporting_manager_remarks %}
+                <div class="mt-2 p-2 bg-light border rounded small">
+                  <strong>Reason:</strong> <em>"{{ exit_request.reporting_manager_remarks }}"</em>
+                </div>
+              {% endif %}
+            </div>
+          </li>
+        {% endif %}
+
+        <!-- 3. HR Action -->
+        {% if exit_request.hr_approved_at %}
+          <li class="timeline-item-wrapper">
+            <div class="timeline-icon bg-success">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="timeline-content">
+              <p class="mb-0"><strong>Formally Approved by HR</strong></p>
+              <small class="text-muted">{{ exit_request.hr_approved_at|timesince }} ago</small>
+              <div class="mt-1">The exit process is now fully approved.</div>
+            </div>
+          </li>
+        {% elif exit_request.status == 'REJECTED_BY_HR' %}
+          <li class="timeline-item-wrapper">
+            <div class="timeline-icon bg-danger">
+              <i class="fas fa-times-circle"></i>
+            </div>
+            <div class="timeline-content">
+              <p class="mb-0"><strong>Rejected by HR</strong></p>
+              <small class="text-muted">{{ exit_request.updated_at|timesince }} ago</small>
+              {% if exit_request.hr_remarks %}
+                <div class="mt-2 p-2 bg-light border rounded small">
+                  <strong>Reason:</strong> <em>"{{ exit_request.hr_remarks }}"</em>
+                </div>
+              {% endif %}
+            </div>
+          </li>
+        {% endif %}
+
+      </ul>
+    </div>
+  </div>
+</div>
+</div>
+
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  {% include 'footer.html' %}
+</div>
+{% endblock %}

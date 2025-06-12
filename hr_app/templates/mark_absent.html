@@ -1,0 +1,41 @@
+{% extends "main1.html" %}
+{% load static %}
+
+{% block title %}Mark Absent{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+  {% include 'navbar.html' %}
+  {% include 'sidebar.html' %}
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <h2>Mark Absent</h2>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <form method="post" action="{% url 'mark_absent' %}">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="employee_id">Select Employee</label>
+            <select name="employee_id" id="employee_id" class="form-control" required>
+              <option value="" disabled selected>Select Employee</option>
+              {% for employee in employees %}
+              <option value="{{ employee.id }}">{{ employee.full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="date">Date</label>
+            <input type="date" name="date" id="date" class="form-control" value="{{ today }}" required>
+          </div>
+          <button type="submit" class="btn btn-danger">Mark Absent</button>
+        </form>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

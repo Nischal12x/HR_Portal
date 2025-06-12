@@ -1,0 +1,36 @@
+{% load custom_tags %}
+<h3>{{ month_year_display }}</h3>
+<table border="1" cellspacing="0" cellpadding="4">
+  <thead>
+    <tr>
+      <th>Employee</th>
+      <th>Payslip Code</th>
+      <th>Basic Salary</th>
+      <th>HRA</th>
+      <th>DA</th>
+      <th>Total Salary</th>
+      <th>Present Days</th>
+      <th>Paid Leaves</th>
+      <th>Weekly Off</th>
+      <th>Unpaid Leaves</th>
+      <th>Festivals</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for record in payroll_data %}
+    <tr>
+      <td>{{ record.employee_identifier.full_name }}</td>
+      <td>{{ record.payslip_code }}</td>
+      <td>{{ record.basic_salary|currency_format }}</td>
+      <td>{{ record.hra|currency_format }}</td>
+      <td>{{ record.da|currency_format }}</td>
+      <td>{{ record.total_salary|currency_format }}</td>
+      <td>{{ record.present_days }}</td>
+      <td>{{ record.paid_leaves }}</td>
+      <td>{{ record.weekly_off }}</td>
+      <td>{{ record.unpaid_leaves }}</td>
+      <td>{{ record.festivals }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

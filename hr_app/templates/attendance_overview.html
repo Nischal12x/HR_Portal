@@ -1,0 +1,68 @@
+{% extends "main1.html" %}
+{% load static %}
+
+{% block title %}Attendance Overview{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+  {% include 'navbar.html' %}
+  {% include 'sidebar.html' %}
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid d-flex justify-content-between align-items-center">
+        <h2>Attendance Overview - {{ month }}/{{ year }}</h2>
+        <div>
+          <a href="?month={{ prev_month }}&year={{ prev_year }}" class="btn btn-primary btn-sm">Previous Month</a>
+          <a href="?month={{ next_month }}&year={{ next_year }}" class="btn btn-primary btn-sm">Next Month</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                {% for day in days_in_month %}
+                <th>{{ day }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% if table_rows %}
+                {% for row in table_rows %}
+                <tr>
+                  <td>{{ row.employee.full_name }}</td>
+                  {% for status in row.statuses %}
+                  <td class="text-center">
+                    {% if status == 'P' %}
+                      <span class="badge bg-success">P</span>
+                    {% elif status == 'A' %}
+                      <span class="badge bg-danger">A</span>
+                    {% elif status == 'L' %}
+                      <span class="badge bg-warning text-dark">L</span>
+                    {% elif status == 'H' %}
+                      <span class="badge bg-info text-dark">H</span>
+                    {% else %}
+                      <span>-</span>
+                    {% endif %}
+                  </td>
+                  {% endfor %}
+                </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="{{ days_in_month|length|add:'1' }}" class="text-center">No attendance data available.</td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

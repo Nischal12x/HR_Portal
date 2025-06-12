@@ -1,4 +1,5 @@
 {% load static %}
+
 <!-- Main Sidebar Container -->
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
@@ -10,321 +11,326 @@
     <div class="sidebar os-host os-theme-light os-host-overflow os-host-overflow-y os-host-resize-disabled os-host-scrollbar-horizontal-hidden os-host-transition">
         <div class="os-resize-observer-host observed"><div class="os-resize-observer" style="left: 0px; right: auto;"></div></div>
         <div class="os-size-auto-observer observed" style="height: calc(100% + 1px); float: left;"><div class="os-resize-observer"></div></div>
-         <div class="os-content-glue" style="margin: 0px -8px; width: 249px; height: 672px;"></div>
+        <div class="os-content-glue" style="margin: 0px -8px; width: 249px; height: 672px;"></div>
         <div class="os-padding">
             <div class="os-viewport os-viewport-native-scrollbars-invisible" style="overflow-y: scroll;">
-            <div class="os-content" style="padding: 0px 8px; height: 100%; width: 100%;">
-        <!-- User Panel -->
-        <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+                <div class="os-content" style="padding: 0px 8px; height: 100%; width: 100%;">
+                    <!-- User Panel -->
+                    <div class="user-panel mt-3 pb-3 mb-3 d-flex up">
+                        <div class="image" style="display: flex; justify-content: center; align-items: center;">
+                            {% with default_img='/static/img/default_user.jpg' %}
+                              <img src="{{ request.session.attachment|default:default_img }}" class="img-circle elevation-2" style="width: 40px;" alt="User Image">
+                            {% endwith %}
+                        </div>
+                        <div class="info">
+                            <a href="{% url 'my_profile' %}" class="d-block {% if request.resolver_match.url_name == 'my_profile' %}active{% endif %}">{{ request.session.name|default:"User Name" }}</a>
+                            <span class="text-muted">{{ request.session.role|default:"Sr. Software Developer" }}</span>
+                        </div>
+                    </div>  
+                    <!-- SidebarSearch Form -->
+                    <div class="form-inline">
+                        <div class="input-group" data-widget="sidebar-search">
+                          <input class="form-control form-control-sidebar" type="search" placeholder="Search" aria-label="Search">
+                          <div class="input-group-append">
+                            <button class="btn btn-sidebar">
+                              <i class="fas fa-search fa-fw"></i>
+                            </button>
+                          </div>
+                        </div><div class="sidebar-search-results"><div class="list-group"><a href="#" class="list-group-item"><div class="search-title"><strong class="text-light"></strong>N<strong class="text-light"></strong>o<strong class="text-light"></strong> <strong class="text-light"></strong>e<strong class="text-light"></strong>l<strong class="text-light"></strong>e<strong class="text-light"></strong>m<strong class="text-light"></strong>e<strong class="text-light"></strong>n<strong class="text-light"></strong>t<strong class="text-light"></strong> <strong class="text-light"></strong>f<strong class="text-light"></strong>o<strong class="text-light"></strong>u<strong class="text-light"></strong>n<strong class="text-light"></strong>d<strong class="text-light"></strong>!<strong class="text-light"></strong></div><div class="search-path"></div></a></div></div>
+                    </div>
 
-            <div class="image" style="display: flex; justify-content: center; align-items: center;">
-                {% with default_img='/static/img/user2-160x160.jpg' %}
-                  <img src="{{ request.session.attachment|default:default_img }}" class="img-circle elevation-2" style="width: 40px;" alt="User Image">
-                {% endwith %}
-            </div>
-            <div class="info">
-                <a href="{% url 'my_profile' %}" class="d-block">{{ request.session.name|default:"User Name" }}</a>
-                <span class="text-muted">{{ request.session.role|default:"Sr. Software Developer" }}</span>
-            </div>
-        </div>
-        <!-- SidebarSearch Form -->
-        <div class="form-inline">
-        <div class="input-group" data-widget="sidebar-search">
-          <input class="form-control form-control-sidebar" type="search" placeholder="Search" aria-label="Search">
-          <div class="input-group-append">
-            <button class="btn btn-sidebar">
-              <i class="fas fa-search fa-fw"></i>
-            </button>
-          </div>
-        </div><div class="sidebar-search-results"><div class="list-group"><a href="#" class="list-group-item"><div class="search-title"><strong class="text-light"></strong>N<strong class="text-light"></strong>o<strong class="text-light"></strong> <strong class="text-light"></strong>e<strong class="text-light"></strong>l<strong class="text-light"></strong>e<strong class="text-light"></strong>m<strong class="text-light"></strong>e<strong class="text-light"></strong>n<strong class="text-light"></strong>t<strong class="text-light"></strong> <strong class="text-light"></strong>f<strong class="text-light"></strong>o<strong class="text-light"></strong>u<strong class="text-light"></strong>n<strong class="text-light"></strong>d<strong class="text-light"></strong>!<strong class="text-light"></strong></div><div class="search-path"></div></a></div></div>
-      </div>
+                    <!-- Navigation Menu -->
+                    <nav class="mt-2">
+                        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                            <li class="nav-item">
+                                <a href="{% url 'index' %}" class="nav-link {% if request.resolver_match.url_name == 'index' %} active {% endif %}">
+                                    <i class="nav-icon fas fa-tachometer-alt"></i>
+                                    <p>Dashboard</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'dashboardV2' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboardV2' %} active {% endif %}">
+                                    <i class="nav-icon fas fa-tachometer-alt"></i>
+                                    <p>Dashboard V2</p>
+                                </a>
+                            </li>
 
+                            <li class="nav-item">
+                                <a href="{% url 'widgets' %}" class="nav-link {% if request.resolver_match.url_name == 'widgets' %} active {% endif %}">
+                                    <i class="nav-icon fas fa-project-diagram"></i>
+                                    <p>Projects</p>
+                                </a>
+                            </li>
 
-        <!-- Navigation Menu -->
-        <nav class="mt-2">
-            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-                <li class="nav-item">
-                    <a href="{% url 'index' %}" class="nav-link {% if request.path == '/dashboard/' %} active {% endif %}">
-                        <i class="nav-icon fas fa-tachometer-alt"></i>
-                        <p>Dashboard</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'dashboardV2' %}" class="nav-link {% if request.path == '/dashboard/' %} active {% endif %}">
-                        <i class="nav-icon fas fa-tachometer-alt"></i>
-                        <p>Dashboard V2</p>
-                    </a>
-                </li>
+                            <li class="nav-item">
+                                <a href="{% url 'task_list' %}" class="nav-link {% if request.resolver_match.url_name == 'task_list' %} active {% endif %}">
+                                    <i class="nav-icon fas fa-tasks"></i>
+                                    <p>Tasks</p>
+                                </a>
+                            </li>
 
-                <li class="nav-item">
-                    <a href="{% url 'widgets' %}" class="nav-link {% if request.path == '/Projects' %} active {% endif %}">
-                        <i class="nav-icon fas fa-project-diagram"></i>
-                        <p>Projects</p>
-                    </a>
-                </li>
+                            <!-- Timesheet Dropdown -->
+                            <li class="nav-item has-treeview {% if request.resolver_match.url_name == 'view_timesheet' or request.resolver_match.url_name == 'timesheet_image_records' or request.resolver_match.url_name == 'time_sheet' or request.resolver_match.url_name == 'add_daily_timesheet' or request.resolver_match.url_name == 'add_image_timesheet' or request.resolver_match.url_name == 'last_week_timesheet' %} menu-open {% endif %}">
+                                <a href="#" class="nav-link {% if request.resolver_match.url_name == 'view_timesheet' or request.resolver_match.url_name == 'timesheet_image_records' or request.resolver_match.url_name == 'time_sheet' or request.resolver_match.url_name == 'add_daily_timesheet' or request.resolver_match.url_name == 'add_image_timesheet' or request.resolver_match.url_name == 'last_week_timesheet' %} active {% endif %}">
+                                    <i class="nav-icon fas fa-table"></i>
+                                    <p>Timesheet <i class="fas fa-angle-left right"></i></p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item has-treeview {% if request.resolver_match.url_name == 'view_timesheet' or request.resolver_match.url_name == 'timesheet_image_records' %} menu-open {% endif %}">
+                                        <a href="#" class="nav-link {% if request.resolver_match.url_name == 'view_timesheet' or request.resolver_match.url_name == 'timesheet_image_records' %} active {% endif %}">
+                                            <i class="far fa-circle nav-icon"></i>
+                                            <p>Records <i class="fas fa-angle-left right"></i></p>
+                                        </a>
+                                        <ul class="nav nav-treeview">
+                                            <li class="nav-item">
+                                                <a href="{% url 'view_timesheet' %}" class="nav-link {% if request.resolver_match.url_name == 'view_timesheet' %} active {% endif %}">
+                                                    <i class="far fa-dot-circle nav-icon"></i> <p>Records</p>
+                                                </a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a href="{% url 'timesheet_image_records' %}" class="nav-link {% if request.resolver_match.url_name == 'timesheet_image_records' %} active {% endif %}">
+                                                    <i class="far fa-dot-circle nav-icon"></i> <p>Records I.Timesheet</p>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{% url 'time_sheet' %}" class="nav-link {% if request.resolver_match.url_name == 'time_sheet' %} active {% endif %}">
+                                            <i class="far fa-circle nav-icon"></i> <p>Add Weekly Record</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{% url 'add_daily_timesheet' %}" class="nav-link {% if request.resolver_match.url_name == 'add_daily_timesheet' %} active {% endif %}">
+                                            <i class="far fa-circle nav-icon"></i> <p>Daily Timesheet</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{% url 'add_image_timesheet' %}" class="nav-link {% if request.resolver_match.url_name == 'add_image_timesheet' %} active {% endif %}">
+                                            <i class="far fa-circle nav-icon"></i> <p>Image Timesheet</p>
+                                        </a>
+                                    </li>
 
-                <li class="nav-item">
-                    <a href="{% url 'task_list' %}" class="nav-link {% if request.path == '/tasks' %} active {% endif %}">
-                        <i class="nav-icon fas fa-tasks"></i>
-                        <p>Tasks</p>
-                    </a>
-                </li>
+                                </ul>
+                            </li>
 
-                <!-- Timesheet Dropdown -->
-                <li class="nav-item has-treeview">
-    <a href="#" class="nav-link">
-        <i class="nav-icon fas fa-table"></i>
-        <p>
-            Timesheet
-            <i class="fas fa-angle-left right"></i>
-        </p>
-    </a>
-    <ul class="nav nav-treeview">
-        <!-- Records Sub-Menu -->
-        <li class="nav-item has-treeview">
-            <a href="#" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>
-                    Records
-                    <i class="fas fa-angle-left right"></i>
-                </p>
-            </a>
-            <ul class="nav nav-treeview">
-                <li class="nav-item">
-                    <a href="{% url 'view_timesheet' %}" class="nav-link">
-                        <i class="far fa-dot-circle nav-icon"></i>
-                        <p>Records</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'timesheet_image_records' %}" class="nav-link">
-                        <i class="far fa-dot-circle nav-icon"></i>
-                        <p>Records I.Timesheet</p>
-                    </a>
-                </li>
-            </ul>
-        </li>
+                            <!-- Leave Management Dropdown -->
+                            <li class="nav-item has-treeview {% if request.resolver_match.url_name == 'leave_dashboard' or request.resolver_match.url_name == 'index2' or request.resolver_match.url_name == 'leave_dashboard1' %} menu-open {% endif %}">
+                                <a href="#" class="nav-link {% if request.resolver_match.url_name == 'leave_dashboard' or request.resolver_match.url_name == 'index2' or request.resolver_match.url_name == 'leave_dashboard1' %} active {% endif %}">
+                                    <i class="nav-icon fas fa-tree"></i>
+                                    <p>Leave <i class="fas fa-angle-left right"></i></p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="{% url 'leave_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'leave_dashboard' %} active {% endif %}">
+                                            <i class="far fa-circle nav-icon"></i> <p>Leave Record</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{% url 'index2' %}" class="nav-link {% if request.resolver_match.url_name == 'index2' %} active {% endif %}">
+                                            <i class="far fa-circle nav-icon"></i> <p>Apply Leave</p>
+                                        </a>
+                                    </li>
+                                    {% if request.session.role == 'HR' %}
+                                    <li class="nav-item">
+                                        <a href="{% url 'leave_dashboard1' 1 %}" class="nav-link {% if request.resolver_match.url_name == 'leave_dashboard1' %} active {% endif %}">
+                                            <i class="far fa-circle nav-icon"></i> <p>Staff Leave</p>
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </li>
 
-        <!-- Other Timesheet Options -->
-        <li class="nav-item">
-            <a href="{% url 'time_sheet' %}" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Add Weekly Record</p>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'add_daily_timesheet' %}" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Daily Timesheet</p>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'add_image_timesheet' %}" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Image Timesheet</p>
-            </a>
-        </li>
-    </ul>
-</li>
+                            <!-- Staff Dropdown -->
+                            {% if request.session.role == 'HR' or not request.session.role %}
+                            <li class="nav-item has-treeview {% if request.resolver_match.url_name == 'add_employees' or request.resolver_match.url_name == 'employees' or request.resolver_match.url_name == 'inactive_employees' %} menu-open {% endif %}">
+                                <a href="#" class="nav-link {% if request.resolver_match.url_name == 'add_employees' or request.resolver_match.url_name == 'employees' or request.resolver_match.url_name == 'inactive_employees' %} active {% endif %}">
+                                    <i class="fas fa-user nav-icon"></i>
+                                    <p>Staff <i class="fas fa-angle-left right"></i></p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="{% url 'add_employees' %}" class="nav-link {% if request.resolver_match.url_name == 'add_employees' %} active {% endif %}">
+                                            <i class="fas fa-id-badge nav-icon"></i> <p>Add Employee</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{% url 'employees' %}" class="nav-link {% if request.resolver_match.url_name == 'employees' %} active {% endif %}">
+                                            <i class="far fa-circle nav-icon"></i> <p>Employees</p>
+                                        </a>
+                                    </li>
 
+                                </ul>
+                            </li>
 
-                <!-- Leave Management Dropdown -->
-                <li class="nav-item has-treeview">
-                    <a href="#" class="nav-link">
-                        <i class="nav-icon fas fa-tree"></i>
-                        <p>
-                            Leave
-                            <i class="fas fa-angle-left right"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{% url 'leave_dashboard' %}" class="nav-link">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Leave Record</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{% url 'index2' %}" class="nav-link">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Apply Leave</p>
-                            </a>
-                        </li>
-                        {% if request.session.role == 'HR' %}
-                        <li class="nav-item">
-                            <a href="{% url 'leave_dashboard1' 1 %}" class="nav-link">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Staff Leave</p>
-                            </a>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </li>
-                <!-- add Member dropdown-->
-                {% if request.session.role == 'HR' or not request.session.role %}
-                <li class="nav-item has-treeview">
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-user nav-icon"></i>
-                        <p>
-                            Staff
-                            <i class="fas fa-angle-left right"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{% url 'add_employees' %}" class="nav-link">
+                            <!-- Configuration Dropdown -->
+                            <li class="nav-item has-treeview {% if request.resolver_match.url_name == 'payroll_setting' or request.resolver_match.url_name == 'employee_salary' or request.resolver_match.url_name == 'add_employees' or request.resolver_match.url_name == 'leaves_sys' or request.resolver_match.url_name == 'holiday_dashboard' or request.resolver_match.url_name == 'manage_handbooks' or request.resolver_match.url_name == 'assets' or request.resolver_match.url_name == 'leave_settings' %} menu-open {% endif %}">
+                                <a href="#" class="nav-link {% if request.resolver_match.url_name == 'payroll_setting' or request.resolver_match.url_name == 'employee_salary' or request.resolver_match.url_name == 'add_employees' or request.resolver_match.url_name == 'leaves_sys' or request.resolver_match.url_name == 'holiday_dashboard' or request.resolver_match.url_name == 'manage_handbooks' or request.resolver_match.url_name == 'assets' or request.resolver_match.url_name == 'leave_settings' %} active {% endif %}">
+                                    <i class="fas fa-cogs nav-icon"></i>
+                                    <p>Configuration <i class="fas fa-angle-left right"></i></p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="{% url 'payroll_setting' %}" class="nav-link {% if request.resolver_match.url_name == 'payroll_setting' %} active {% endif %}">
+                                            <i class="far fa-circle nav-icon"></i> <p>Payroll Setting</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{% url 'employee_salary' %}" class="nav-link {% if request.resolver_match.url_name == 'employee_salary' %} active {% endif %}">
+                                            <i class="far fa-circle nav-icon"></i> <p>Employee Salary</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{% url 'add_employees' %}" class="nav-link {% if request.resolver_match.url_name == 'add_employees' %} active {% endif %}">
+                                            <i class="far fa-circle nav-icon"></i> <p>Employee</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{% url 'leaves_sys' %}" class="nav-link {% if request.resolver_match.url_name == 'leaves_sys' %} active {% endif %}">
+                                            <i class="far fa-circle nav-icon"></i> <p>Leave System</p>
+                                        </a>
+                                    </li>
 
-                                <i class="fas fa-id-badge nav-icon"></i>
-                                <p>Add Employee</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{% url 'employees' %}" class="nav-link">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Employees</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                <li class="nav-item has-treeview">
-    <a href="#" class="nav-link">
-        <i class="fas fa-cogs nav-icon"></i>
-        <p>
-            Configuration
-            <i class="fas fa-angle-left right"></i>
-        </p>
-    </a>
-    <ul class="nav nav-treeview">
-        <li class="nav-item">
-            <a href="{% url 'payroll_setting' %}" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Payroll Setting</p>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'employee_salary' %}" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Employee Salary</p>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'add_employees' %}" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Employee</p>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'leaves_sys' %}" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Leave</p>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'holiday_dashboard' %}" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Holiday</p>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'manage_handbooks' %}" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Upload Handbook</p>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'assets' %}" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Assets</p>
-            </a>
-        </li>
-    </ul>
-</li>
-                {% endif %}
-                <li class="nav-item">
-                    <a href="{% url 'employee_handbook' %}" class="nav-link">
-                        <i class="nav-icon fas fa-book"></i>
-                        <p>Handbook PDF</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="nav-icon fas fa-play-circle"></i>
-                        <p>Learning Video</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="nav-icon fas fa-chalkboard-teacher"></i>
-                        <p>Training Module</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="nav-icon fas fa-file-invoice-dollar"></i>
-                        <p>Investment Declaration</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="nav-icon fas fa-door-open"></i>
-                        <p>Exit Management System</p>
-                    </a>
-                </li>
-                {% if user.is_authenticated %}
-  {% comment %} Assuming you have a way to get employee_profile in context or via a template tag {% endcomment %}
-  {% with employee_profile=request.user.addemployee %} {# Adjust if this isn't how you access it #}
+                                    <li class="nav-item">
+                                        <a href="{% url 'holiday_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'holiday_dashboard' %} active {% endif %}">
+                                            <i class="far fa-circle nav-icon"></i> <p>Holiday</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{% url 'manage_handbooks' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_handbooks' %} active {% endif %}">
+                                            <i class="far fa-circle nav-icon"></i> <p>Upload Handbook</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{% url 'assets' %}" class="nav-link {% if request.resolver_match.url_name == 'assets' %} active {% endif %}">
+                                            <i class="far fa-circle nav-icon"></i> <p>Assets</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
 
-    <li class="nav-item">
-      <a href="{% url 'apply_resignation' %}" class="nav-link {% if request.resolver_match.url_name == 'apply_resignation' %}active{% endif %}">
-        <i class="nav-icon fas fa-sign-out-alt"></i>
-        <p>Apply Resignation</p>
-      </a>
-    </li>
-    <li class="nav-item">
-      <a href="{% url 'view_my_exit_request' %}" class="nav-link {% if request.resolver_match.url_name == 'view_my_exit_request' %}active{% endif %}">
-        <i class="nav-icon fas fa-file-contract"></i>
-        <p>My Exit Status</p>
-      </a>
-    </li>
+                            <!-- Employee Salary Dropdown (NEW) -->
+                            <li class="nav-item has-treeview {% if request.resolver_match.url_name == 'salary_details' or request.resolver_match.url_name == 'monthly_payroll_data' or request.resolver_match.url_name == 'payroll_settings_main' or request.resolver_match.url_name == 'upload_salary_csv' %} menu-open {% endif %}">
+                                <a href="#" class="nav-link {% if request.resolver_match.url_name == 'salary_details' or request.resolver_match.url_name == 'monthly_payroll_data' or request.resolver_match.url_name == 'payroll_settings_main' or request.resolver_match.url_name == 'upload_salary_csv' %} active {% endif %}">
+                                    <i class="nav-icon fas fa-user"></i> <!-- Icon from your image -->
+                                    <p>Employee Salary <i class="fas fa-angle-left right"></i></p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="{% url 'salary_details' %}" class="nav-link {% if request.resolver_match.url_name == 'salary_details' %} active {% endif %}">
+                                            <i class="far fa-circle nav-icon"></i> <p>Salary</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{% url 'monthly_payroll_data' %}" class="nav-link {% if request.resolver_match.url_name == 'monthly_payroll_data' %} active {% endif %}">
+                                            <i class="far fa-circle nav-icon"></i> <p>Monthly Payroll Data</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{% url 'payroll_settings_main' %}" class="nav-link {% if request.resolver_match.url_name == 'payroll_settings_main' %} active {% endif %}">
+                                            <i class="far fa-circle nav-icon"></i> <p>Payroll Setting</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{% url 'upload_salary_csv' %}" class="nav-link {% if request.resolver_match.url_name == 'upload_salary_csv' %} active {% endif %}">
+                                            <i class="far fa-circle nav-icon"></i> <p>Upload CSV</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            {% endif %} <!-- End of HR/Admin role check -->
 
-    {% if employee_profile.role.name == 'Manager' %} {# Example Role Check #}
-      <li class="nav-header">MANAGER ACTIONS</li>
-      <li class="nav-item">
-        <a href="{% url 'manage_exit_requests_rm' %}" class="nav-link {% if 'manage_exit_requests_rm' in request.resolver_match.url_name %}active{% endif %}">
-          <i class="nav-icon fas fa-users-cog"></i>
-          <p>Team Exit Requests</p>
-        </a>
-      </li>
-    {% endif %}
+                            <li class="nav-item">
+                                <a href="{% url 'employee_handbook' %}" class="nav-link {% if request.resolver_match.url_name == 'employee_handbook' %} active {% endif %}">
+                                    <i class="nav-icon fas fa-book"></i> <p>Handbook PDF</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'calendar' %}" class="nav-link {% if request.resolver_match.url_name == 'calendar' %} active {% endif %}">
+                                    <i class="nav-icon fas fa-calendar-alt"></i> <p>Calendar</p>
+                                </a>
+                            </li>
 
-    {% if employee_profile.role.name == 'HR_Admin' %} {# Example Role Check #}
-      <li class="nav-header">HR ACTIONS</li>
-      <li class="nav-item">
-        <a href="{% url 'manage_exit_requests_hr' %}" class="nav-link {% if 'manage_exit_requests_hr' in request.resolver_match.url_name %}active{% endif %}">
-          <i class="nav-icon fas fa-cogs"></i>
-          <p>All Exit Requests (HR)</p>
-        </a>
-      </li>
-    {% endif %}
+                            <li class="nav-item">
+                                <a href="{% url 'attendance_overview' %}" class="nav-link {% if request.resolver_match.url_name == 'attendance_overview' %} active {% endif %}">
+                                    <i class="nav-icon fas fa-user-check"></i> <p>Attendance</p>
+                                </a>
+                            </li>
 
-  {% endwith %}
-{% endif %}
-<!-- ... -->
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="nav-icon fas fa-qrcode"></i>
-                        <p>Student QR Scan Record</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'log_out' %}" class="nav-link {% if request.path == '/Projects' %} active {% endif %}">
-                        <i class="nav-icon fas fa-project-diagram"></i>
-                        <p>Log Out</p>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-    </div>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link">
+                                    <i class="nav-icon fas fa-play-circle"></i> <p>Learning Video</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link">
+                                    <i class="nav-icon fas fa-chalkboard-teacher"></i> <p>Training Module</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link">
+                                    <i class="nav-icon fas fa-file-invoice-dollar"></i> <p>Investment Declaration</p>
+                                </a>
+                            </li>
+
+                            <!-- Exit Management Dropdown -->
+                            {% if user.is_authenticated %}
+                            <li class="nav-item has-treeview {% if request.resolver_match.url_name == 'apply_resignation' or request.resolver_match.url_name == 'view_my_exit_request' or request.resolver_match.url_name == 'resignation_status' or request.resolver_match.url_name == 'manage_exit_requests_rm' or request.resolver_match.url_name == 'manage_exit_requests_hr' %} menu-open {% endif %}">
+                                <a href="#" class="nav-link {% if request.resolver_match.url_name == 'apply_resignation' or request.resolver_match.url_name == 'view_my_exit_request' or request.resolver_match.url_name == 'resignation_status' or request.resolver_match.url_name == 'manage_exit_requests_rm' or request.resolver_match.url_name == 'manage_exit_requests_hr' %} active {% endif %}">
+                                    <i class="nav-icon fas fa-door-open"></i>
+                                    <p>Exit Management <i class="fas fa-angle-left right"></i></p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="{% url 'apply_resignation' %}" class="nav-link {% if request.resolver_match.url_name == 'apply_resignation' %}active{% endif %}">
+                                            <i class="far fa-circle nav-icon"></i> <p>Apply Resignation</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{% url 'resignation_status' %}" class="nav-link {% if request.resolver_match.url_name == 'resignation_status' %}active{% endif %}">
+                                            <i class="far fa-circle nav-icon"></i> <p>My Exit Status</p>
+                                        </a>
+                                    </li>
+
+                                    {% if request.user.addemployee %}
+                                        {% with employee_profile=request.user.addemployee %}
+                                            {% if employee_profile.role.name == 'HR' or employee_profile.role.name == 'Project Manager' %}
+                                            <li class="nav-header">MANAGER ACTIONS</li>
+                                            <li class="nav-item">
+                                                <a href="{% url 'manage_exit_requests_rm' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_exit_requests_rm' %}active{% endif %}">
+                                                    <i class="nav-icon fas fa-users-cog"></i> <p>Team Exit Requests</p>
+                                                </a>
+                                            </li>
+                                            {% endif %}
+
+                                            {% if employee_profile.role and employee_profile.role.name == 'HR' %}
+                                            <li class="nav-header">HR ACTIONS</li>
+                                            <li class="nav-item">
+                                                <a href="{% url 'manage_exit_requests_hr' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_exit_requests_hr' %}active{% endif %}">
+                                                    <i class="nav-icon fas fa-cogs"></i> <p>All Exit Requests (HR)</p>
+                                                </a>
+                                            </li>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% endif %}
+                                </ul>
+                            </li>
+                            {% endif %}
+
+                            <li class="nav-item">
+                                <a href="#" class="nav-link">
+                                    <i class="nav-icon fas fa-qrcode"></i>
+                                    <p>Student QR Scan Record</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'log_out' %}" class="nav-link">
+                                    <i class="nav-icon fas fa-sign-out-alt"></i>
+                                    <p>Log Out</p>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
             </div>
         </div>
         <div class="os-scrollbar os-scrollbar-horizontal os-scrollbar-unusable os-scrollbar-auto-hidden"><div class="os-scrollbar-track"><div class="os-scrollbar-handle" style="width: 100%; transform: translate(0px, 0px);"></div></div></div>

@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title_tag %}Exit Management - BISP Solutions{% endblock %}</title> <!-- Changed block name for clarity -->
-
+    {% block extra_head %}{% endblock %}
     <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
     <!-- Font Awesome -->
@@ -15,7 +15,6 @@
     <!-- overlayScrollbars for sidebar scrolling -->
     <link rel="stylesheet" href="{% static 'plugins/overlayScrollbars/css/OverlayScrollbars.min.css' %}">
 
-    {% block extra_head %}{% endblock %} <!-- For any page-specific CSS -->
 
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -38,13 +37,13 @@
             {% if user.is_authenticated %}
             <li class="nav-item dropdown user-menu">
                 <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
-                    <img src="{% if request.user.addemployee.attachment %}{{ request.user.addemployee.attachment.url }}{% else %}{% static 'img/user_avatar.png' %}{% endif %}" class="user-image img-circle elevation-2" alt="User Image">
+                    <img src="{% if request.user.addemployee.attachment %}{{ request.user.addemployee.attachment.url }}{% else %}{% static 'img/avatar.png' %}{% endif %}" class="user-image img-circle elevation-2" alt="User Image">
                     <span class="d-none d-md-inline">{{ user.username }}</span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
                     <!-- User image -->
                     <li class="user-header bg-primary">
-                        <img src="{% if request.user.addemployee.attachment %}{{ request.user.addemployee.attachment.url }}{% else %}{% static 'img/user_avatar.png' %}{% endif %}" class="img-circle elevation-2" alt="User Image">
+                        <img src="{% if request.user.addemployee.attachment %}{{ request.user.addemployee.attachment.url }}{% else %}{% static 'img/avatar.png' %}{% endif %}" class="img-circle elevation-2" alt="User Image">
                         <p>
                             {{ user.username }}
                             {% if user.addemployee.designation %}
@@ -71,110 +70,25 @@
             </li>
         </ul>
     </nav>
+
+  {% include 'sidebar.html' %}
     <!-- /.navbar -->
-
-    <!-- Main Sidebar Container -->
-    <aside class="main-sidebar sidebar-dark-primary elevation-4">
-        <!-- Brand Logo -->
-        <a href="{% url 'index' %}" class="brand-link"> <!-- UPDATED URL NAME -->
-            <img src="{% static 'img/AdminLTELogo.png' %}" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8"> <!-- Replace with your logo -->
-            <span class="brand-text font-weight-light">BISP Solutions</span>
-        </a>
-
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <!-- Sidebar user panel (optional) -->
-            {% if user.is_authenticated %}
-            <div class="user-panel mt-3 pb-3 mb-3 d-flex">
-                <div class="image">
-                    <img src="{% if request.user.addemployee.attachment %}{{ request.user.addemployee.attachment.url }}{% else %}{% static 'img/user_avatar.png' %}{% endif %}" class="img-circle elevation-2" alt="User Image">
-                </div>
-                <div class="info">
-                    <a href="{% url 'my_profile' %}" class="d-block">{{ user.username }}</a>
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- SidebarSearch Form (optional) -->
-            <div class="form-inline mt-2">
-                <div class="input-group" data-widget="sidebar-search">
-                    <input class="form-control form-control-sidebar" type="search" placeholder="Search" aria-label="Search">
-                    <div class="input-group-append">
-                        <button class="btn btn-sidebar">
-                            <i class="fas fa-search fa-fw"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sidebar Menu -->
-            <nav class="mt-2">
-                <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-                    <li class="nav-item">
-                        <a href="{% url 'index' %}" class="nav-link {% if request.resolver_match.url_name == 'index' or request.resolver_match.url_name == 'dashboardV2' %}active{% endif %}"> <!-- UPDATED URL NAME & active check -->
-                            <i class="nav-icon fas fa-tachometer-alt"></i>
-                            <p>Dashboard</p>
-                        </a>
-                    </li>
-
-                    <!-- EXIT MANAGEMENT SYSTEM MENU -->
-                    <li class="nav-item has-treeview {% if request.resolver_match.url_name in 'apply_resignation view_my_exit_request manage_exit_requests_rm manage_exit_requests_hr process_exit_request_hr approve_reject_exit_rm withdraw_resignation' %}menu-open{% endif %}">
-                        <a href="#" class="nav-link {% if request.resolver_match.url_name in 'apply_resignation view_my_exit_request manage_exit_requests_rm manage_exit_requests_hr process_exit_request_hr approve_reject_exit_rm withdraw_resignation' %}active{% endif %}">
-                            <i class="nav-icon fas fa-door-open"></i>
-                            <p>
-                                Exit Management System
-                                <i class="right fas fa-angle-left"></i>
-                            </p>
-                        </a>
-
-                        {% if user.is_authenticated %}
-                            {% with employee_profile=request.user.addemployee %}
-                            <ul class="nav nav-treeview">
-                                <li class="nav-item">
-                                    <a href="{% url 'apply_resignation' %}" class="nav-link {% if request.resolver_match.url_name == 'apply_resignation' %}active{% endif %}">
-                                        <i class="fas fa-file-signature nav-icon"></i> <!-- Changed icon for Apply -->
-                                        <p>Apply Resignation</p>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a href="{% url 'view_my_exit_request' %}" class="nav-link {% if request.resolver_match.url_name == 'view_my_exit_request' or request.resolver_match.url_name == 'withdraw_resignation' %}active{% endif %}">
-                                        <i class="fas fa-file-contract nav-icon"></i>
-                                        <p>My Exit Status</p>
-                                    </a>
-                                </li>
-                                {% if employee_profile.role.name == 'Manager' %}
-                                <li class="nav-item">
-                                    <a href="{% url 'manage_exit_requests_rm' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_exit_requests_rm' or request.resolver_match.url_name == 'approve_reject_exit_rm' %}active{% endif %}">
-                                        <i class="fas fa-users-cog nav-icon"></i>
-                                        <p>Team Exit Requests</p>
-                                    </a>
-                                </li>
-                                {% endif %}
-                                {% if employee_profile.role.name == 'HR_Admin' %}
-                                <li class="nav-item">
-                                    <a href="{% url 'manage_exit_requests_hr' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_exit_requests_hr' or request.resolver_match.url_name == 'process_exit_request_hr' %}active{% endif %}">
-                                        <i class="fas fa-cogs nav-icon"></i>
-                                        <p>All Exit Requests (HR)</p>
-                                    </a>
-                                </li>
-                                {% endif %}
-                            </ul>
-                            {% endwith %}
-                        {% endif %}
-                    </li>
-                    <!-- END OF EXIT MANAGEMENT SYSTEM MENU -->
-
-                    {% block sidebar_extra_links %}
-                    {% endblock %}
-                </ul>
-            </nav>
-            <!-- /.sidebar-menu -->
-        </div>
-        <!-- /.sidebar -->
-    </aside>
 
     <!-- Content Wrapper. Contains page content -->
     <div class="content-wrapper">
+        {% if messages %}
+  <div class="container-fluid">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
         <!-- Content Header (Page header) -->
         <div class="content-header">
             <div class="container-fluid">
@@ -225,7 +139,6 @@
 <script src="{% static 'plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js' %}"></script>
 <script src="{% static 'js/adminlte.min.js' %}"></script>
-
 {% block extra_scripts %}{% endblock %}
 
 </body>

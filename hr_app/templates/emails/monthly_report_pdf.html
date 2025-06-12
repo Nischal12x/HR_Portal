@@ -1,0 +1,53 @@
+<!-- hr_app/templates/hr_app/emails/monthly_report_pdf.html -->
+{% load custom_tags %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{{ month_year_display }}</title>
+    <style>
+        body { font-family: sans-serif; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #dddddd; text-align: left; padding: 8px; }
+        thead { background-color: #f2f2f2; }
+        h1 { color: #333; }
+    </style>
+</head>
+<body>
+    <h1>{{ month_year_display }}</h1>
+    <table>
+      <thead>
+    <tr>
+      <th>Employee</th>
+      <th>Payslip Code</th>
+      <th>Basic Salary</th>
+      <th>HRA</th>
+      <th>DA</th>
+      <th>Total Salary</th>
+      <th>Present Days</th>
+      <th>Paid Leaves</th>
+      <th>Weekly Off</th>
+      <th>Unpaid Leaves</th>
+      <th>Festivals</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for record in payroll_data %}
+    <tr>
+      <td>{{ record.employee_identifier.full_name }}</td>
+      <td>{{ record.payslip_code }}</td>
+      <td>{{ record.basic_salary|currency_format }}</td>
+      <td>{{ record.hra|currency_format }}</td>
+      <td>{{ record.da|currency_format }}</td>
+      <td>{{ record.total_salary|currency_format }}</td>
+      <td>{{ record.present_days }}</td>
+      <td>{{ record.paid_leaves }}</td>
+      <td>{{ record.weekly_off }}</td>
+      <td>{{ record.unpaid_leaves }}</td>
+      <td>{{ record.festivals }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+    </table>
+</body>
+</html>
