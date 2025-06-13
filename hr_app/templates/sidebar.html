@@ -19,7 +19,7 @@
                     <div class="user-panel mt-3 pb-3 mb-3 d-flex up">
                         <div class="image" style="display: flex; justify-content: center; align-items: center;">
                             {% with default_img='/static/img/default_user.jpg' %}
-                              <img src="{{ request.session.attachment|default:default_img }}" class="img-circle elevation-2" style="width: 40px;" alt="User Image">
+                              <img src="{{ request.session.attachment|default:default_img }}" class="img-circle elevation-2" style="width: 40px; height: 40px; object-fit: cover;" alt="User Image">
                             {% endwith %}
                         </div>
                         <div class="info">

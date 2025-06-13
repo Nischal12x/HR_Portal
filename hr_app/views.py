@@ -1530,7 +1530,6 @@ def task(request, task_id=0):
     else:
         task = None
         team_members = []
-
     if request.method == 'POST':
         task_name = request.POST.get('task_name')
         project_id = request.POST.get('project_id')
@@ -1541,6 +1540,10 @@ def task(request, task_id=0):
         status = request.POST.get('status')
         description = request.POST.get('description')
         document = request.FILES.get('file_upload')
+        #validations
+        if not task_name:
+            messages.error(request, "Task Name cannot be empty.")
+            return redirect(request.path)
 
         if task:
             task.name = task_name

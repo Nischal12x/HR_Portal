@@ -36,12 +36,12 @@
               <div class="row mb-3">
                 <div class="col-md-3">
                   <label>Task Name *</label>
-                  <input type="text" class="form-control" name="task_name" value="{{ task.name|default_if_none:'' }}" placeholder="Add Task"  {% if role == 'Employee' %}disabled{% endif %} required>
+                  <input type="text" class="form-control" name="task_name" value="{{ task.name|default_if_none:'' }}" placeholder="Add Task"  {% if role == 'Employee' %}readonly{% endif %} required>
                 </div>
 
                 <div class="col-md-3">
                   <label>Project *</label>
-                  <select class="form-control" name="project_id" id="projectSelect" {% if role == 'Employee' %}disabled{% endif %} required>
+                  <select class="form-control" name="project_id" id="projectSelect" {% if role == 'Employee' %}readonly{% endif %} required>
                    <option value="" disabled selected>-- Select Project --</option>
                     {% for project in projects %}
                       <option value="{{ project.id }}" {% if task.project.id == project.id %}selected{% endif %}>{{ project.name }}</option>
@@ -50,11 +50,11 @@
                 </div>
                 <div class="col-md-3">
                   <label>Start Date *</label>
-                  <input type="date" class="form-control" name="start_date" value="{% if task %}{{ task.start_date|date:'Y-m-d' }}{% endif %}"  {% if role == 'Employee' %}disabled{% endif %} required>
+                  <input type="date" class="form-control" name="start_date" value="{% if task %}{{ task.start_date|date:'Y-m-d' }}{% endif %}"  {% if role == 'Employee' %}readonly{% endif %} required>
                 </div>
                 <div class="col-md-3">
                   <label>End Date *</label>
-                  <input type="date" class="form-control" name="end_date" value="{% if task %}{{ task.end_date|date:'Y-m-d' }}{% endif %}"  {% if role == 'Employee' %}disabled{% endif %} required>
+                  <input type="date" class="form-control" name="end_date" value="{% if task %}{{ task.end_date|date:'Y-m-d' }}{% endif %}"  {% if role == 'Employee' %}readonly{% endif %} required>
                 </div>
               </div>
 
@@ -72,7 +72,7 @@
                 </div>
                 <div class="col-md-2">
                   <label>Priority *</label>
-                  <select class="form-control" name="priority"  {% if role == 'Employee' %}disabled{% endif %} required>
+                  <select class="form-control" name="priority"  {% if role == 'Employee' %}readonly{% endif %} required>
                     <option value="Low" {% if task.priority == "Low" %} selected {% endif %}>Low</option>
                     <option value="Medium" {% if task.priority == "Medium" %} selected {% endif %}>Medium</option>
                     <option value="High" {% if task.priority == "High" %} selected {% endif %}>High</option>
@@ -81,7 +81,13 @@
                 <div class="col-md-2">
                   <label>Status *</label>
                   <select class="form-control" name="status" required {% if request.session.role != 'HR' and task.status == 'Completed' %} disabled {% endif %}>
-                    <option value="Pending" {% if task.status == "Pending" %} selected {% endif %}>Pending</option>
+                    <option value="Pending" {% if task.status == "Pending" %} selected {% endif %}>
+                      {% if task.status == "Completed" and request.session.role != "HR" %}
+                        Completed
+                      {% else %}
+                        Pending
+                      {% endif %}
+                    </option>
                     <option value="Claimed Completed" {% if task.status == "Claimed Completed" %} selected {% endif %}>Claimed</option>
                     {% if request.session.role == 'HR' %}<option value="Completed" {% if task.status == "Completed" %} selected {% endif %}>Completed</option> {% endif %}
                   </select>

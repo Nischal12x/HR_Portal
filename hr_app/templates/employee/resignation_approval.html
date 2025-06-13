@@ -75,11 +75,35 @@
                 </div>
               </div>
               <div class="card-footer text-right">
-                <form method="post">
-                    {% csrf_token %}
-                    <button type="submit" name="reject" class="btn btn-danger">Reject</button>
-                    <button type="submit" name="approve" class="btn btn-success ml-2">Approved</button>
-                </form>
+                <!-- Buttons + Remarks -->
+{% if request.session.role == "HR" or request.session.role == "Project Manager" %}
+  {% if exit_request.status == "PENDING_RM_APPROVAL" or exit_request.status == "PENDING_HR_APPROVAL" %}
+    <form method="post" onsubmit="return validateForm();">
+      {% csrf_token %}
+      <div class="form-group">
+        <textarea id="remarks" name="remarks" class="form-control" rows="2" placeholder="Enter remarks (required for rejection)"></textarea>
+      </div>
+      <button type="submit" name="reject" id="rejectBtn" class="btn btn-danger">Reject</button>
+      <button type="submit" name="approve" id="approveBtn" class="btn btn-success ml-2">Approve</button>
+    </form>
+  {% endif %}
+{% endif %}
+
+<!-- Toast Container -->
+<div aria-live="polite" aria-atomic="true" style="position: relative;">
+  <div id="toast-container" style="position: fixed; top: 1rem; right: 1rem; z-index: 9999;">
+    <div id="formToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-delay="3000">
+      <div class="toast-header">
+        <strong class="mr-auto text-danger">Form Error</strong>
+        <button type="button" class="ml-2 mb-1 close" data-dismiss="toast">&times;</button>
+      </div>
+      <div class="toast-body" id="toastMsg">
+        <!-- dynamic content -->
+      </div>
+    </div>
+  </div>
+</div>
+
               </div>
             </div>
           </div>
@@ -236,4 +260,33 @@
 
   {% include 'footer.html' %}
 </div>
+<script>
+  let action = null;
+
+  // Identify clicked action
+  document.getElementById('rejectBtn')?.addEventListener('click', function () {
+    action = 'reject';
+  });
+  document.getElementById('approveBtn')?.addEventListener('click', function () {
+    action = 'approve';
+  });
+
+  function showToast(message) {
+    document.getElementById('toastMsg').innerText = message;
+    const toastEl = document.getElementById('formToast');
+    const toast = new bootstrap.Toast(toastEl);
+    toast.show();
+  }
+
+  function validateForm() {
+    if (action === 'reject') {
+      const remarks = document.getElementById('remarks').value.trim();
+      if (!remarks) {
+        showToast("Remarks are required when rejecting the resignation.");
+        return false;
+      }
+    }
+    return true;
+  }
+</script>
 {% endblock %}

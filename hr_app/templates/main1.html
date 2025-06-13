@@ -537,7 +537,10 @@ td .btn + .btn {
   </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
-
+<div class="wrapper">
+  <div class="preloader flex-column justify-content-center align-items-center">
+    <img class="animation__shake" src="{% static 'img/logo.webp' %}" alt="AdminLTELogo" height="140" width="140">
+  </div>
 <!-- CSRF token for JavaScript fetch() -->
 <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
 
