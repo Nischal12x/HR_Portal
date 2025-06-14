@@ -1291,6 +1291,21 @@ def admins(request):
         total_leaves += consumed + remaining
         remaining_leaves += remaining
         total_consumed_leaves += consumed
+        leave_data = LeaveApplication.objects.values('leave_type__leavetype').annotate(count=Count('id'))
+        leave_labels = [entry['leave_type__leavetype'] for entry in leave_data]
+        leave_counts = [entry['count'] for entry in leave_data]
+
+        timesheet_data = Timesheet.objects.values('project__name').annotate(
+            total_hours=Sum(
+                ExpressionWrapper(
+                    F('end_time') - F('start_time'),
+                    output_field=DurationField()
+                )
+            )
+        )
+        project_labels = [entry['project__name'] or "Unnamed" for entry in timesheet_data]
+        project_hours = [round(entry['total_hours'].total_seconds() / 3600, 2) if entry['total_hours'] else 0 for entry
+                         in timesheet_data]
 
     context = {
         'total_employees': total_employees,
@@ -1300,7 +1315,11 @@ def admins(request):
         'availed_leaves': total_consumed_leaves,
         'total_leaves': total_leaves,
         'total_holidays' : total_holidays,
-        'total_task': total_task
+        'total_task': total_task,
+        'leave_labels': leave_labels,
+        'leave_counts': leave_counts,
+        'project_labels': project_labels,
+        'project_hours': project_hours,
     }
 
     return render(request, 'index.html', context)
@@ -2109,7 +2128,10 @@ def forgot_password_done(request):
     # Simple page to confirm email sent
     return render(request, 'forgot_password_done.html')
 from django.db.models import Q, Count
-
+from django.db.models import Count, Sum
+from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import F, ExpressionWrapper, DurationField
+import json
 def dashboard(request):
     employee_id = request.session.get('employee_id')
     role = request.session.get('role')
@@ -2146,6 +2168,29 @@ def dashboard(request):
 
     # Total tasks count based on role
     total_tasks = tasks.count()
+    # ==== Chart Data ====
+    # 1. Leave Types Distribution (pie chart)
+    leave_type_data = LeaveApplication.objects.values('leave_type__leavetype').annotate(
+        count=Count('id')
+    )
+    leave_labels = [entry['leave_type__leavetype'] for entry in leave_type_data]
+    leave_counts = [entry['count'] for entry in leave_type_data]
+
+    # Calculate total hours per project by subtracting start and end
+    timesheet_data = Timesheet.objects.annotate(
+        duration=ExpressionWrapper(
+            F('end_time') - F('start_time'),
+            output_field=DurationField()
+        )
+    ).values('project__name').annotate(
+        total_duration=Sum('duration')
+    )
+
+    project_labels = [entry['project__name'] for entry in timesheet_data]
+    project_hours = [
+        round(entry['total_duration'].total_seconds() / 3600, 2) if entry['total_duration'] else 0
+        for entry in timesheet_data
+    ]
 
     context = {
         'total_employees': total_employees,
@@ -2155,10 +2200,13 @@ def dashboard(request):
         'projects': projects,
         'tasks': tasks,
         'leaves': leaves,
+        'leave_labels': leave_labels,
+        'leave_counts': leave_counts,
+        'project_labels': project_labels,
+        'project_hours': project_hours,
     }
 
     return render(request, 'dashboard.html', context)
-
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt

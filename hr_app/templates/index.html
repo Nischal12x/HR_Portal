@@ -3,21 +3,51 @@
 
 {% block title %}AdminLTE3 | Dashboard{% endblock %}
 
+{% block head_extra %}
+{# Add this block in your main1.html inside the <head> tag to include custom styles #}
+<style>
+    /* Custom styles for a more professional look */
+    .card-hover {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    .icon-circle {
+        height: 3rem;
+        width: 3rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .chart-container {
+        position: relative;
+        height: 320px;
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
    {% if messages %}
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        {% for message in messages %}
-            Swal.fire({
-                title: "{% if message.tags == 'success' %}Success{% else %}Error{% endif %}",
-                text: "{{ message }}",
-                icon: "{% if message.tags == 'success' %}success{% else %}error{% endif %}",
-                confirmButtonText: "OK"
-            });
-        {% endfor %}
-    });
-</script>
-{% endif %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            {% for message in messages %}
+                Swal.fire({
+                    title: "{% if message.tags == 'success' %}Success{% else %}Error{% endif %}",
+                    text: "{{ message }}",
+                    icon: "{% if message.tags == 'success' %}success{% else %}error{% endif %}",
+                    confirmButtonText: "OK",
+                    customClass: {
+                        confirmButton: 'btn btn-primary'
+                    }
+                });
+            {% endfor %}
+        });
+    </script>
+    {% endif %}
 
 <div class="wrapper">
   <div class="preloader flex-column justify-content-center align-items-center">
@@ -32,7 +62,7 @@
       <div class="container-fluid">
         <div class="row mb-2">
           <div class="col-sm-6">
-            <h1 class="m-0">Dashboard <small class="text-muted">{{ current_date }}</small></h1>
+            <h1 class="m-0">Dashboard <small class="text-muted font-weight-light">{{ current_date }}</small></h1>
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
@@ -44,94 +74,171 @@
       </div>
     </div>
 
-    <div class="container-fluid">
-      <div class="dashboard-container">
-  <div class="dashboard-cards">
-    <!-- Card: Total Employees -->
-    {% if request.session.role != "Employee" %}
-    <a href="{% url 'employees' %}" class="text-decoration-none text-dark">
-    <div class="card-box">
-      <div class="icon-box bg-blue"><i class="fas fa-users"></i></div>
-      <div class="info">
-        <div class="label">Total Employees</div>
-        <div class="count" data-count="{{total_employees}}">{{total_employees}}</div>
-      </div>
-    </div>
-    </a>
-    {% endif %}
-    <!-- Card: Total Projects -->
-    <a href="{% url 'widgets' %}" class="text-decoration-none text-dark">
-    <div class="card-box">
-      <div class="icon-box bg-green"><i class="fas fa-folder-open"></i></div>
-      <div class="info">
-        <div class="label">Total Projects</div>
-        <div class="count" data-count="{{total_projects}}">{{total_projects}}</div>
-      </div>
-    </div>
-    </a>
-      <div class="card-box">
-      <div class="icon-box bg-yellow"><i class="fas fa-tasks"></i></div>
-      <div class="info">
-        <div class="label">Ongoing Tasks</div>
-        <div class="count" data-count="{{ongoing_tasks}}">{{ongoing_tasks}}</div>
-      </div>
-    </div>
+    <section class="content">
+      <div class="container-fluid">
+        <!-- Info Cards Row -->
+        <div class="row">
+          {% if request.session.role != "Employee" %}
+          <!-- Card: Total Employees -->
+          <div class="col-xl-3 col-md-6 mb-4">
+            <a href="{% url 'employees' %}" class="text-decoration-none">
+              <div class="card border-left-primary shadow-sm h-100 py-2 card-hover">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Employees</div>
+                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_employees }}</div>
+                    </div>
+                    <div class="col-auto">
+                      <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
+          {% endif %}
 
-    <!-- Card: Ongoing Tasks -->
-    <a href="{% url 'task_list' %}" class="text-decoration-none text-dark">
-    <div class="card-box">
-      <div class="icon-box bg-blue"><i class="fas fa-tasks"></i></div>
-      <div class="info">
-        <div class="label">Total Tasks</div>
-        <div class="count" data-count="{{total_task}}">{{total_task}}</div>
-      </div>
-    </div>
-    <!-- Card: Total Leave -->
-    <a href="{% url 'index2' %}" class="text-decoration-none text-dark">
-    <div class="card-box">
-      <div class="icon-box bg-gray"><i class="fas fa-calendar-check"></i></div>
-      <div class="info">
-        <div class="label">Total Leave</div>
-        <div class="count" data-count="{{total_leaves}}">{{total_leaves}}</div>
-      </div>
-    </div>
-    </a>
-    <!-- Card: Availed Leaves -->
-      <a href="{% url 'leave_dashboard' %}" class="text-decoration-none text-dark">
-    <div class="card-box">
-      <div class="icon-box bg-red"><i class="fas fa-clock"></i></div>
-      <div class="info">
-        <div class="label">Availed Leaves</div>
-        <div class="count" data-count="{{availed_leaves}}">{{availed_leaves}}</div>
-      </div>
-    </div>
-      </a>
-    <!-- Card: Remaining Leave -->
-      <a href="{% url 'index2' %}" class="text-decoration-none text-dark">
-    <div class="card-box">
-      <div class="icon-box bg-teal"><i class="fas fa-umbrella-beach"></i></div>
-      <div class="info">
-        <div class="label">Remaining Leave</div>
-        <div class="count" data-count="{{remaining_leaves}}">{{remaining_leaves}}</div>
-      </div>
-    </div>
-      </a>
-    <a href="{% url 'holiday_dashboard' %}" class="text-decoration-none text-dark">
-  <div class="card-box">
-    <div class="icon-box bg-red">
-      <i class="fas fa-calendar-day"></i>
-    </div>
-    <div class="info">
-      <div class="label">Total Holidays</div>
-      <div class="count" data-count="{{ total_holidays }}">{{ total_holidays }}</div>
-    </div>
-  </div>
-</a>
+          <!-- Card: Total Projects -->
+          <div class="col-xl-3 col-md-6 mb-4">
+            <a href="{% url 'widgets' %}" class="text-decoration-none">
+              <div class="card border-left-success shadow-sm h-100 py-2 card-hover">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Projects</div>
+                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_projects }}</div>
+                    </div>
+                    <div class="col-auto">
+                      <i class="fas fa-folder-open fa-2x text-gray-300"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
 
-  </div>
-</div>
+          <!-- Card: Ongoing Tasks -->
+          <div class="col-xl-3 col-md-6 mb-4">
+            <a href="{% url 'task_list' %}" class="text-decoration-none">
+                <div class="card border-left-info shadow-sm h-100 py-2 card-hover">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Ongoing Tasks</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ ongoing_tasks }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-spinner fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+          </div>
 
-    </div>
+          <!-- Card: Total Tasks -->
+          <div class="col-xl-3 col-md-6 mb-4">
+            <a href="{% url 'task_list' %}" class="text-decoration-none">
+                <div class="card border-left-warning shadow-sm h-100 py-2 card-hover">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Total Tasks</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_task }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-tasks fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+          </div>
+
+          <!-- Card: Total Leave -->
+          <div class="col-xl-3 col-md-6 mb-4">
+            <a href="{% url 'index2' %}" class="text-decoration-none">
+                <div class="card border-left-secondary shadow-sm h-100 py-2 card-hover">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Total Leave</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_leaves }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+          </div>
+
+          <!-- Card: Availed Leaves -->
+          <div class="col-xl-3 col-md-6 mb-4">
+            <a href="{% url 'leave_dashboard' %}" class="text-decoration-none">
+                <div class="card border-left-danger shadow-sm h-100 py-2 card-hover">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Availed Leaves</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ availed_leaves }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-clock fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+          </div>
+
+          <!-- Card: Remaining Leave -->
+          <div class="col-xl-3 col-md-6 mb-4">
+            <a href="{% url 'index2' %}" class="text-decoration-none">
+                <div class="card border-left-success shadow-sm h-100 py-2 card-hover">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Remaining Leave</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ remaining_leaves }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-umbrella-beach fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+          </div>
+
+          <!-- Card: Total Holidays -->
+          <div class="col-xl-3 col-md-6 mb-4">
+            <a href="{% url 'holiday_dashboard' %}" class="text-decoration-none">
+                <div class="card border-left-info shadow-sm h-100 py-2 card-hover">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Holidays</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_holidays }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+          </div>
+
+        </div>
+        <!-- /.row -->
+
+        {% include "reports_analysis.html" %}
+
+      </div>
+    </section>
   </div>
   {% include 'footer.html' %}
 </div>
