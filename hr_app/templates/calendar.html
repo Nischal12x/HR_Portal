@@ -202,7 +202,16 @@
                 if (response.status === 'success') {
                     // Update the event ID from the server so future updates/deletes work
                     info.event.setProp('id', response.event_id);
-                    Swal.fire('Saved!', 'Task added to calendar.', 'success');
+                    Swal.fire({
+                        title: 'Saved!',
+                        text: 'Task added to calendar.',
+                        icon: 'success',
+                        timer: 1000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.reload();
+                    });
+
                     if (checkbox.checked) {
                         info.draggedEl.parentNode.removeChild(info.draggedEl);
                     }
@@ -312,9 +321,22 @@
             data: JSON.stringify(eventData),
             success: function(response) {
                 if (response.status === 'success') {
-                    eventData.id = response.event_id; // Add server ID to the event object
-                    calendar.addEvent(eventData); // Add event to calendar UI
-                    Swal.fire('Saved!', 'Task added to calendar.', 'success');
+                    const createdEvent = calendar.addEvent({
+                    ...eventData,
+                    id: response.event_id // Ensure FullCalendar knows the ID
+                });
+
+                    Swal.fire({
+                        title: 'Saved!',
+                        text: 'Task added to calendar.',
+                        icon: 'success',
+                        timer: 1000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.reload();
+                    });
+
+
                 } else {
                     Swal.fire('Error!', response.message || 'Could not save event.', 'error');
                 }

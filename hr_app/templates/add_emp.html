@@ -29,7 +29,7 @@
     {% if employee and employee.id %} Update Employee {% else %} Add Employee {% endif %}
   </h3>
   {% if employee and employee.id %}
-    <div class="ms-auto">
+    <div class="ms-auto" style="margin-left : auto ;">
       <a href="{% url 'employee_history' employee.id %}" class="btn btn-info btn-sm">
         View History
       </a>

@@ -543,6 +543,12 @@ from .models import AddEmployee, Role
 from .forms import EmployeeForm
 
 def add_employee(request):
+    employee_id = request.session.get('employee_id')
+    try:
+        employee = AddEmployee.objects.get(id=employee_id)
+    except AddEmployee.DoesNotExist:
+        messages.error(request, "Employee not found.")
+        return redirect('login')
     if request.method == "POST":
 
         roles = Role.objects.all()
@@ -665,7 +671,7 @@ def add_employee(request):
             marital_status=employee.marital_status,
             gender=employee.gender,
             address=employee.address,
-            employee_id=employee.employee_id,
+            employee_id=employee.id,
             department=employee.department,
             designation=employee.designation,
             joining_date=employee.joining_date,
@@ -683,12 +689,6 @@ def add_employee(request):
         return redirect('index')
 
     return render(request, "add_emp.html")
-
-
-
-
-
-
 
 def employee_list(request):
     employees = AddEmployee.objects.filter(is_active=True)  # Fetch only active employees
@@ -776,7 +776,7 @@ def update_employee(request, id):
             marital_status=employee.marital_status,
             gender=employee.gender,
             address=employee.address,
-            employee_id=employee.employee_id,
+            employee_id=employee.id,
             department=employee.department,
             designation=employee.designation,
             joining_date=employee.joining_date,
@@ -2648,6 +2648,9 @@ def apply_resignation(request):
     if ExitRequest.objects.filter(employee=employee, status='PENDING_RM_APPROVAL').exists():
         messages.warning(request, "You have already submitted a resignation request.")
         return redirect('resignation_status')
+    elif ExitRequest.objects.filter(employee=employee, status='PENDING_HR_APPROVAL').exists():
+        messages.warning(request, "You Resignation is already Confirmed.")
+        return redirect('resignation_status')
     elif ExitRequest.objects.filter(employee=employee, status='Approved').exists():
         messages.warning(request, "You Resignation is already Confirmed.")
         return redirect('resignation_status')
@@ -3051,7 +3054,7 @@ def add_event(request):
                 all_day=all_day,
                 color=color
             )
-            return JsonResponse({'status': 'success', 'event_id': event.id, 'message': 'Event added successfully'})
+            return JsonResponse({'status': 'success', 'event_id': event.id, 'message': 'Event added successfully', 'reload': True})
         except json.JSONDecodeError:
             return JsonResponse({'status': 'error', 'message': 'Invalid JSON data.'}, status=400)
         except Exception as e:
