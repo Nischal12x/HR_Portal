@@ -233,6 +233,7 @@ $(document).ready(function() {
                 } else {
                     alert('Error: ' + response.message);
                 }
+                location.reload(); // force reload
                 $('#attendanceModal').modal('hide');
             },
             error: function(xhr, status, error) {
