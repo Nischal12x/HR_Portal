@@ -8,135 +8,199 @@
   {% include 'sidebar.html' %}
 
   <div class="content-wrapper">
+    <!-- Content Header -->
     <section class="content-header">
       <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center">
-          <h1 class="h4 mb-0">User Profile</h1>
-          <ol class="breadcrumb float-sm-right bg-transparent p-0 m-0">
-            <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
-            <li class="breadcrumb-item active">User Profile</li>
-          </ol>
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Profile</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+              <li class="breadcrumb-item active">User Profile</li>
+            </ol>
+          </div>
         </div>
       </div>
     </section>
 
+    <!-- Main content -->
     <section class="content">
-      <div class="container py-3">
-        <div class="row g-4">
-          <!-- Profile Sidebar -->
-          <div class="col-lg-4">
-            <div class="card text-center p-3">
-              <img src="{% if employee and employee.attachment %}{{ employee.attachment.url }}{% else %}{% static 'img/avatar.png' %}{% endif %}" class="rounded-circle mx-auto mb-3" width="120" height="120" alt="Profile Picture">
-              <h4 class="mb-1">{{ employee.full_name }}</h4>
-              <p class="text-muted mb-2">{{ employee.designation }}</p>
-              <p class="text-secondary">{{ employee.address }}</p>
-              <div class="d-grid gap-2 d-sm-flex justify-content-center">
-                <button class="btn btn-primary btn-sm">Follow</button>
-                <button class="btn btn-outline-primary btn-sm">Message</button>
+      <div class="container-fluid">
+        <!-- Info Boxes -->
+        <div class="row">
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="info-box">
+              <span class="info-box-icon bg-info"><i class="fas fa-tasks"></i></span>
+              <div class="info-box-content">
+                <span class="info-box-text">Active Tasks</span>
+                <span class="info-box-number">{{ employee.task_set.count }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="info-box">
+              <span class="info-box-icon bg-success"><i class="fas fa-project-diagram"></i></span>
+              <div class="info-box-content">
+                <span class="info-box-text">Projects</span>
+                <span class="info-box-number">{{ employee.project_set.count }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="info-box">
+              <span class="info-box-icon bg-warning"><i class="fas fa-calendar-alt"></i></span>
+              <div class="info-box-content">
+                <span class="info-box-text">Leave Balance</span>
+                <span class="info-box-number">{{ employee.leave_balance }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="info-box">
+              <span class="info-box-icon bg-danger"><i class="fas fa-clock"></i></span>
+              <div class="info-box-content">
+                <span class="info-box-text">Hours This Month</span>
+                <span class="info-box-number">{{ employee.monthly_hours }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-3">
+            <!-- Profile Image -->
+            <div class="card card-primary card-outline">
+              <div class="card-body box-profile">
+                <div class="text-center">
+                  <img class="profile-user-img img-fluid img-circle" 
+                       src="{% if employee and employee.attachment %}{{ employee.attachment.url }}{% else %}{% static 'img/avatar.png' %}{% endif %}" 
+                       alt="User profile picture">
+                </div>
+                <h3 class="profile-username text-center">{{ employee.full_name }}</h3>
+                <p class="text-muted text-center">{{ employee.designation }}</p>
+                <ul class="list-group list-group-unbordered mb-3">
+                  <li class="list-group-item">
+                    <b>Employee ID</b> <a class="float-right">{{ employee.id }}</a>
+                  </li>
+                  <li class="list-group-item">
+                    <b>Department</b> <a class="float-right">{{ employee.department }}</a>
+                  </li>
+                  <li class="list-group-item">
+                    <b>Join Date</b> <a class="float-right">{{ employee.joining_date }}</a>
+                  </li>
+                </ul>
+                <a href="{% url 'update_employee' employee.id %}" class="btn btn-primary btn-block"><b>Edit Profile</b></a>
               </div>
             </div>
 
-            <div class="card mt-4">
-              <ul class="list-group list-group-flush">
-                {% if employee.website %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                  <i class="fas fa-globe text-primary"></i>
-                  <a href="{{ employee.website }}" class="text-decoration-none" target="_blank">{{ employee.website }}</a>
-                </li>
-                {% endif %}
-                {% if employee.github %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                  <i class="fab fa-github text-dark"></i>
-                  <span>{{ employee.github }}</span>
-                </li>
-                {% endif %}
-                {% if employee.twitter %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                  <i class="fab fa-twitter text-info"></i>
-                  <span>{{ employee.twitter }}</span>
-                </li>
-                {% endif %}
-                {% if employee.instagram %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                  <i class="fab fa-instagram text-danger"></i>
-                  <span>{{ employee.instagram }}</span>
-                </li>
-                {% endif %}
-                {% if employee.facebook %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                  <i class="fab fa-facebook text-primary"></i>
-                  <span>{{ employee.facebook }}</span>
-                </li>
-                {% endif %}
-              </ul>
+            <!-- About Me Box -->
+            <div class="card card-primary">
+              <div class="card-header">
+                <h3 class="card-title">About Me</h3>
+              </div>
+              <div class="card-body">
+                <strong><i class="fas fa-book mr-1"></i> Education</strong>
+                <p class="text-muted">{{ employee.education }}</p>
+                <hr>
+                <strong><i class="fas fa-map-marker-alt mr-1"></i> Location</strong>
+                <p class="text-muted">{{ employee.address }}</p>
+                <hr>
+                <strong><i class="fas fa-pencil-alt mr-1"></i> Skills</strong>
+                <p class="text-muted">{{ employee.skills }}</p>
+                <hr>
+                <strong><i class="far fa-file-alt mr-1"></i> Notes</strong>
+                <p class="text-muted">{{ employee.notes }}</p>
+              </div>
             </div>
           </div>
 
-          <!-- Profile Details -->
-          <div class="col-lg-8">
-            <div class="card mb-4 p-3">
-              <h5 class="mb-3">Personal Information</h5>
-              <div class="row mb-2">
-                <div class="col-sm-4 text-muted">Full Name</div>
-                <div class="col-sm-8">{{ employee.full_name }}</div>
+          <div class="col-md-9">
+            <div class="card">
+              <div class="card-header p-2">
+                <ul class="nav nav-pills">
+                  <li class="nav-item"><a class="nav-link active" href="#activity" data-toggle="tab">Activity</a></li>
+                  <li class="nav-item"><a class="nav-link" href="#timeline" data-toggle="tab">Timeline</a></li>
+                  <li class="nav-item"><a class="nav-link" href="#settings" data-toggle="tab">Settings</a></li>
+                </ul>
               </div>
-              <div class="row mb-2">
-                <div class="col-sm-4 text-muted">Email</div>
-                <div class="col-sm-8">{{ employee.email }}</div>
-              </div>
-              <div class="row mb-2">
-                <div class="col-sm-4 text-muted">Phone</div>
-                <div class="col-sm-8">{{ employee.phone }}</div>
-              </div>
-              <div class="row mb-2">
-                <div class="col-sm-4 text-muted">Address</div>
-                <div class="col-sm-8">{{ employee.address }}</div>
-              </div>
-              <div class="text-end mt-3">
-                <a href="{% url 'update_employee' employee.id %}" class="btn btn-info btn-sm">Edit Profile</a>
-              </div>
-            </div>
+              <div class="card-body">
+                <div class="tab-content">
+                  <!-- Activity Tab -->
+                  <div class="active tab-pane" id="activity">
+                    {% for task in employee.task_set.all %}
+                    <div class="post">
+                      <div class="user-block">
+                        <span class="username">
+                          <a href="#">{{ task.title }}</a>
+                        </span>
+                        <span class="description">Due Date - {{ task.due_date }}</span>
+                      </div>
+                      <p>{{ task.description }}</p>
+                      <div class="progress progress-sm">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ task.progress }}%"></div>
+                      </div>
+                      <small>Progress: {{ task.progress }}%</small>
+                    </div>
+                    {% endfor %}
+                  </div>
 
-            <!-- Project Status -->
-            <div class="card p-3">
-              <h5 class="mb-3"><i class="fas fa-chart-line me-2 text-info"></i>Project Progress</h5>
-              <div class="row">
-                <div class="col-md-6">
+                  <!-- Timeline Tab -->
+                  <div class="tab-pane" id="timeline">
+                    <div class="timeline timeline-inverse">
+                      {% for project in employee.project_set.all %}
+                      <div class="time-label">
+                        <span class="bg-success">{{ project.start_date }}</span>
+                      </div>
+                      <div>
+                        <i class="fas fa-project-diagram bg-primary"></i>
+                        <div class="timeline-item">
+                          <span class="time"><i class="far fa-clock"></i> {{ project.end_date }}</span>
+                          <h3 class="timeline-header"><a href="#">{{ project.name }}</a></h3>
+                          <div class="timeline-body">{{ project.description }}</div>
+                        </div>
+                      </div>
+                      {% endfor %}
+                    </div>
+                  </div>
 
-                  <small>{{ label }}</small>
-                  <div class="progress mb-3" style="height: 6px;">
-                    <div class="progress-bar bg-primary" role="progressbar" style="width: {{ value }}%;"></div>
+                  <!-- Settings Tab -->
+                  <div class="tab-pane" id="settings">
+                    <form class="form-horizontal">
+                      <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">Email Notifications</label>
+                        <div class="col-sm-10">
+                          <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="emailNotifications" checked>
+                            <label class="custom-control-label" for="emailNotifications">Enable email notifications</label>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">Privacy</label>
+                        <div class="col-sm-10">
+                          <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="profilePrivacy">
+                            <label class="custom-control-label" for="profilePrivacy">Make profile private</label>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="form-group row">
+                        <div class="offset-sm-2 col-sm-10">
+                          <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                      </div>
+                    </form>
                   </div>
                 </div>
-                <div class="col-md-6">
-
-                  <small>{{ label }}</small>
-                  <div class="progress mb-3" style="height: 6px;">
-                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ value }}%;"></div>
-                  </div>
-                </div>
               </div>
             </div>
-
           </div>
         </div>
       </div>
     </section>
   </div>
 </div>
-
-<style>
-body {
-  background-color: #f8f9fa;
-}
-.card {
-  border: none;
-  border-radius: 0.5rem;
-  box-shadow: 0 0 15px rgba(0,0,0,0.05);
-}
-.progress {
-  background-color: #e9ecef;
-}
-</style>
 
 {% endblock %}

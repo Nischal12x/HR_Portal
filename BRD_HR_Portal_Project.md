@@ -6,82 +6,237 @@ Address: G2/197 A, near Indian Coffee House, Gulmohar Colony, Bhopal, (M.P.) 462
 ---
 
 ## Table of Contents  
-1. Executive Summary  
-2. Objectives  
-3. Vision  
-4. Scope  
-5. Current Process  
-6. Proposed Process  
-7. Documents Needed from Stakeholders  
-8. Assumptions & Limitations  
-9. Resource & Deployment  
+1. Company Vision
+2. Project Objectives
+3. Project Overview
+4. Client Information
+5. Project Scope
+6. Current Process
+7. Proposed Process
+8. Document Requirements
+9. Assumptions & Limitations
+10. Technical Requirements
+11. Resource & Deployment
 
 ---
 
-## 1. Executive Summary  
-The HR Portal project aims to develop a comprehensive web-based platform to streamline and automate human resource management processes for BISP Infonet Pvt. Ltd. This portal will facilitate employee management, leave tracking, project and task management, timesheet recording, and employee handbook distribution. The solution will improve operational efficiency, reduce manual errors, and provide real-time insights into HR activities.
+## 1. Company Vision
+BISP Infonet Pvt. Ltd. strives for excellence in:
+
+### Global Leadership
+- Leading provider of BI, Data Warehouse (DWH), and ETL services globally
+- Specialized expertise in BI, ETL, DWH consulting and implementation
+- Focus on Enterprise Performance Management (EPM) solutions
+
+### Innovation & Quality
+- Development of innovative learning solutions
+- Creation of world-class training materials
+- Delivery of cost-effective EPM/BI solutions
+
+### Core Services
+- Enterprise Performance Management
+- Business Intelligence
+- CRM Services
+- Application Development
+- Data Migration and Support
 
 ---
 
-## 2. Objectives  
-- Automate employee data management including personal and job details.  
-- Provide a robust leave management system with leave application, approval workflows, and leave balance tracking.  
-- Enable project and task management with role-based access and team collaboration.  
-- Facilitate timesheet submission and tracking for accurate work hour recording.  
-- Distribute and acknowledge employee handbooks digitally.  
-- Enhance reporting and dashboard capabilities for HR and management.  
+## 2. Project Objectives
+### Digital Transformation
+- Implement end-to-end digitization of employee leave management processes
+- Establish paperless timesheet submission and approval workflows
+- Create digital audit trails for all HR operations
+- Enable secure document storage and retrieval
+
+### Data Management & Security
+- Implement robust data handling mechanisms using Django's security features
+- Ensure fast and reliable database operations with PostgreSQL
+- Maintain data integrity through proper validation and verification
+- Establish secure access controls and user authentication
+
+### Process Automation
+- Reduce manual intervention in routine HR tasks
+- Minimize human errors through automated calculations
+- Implement automated notifications and reminders
+- Create automated report generation capabilities
+
+### User Empowerment
+- Provide intuitive self-service portals for employees
+- Enable administrative control through dedicated admin interface
+- Implement role-based access control
+- Offer mobile-responsive interface for anywhere access
+
+### System Integration
+- Develop robust leave approval workflows
+- Create comprehensive timesheet tracking system
+- Implement project progress monitoring
+- Enable seamless data flow between modules
 
 ---
 
-## 3. Vision  
-To create an integrated, user-friendly HR Portal that empowers employees and HR personnel with efficient tools for managing human resources, fostering transparency, and supporting organizational growth.
+## 3. Project Overview
+The HR Portal project encompasses four key modules:
+
+### Admin Panel
+- Employee management (CRUD operations)
+- Personal details management
+- Designation assignment
+- Payroll information
+- Project assignment
+- Timesheet monitoring
+- Progress tracking
+
+### Employee Panel
+- Personal profile access
+- Leave application interface
+- Leave balance tracking
+- Timesheet management
+- Project updates
+
+### Leave Management System
+- Leave application processing
+- Admin approval workflow
+- Leave type configuration
+- Balance calculation
+- Leave history tracking
+
+### Timesheet Module
+- Daily activity tracking
+- Project progress monitoring
+- Task completion reporting
+- Time allocation management
 
 ---
 
-## 4. Scope  
-The HR Portal will cover the following functional areas:  
-- Employee Management: Registration, updates, role assignments, and history tracking.  
-- Leave Management: Leave types, applications, approvals, and leave balance calculations.  
-- Project & Task Management: Project creation, team assignments, task tracking, and status updates.  
-- Timesheet Management: Daily and weekly timesheet submissions, image timesheets, and approvals.  
-- Employee Handbook: Upload, distribution, and acknowledgement tracking.  
-- Authentication & Authorization: Role-based access control for HR, Project Leaders, and Employees.  
-- Reporting & Dashboards: Summary views of employees, projects, leaves, tasks, and timesheets.  
+## 4. Client Information
+### Basic Information
+- **Client Name:** BISP Infonet Pvt. Ltd.
+- **Location:** G2/197 A, near Indian Coffee House
+- **Address:** Gulmohar Colony, Bhopal, (M.P.)
+- **Currency:** Rupee (INR)
+
+### Business Need
+- Centralized employee management system
+- Automated activity tracking
+- Leave management automation
+- Project progress monitoring
+- Employee performance tracking
+- Resource allocation optimization
 
 ---
 
-## 5. Current Process  
-Currently, HR processes are managed manually or through disparate systems leading to inefficiencies, delayed approvals, and lack of centralized data. Leave applications and approvals are paper-based or email-driven, causing tracking difficulties. Project and timesheet management lack integration with HR data.
+## 5. Project Scope
+### Phase 1 Implementation
+1. Employee Management
+   - Add/Remove/Update employee records
+   - Profile management
+   - Document handling
+
+2. Leave Management
+   - Leave application system
+   - Approval workflow
+   - Balance tracking
+
+3. Timesheet Implementation
+   - Activity tracking
+   - Progress monitoring
+   - Report generation
+
+### Out of Scope
+- Biometric integration
+- Advanced analytics panels
+- Third-party integrations
 
 ---
 
-## 6. Proposed Process  
-The HR Portal will automate and centralize HR functions, providing a single platform for all stakeholders. Employees can apply for leave online, track their balances, and submit timesheets. HR can manage employee records, approve leaves, and monitor projects and tasks. Project Leaders can assign tasks and track progress. The portal will generate reports and dashboards for informed decision-making.
+## 6. Current Process
+- Manual employee record management
+- HR/admin handles employee data updates
+- Database storage of employee information
+- Paper-based leave applications
+- Manual timesheet tracking
 
 ---
 
-## 7. Documents Needed from Stakeholders  
-- Employee master data including personal and job details.  
-- Leave policies and types applicable to employees.  
-- Project and task details with team assignments.  
-- Employee handbook documents for upload.  
-- Organizational roles and access permissions.  
+## 7. Proposed Process
+### System Features
+- Automated employee data management
+- Digital leave application and tracking
+- Automated leave balance calculation
+- Online timesheet submission
+- Real-time project monitoring
+
+### Process Improvements
+- Streamlined workflow
+- Reduced manual intervention
+- Improved data accuracy
+- Enhanced tracking capabilities
+- Better resource management
 
 ---
 
-## 8. Assumptions & Limitations  
-- Users have access to the internet and compatible devices.  
-- Data provided by stakeholders is accurate and up-to-date.  
-- The portal will be deployed on the organization's internal network or cloud.  
-- Integration with external payroll or ERP systems is out of scope for this phase.  
+## 8. Document Requirements
+### Essential Documents
+1. Employee Data
+   - Complete personal information
+   - Professional details
+   - Employment history
+
+2. Designation Information
+   - Current role
+   - Date of joining
+   - Department details
+
+3. Address Information
+   - Residential address
+   - Contact details
+   - Emergency contacts
 
 ---
 
-## 9. Resource & Deployment  
-- Project Team: HR personnel, Project Manager, Developers, QA testers.  
-- Technology Stack: Django (Python), PostgreSQL/SQLite, HTML/CSS/JS for frontend.  
-- Deployment: Hosted on internal servers or cloud infrastructure with secure access.  
-- Training and support will be provided to end-users post-deployment.  
+## 9. Assumptions & Limitations
+### Assumptions
+- Provided employee and project information is accurate
+- Client will provide required hardware infrastructure
+- Users have basic computer literacy
+- Stable internet connectivity available
+
+### Limitations
+- Database structure modifications restricted post-deployment
+- Limited to core HR functions
+- No external system integration in initial phase
+
+---
+
+## 10. Technical Requirements
+### Hardware Requirements
+| Component | Minimum | Recommended |
+|-----------|----------|-------------|
+| Processor | Intel Core i3 | Intel Core i5 |
+| RAM | 4 GB | 8 GB or higher |
+| Storage | 100 GB HDD/SSD | 256 GB SSD |
+| Display | 1366x768 | Full HD (1920x1080) |
+| Internet | 5 Mbps | 20 Mbps |
+
+### Software Stack
+- Backend: Django 4.x with Python 3.x
+- Database: PostgreSQL
+- Frontend: HTML5, CSS3, JavaScript, Bootstrap
+- Server: Production-grade web server
+
+---
+
+## 11. Resource & Deployment
+### Development Team
+- Project Lead: Apurv Malviya
+- Responsibilities: Design, Development, and Testing
+
+### Deployment Strategy
+- Development environment setup
+- Testing and QA
+- Production deployment
+- User training and support
 
 ---
 

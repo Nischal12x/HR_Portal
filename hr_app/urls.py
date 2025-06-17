@@ -22,7 +22,7 @@ urlpatterns = [
     path('apply-leave/', views.index2, name = 'index2'),
     path('dashboard_v3/', views.dash_v3, name = 'index3'),
     path('widgets/', views.widgets, name = 'widgets'),
-    path('calendar/', views.calendar, name = 'calendar'),
+    path('calendar/', views.calendar1, name = 'calendar'),
     path('gallery/', views.gallery, name = 'gallery'),
     path('login/', views.login_view, name='login'),
     path('register/', views.register, name = 'register'),
@@ -113,6 +113,8 @@ urlpatterns = [
     path('exit/hr-manage/', views.manage_exit_requests_hr, name='manage_exit_requests_hr'),
     path('exit/hr-process/<int:request_id>/', views.process_exit_request_hr, name='process_exit_request_hr'),
     path('attendance/', views.attendance_overview, name='attendance_overview'),
+    path('attendance/update/', views.update_attendance_status, name='update_attendance_status'),
+    path('attendance/download/', views.download_attendance_csv, name='download_attendance_csv'),
     path('mark_absent/', views.mark_absent, name='mark_absent'),
     # inactive employees
     path('inactive_employees/', views.inactive_employees, name='inactive_employees'),

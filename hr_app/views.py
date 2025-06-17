@@ -1702,7 +1702,7 @@ def widgets(request) :
     page_number = request.GET.get('page')  # Get current page number
     page_obj = paginator.get_page(page_number)  # Get the page object
     return render(request, 'widgets.html', {'projects' : page_obj})
-def calendar(request) :
+def calendar1(request) :
     return render(request, 'calendar.html')
 def gallery(request) :
     return render(request, 'gallery.html')
@@ -2409,165 +2409,329 @@ from datetime import datetime, timedelta
 from django.db.models import Q
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from .models import Attendance, LeaveApplication, Leave_Type, Holiday, AddEmployee
+from .models import Attendance, LeaveApplication, Holiday
 
-@login_required
-def attendance_overview(request):
-    # Get month and year from request GET params or default to current month/year
-    month = int(request.GET.get('month', timezone.now().month))
-    year = int(request.GET.get('year', timezone.now().year))
+# your_app/views.py
 
-    # Get all active employees only
-    employees = AddEmployee.objects.filter(is_active=True).order_by('full_name')
-
-    # Get holidays effective from their added date onward
-    holidays = Holiday.objects.filter(date__year=year, date__month=month, date__lte=timezone.now().date())
-
-    # Get leaves approved for the month
-    leaves = LeaveApplication.objects.filter(
-        status='Approved',
-        from_date__year=year,
-        from_date__month=month
-    )
-
-    # Prepare attendance data per employee per day
-    days_in_month = (datetime(year, month % 12 + 1, 1) - timedelta(days=1)).day
-    attendance_data = {}
-
-    for employee in employees:
-        attendance_data[employee.id] = {}
-        for day in range(1, days_in_month + 1):
-            date = datetime(year, month, day).date()
-            # Default status is Present
-            status = 'P'
-
-            # Check if date is a holiday and holiday date is <= today
-            if holidays.filter(date=date).exists():
-                status = 'H'
-
-            # Check if employee has approved leave on this date
-            if leaves.filter(employee=employee, from_date__lte=date, till_date__gte=date).exists():
-                status = 'L'
-
-            # Check if manual attendance record exists
-            attendance_record = Attendance.objects.filter(employee=employee, date=date).first()
-            if attendance_record:
-                status = attendance_record.get_status_display()
-
-            attendance_data[employee.id][date] = status
-
-    # Prepare table_rows for template
-    table_rows = []
-    for employee in employees:
-        statuses = []
-        for day in range(1, days_in_month + 1):
-            date = datetime(year, month, day).date()
-            statuses.append(attendance_data[employee.id].get(date, '-'))
-        table_rows.append({'employee': employee, 'statuses': statuses})
-
-    context = {
-        'employees': employees,
-        'attendance_data': attendance_data,
-        'month': month,
-        'year': year,
-        'days_in_month': range(1, days_in_month + 1),
-        'table_rows': table_rows,
-    }
-    return render(request, 'attendance_overview.html', context)
-
-@login_required
-def mark_absent(request):
-    if request.session.get('role') != 'HR':
-        messages.error(request, "Unauthorized access.")
-        return redirect('attendance_overview')
-
-    if request.method == 'POST':
-        employee_id = request.POST.get('employee_id')
-        date_str = request.POST.get('date')
-        try:
-            date = datetime.strptime(date_str, '%Y-%m-%d').date()
-            employee = AddEmployee.objects.get(id=employee_id)
-        except (ValueError, AddEmployee.DoesNotExist):
-            messages.error(request, "Invalid data.")
-            return redirect('attendance_overview')
-
-        # Create or update attendance record as Absent
-        attendance_record, created = Attendance.objects.update_or_create(
-            employee=employee,
-            date=date,
-            defaults={'status': 'A'}
-        )
-        messages.success(request, f"Marked {employee.full_name} as absent on {date}.")
-        return redirect('attendance_overview')
-
-    # For GET request, show form to mark absent
-    employees = AddEmployee.objects.filter(is_active=True).order_by('full_name')
-    context = {
-        'employees': employees,
-        'today': timezone.now().date(),
-    }
-    return render(request, 'mark_absent.html', context)
 from datetime import datetime, timedelta
+import calendar
+import csv
+
 from django.db.models import Q
-from django.http import JsonResponse
+from django.utils import timezone
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
 from django.contrib import messages
-from .models import Attendance, LeaveApplication, Leave_Type, Holiday, AddEmployee
+from .models import Attendance, LeaveApplication, Holiday, AddEmployee
+
+
+# Helper function for role check
+def is_hr(user):
+    # Replace this with your actual role checking logic
+    try:
+        return AddEmployee.objects.get(user=user)
+    except AddEmployee.DoesNotExist:
+        return None
+
+    return user.is_authenticated and user.session.get('role') == 'HR'
+    # Or if you have a profile model:
+    # return user.is_authenticated and user.userprofile.role == 'HR'
+
 
 @login_required
 def attendance_overview(request):
-    # Get month and year from request GET params or default to current month/year
-    month = int(request.GET.get('month', timezone.now().month))
-    year = int(request.GET.get('year', timezone.now().year))
+    # --- 1. Get Date and Navigation ---
+    try:
+        month = int(request.GET.get('month', timezone.now().month))
+        year = int(request.GET.get('year', timezone.now().year))
+        # Prevent invalid month/year values
+        if not (1 <= month <= 12):
+            month = timezone.now().month
+        current_date = datetime(year, month, 1)
+    except (ValueError, TypeError):
+        current_date = timezone.now()
+        month = current_date.month
+        year = current_date.year
+        current_date = datetime(year, month, 1)
 
-    # Get all employees (active and inactive)
-    employees = AddEmployee.objects.all().order_by('full_name')
+    # Calculate previous and next month/year for navigation links
+    prev_month_date = current_date - timedelta(days=1)
+    next_month_date = (current_date + timedelta(days=32)).replace(day=1)
 
-    # Get holidays effective from their added date onward
-    holidays = Holiday.objects.filter(date__year=year, date__month=month, date__lte=timezone.now().date())
+    # --- 2. Efficient Data Fetching (Avoid N+1 queries) ---
+    all_employees = AddEmployee.objects.filter(is_active=True).order_by('full_name')
 
-    # Get leaves approved for the month
+    # Get all relevant records for the month in single queries
+    holidays = set(Holiday.objects.filter(date__year=year, date__month=month).values_list('date', flat=True))
+
     leaves = LeaveApplication.objects.filter(
         status='Approved',
-        from_date__year=year,
-        from_date__month=month
+        from_date__year__lte=year,
+        till_date__year__gte=year,
+        from_date__month__lte=month,
+        till_date__month__gte=month,
     )
 
-    # Prepare attendance data per employee per day
-    days_in_month = (datetime(year, month % 12 + 1, 1) - timedelta(days=1)).day
-    attendance_data = {}
+    manual_attendance = Attendance.objects.filter(
+        employee__in=all_employees,
+        date__year=year,
+        date__month=month
+    )
 
-    for employee in employees:
-        attendance_data[employee.id] = {}
+    # Pre-process data into fast-lookup dictionaries
+    leaves_map = {}
+    for leave in leaves:
+        current_date_in_leave = leave.from_date
+        while current_date_in_leave <= leave.till_date:
+            if current_date_in_leave.year == year and current_date_in_leave.month == month:
+                if leave.employee.id not in leaves_map:
+                    leaves_map[leave.employee.id] = set()
+                leaves_map[leave.employee.id].add(current_date_in_leave)
+            current_date_in_leave += timedelta(days=1)
+
+    attendance_map = {(rec.employee.id, rec.date): rec.get_status_display() for rec in manual_attendance}
+
+    # --- 3. Prepare Data for Template ---
+    _, days_in_month = calendar.monthrange(year, month)
+    days_with_weekdays = [
+        {'day': day, 'weekday': calendar.day_name[datetime(year, month, day).weekday()][:3]}
+        for day in range(1, days_in_month + 1)
+    ]
+
+    table_rows = []
+    for employee in all_employees:
+        statuses = []
+
+        summary = {'P': 0, 'A': 0, 'L': 0, 'H': 0, 'W': 0}  # Present, Absent, Leave, Holiday, Weekend
+
         for day in range(1, days_in_month + 1):
             date = datetime(year, month, day).date()
-            # Default status is Present
-            status = 'P'
+            status_key = 'P'  # Default to Present
 
-            # Check if date is a holiday and holiday date is <= today
-            if holidays.filter(date=date).exists():
-                status = 'H'
+            # Logic is ordered by precedence
+            if date > timezone.now().date():
+                status_key = '-'  # Future date
+            elif date in holidays:
+                status_key = 'H'
+            elif date.weekday() >= 5:  # Saturday or Sunday
+                status_key = 'W'
 
-            # Check if employee has approved leave on this date
-            if leaves.filter(employee=employee, from_date__lte=date, till_date__gte=date).exists():
-                status = 'L'
+            # Employee-specific checks
+            if employee.id in leaves_map and date in leaves_map[employee.id]:
+                status_key = 'L'
 
-            # Check if manual attendance record exists
-            attendance_record = Attendance.objects.filter(employee=employee, date=date).first()
-            if attendance_record:
-                status = attendance_record.get_status_display()
+            # Manual attendance overrides everything
+            if (employee.id, date) in attendance_map:
+                status_display = attendance_map[(employee.id, date)]
+                status_key = {
+                    'Present': 'P',
+                    'Absent': 'A',
+                    'Leave': 'L',
+                    'Holiday': 'H',
+                    'Weekend': 'W'
+                }.get(status_display, 'P')  # Default to 'P' if unknown
+                if status_key != '-':
+                    summary[status_key] = summary.get(status_key, 0) + 1
 
-            attendance_data[employee.id][date] = status
+            # A day without any record that is not a weekend or holiday is an Absence
+            # if status_key == 'P' and (employee.id, date) not in attendance_map:
+            #     # This assumes no explicit 'Present' record is created.
+            #     # If you have check-in/out, 'P' would come from there.
+            #     # For a manual system, an unmarked day is Absent.
+            #     status_key = 'A'
+
+            statuses.append(status_key)
+            if status_key != '-':
+                summary[status_key] += 1
+
+        table_rows.append({'employee': employee, 'statuses': statuses, 'summary': summary})
+
+    # --- 4. Pagination ---
+    paginator = Paginator(table_rows, 25)  # Show 25 employees per page
+    page = request.GET.get('page')
+    try:
+        paginated_rows = paginator.page(page)
+    except PageNotAnInteger:
+        paginated_rows = paginator.page(1)
+    except EmptyPage:
+        paginated_rows = paginator.page(paginator.num_pages)
 
     context = {
-        'employees': employees,
-        'attendance_data': attendance_data,
+        'paginated_rows': paginated_rows,
         'month': month,
         'year': year,
-        'days_in_month': range(1, days_in_month + 1),
+        'month_name': calendar.month_name[month],
+        'days_in_month_with_weekdays': days_with_weekdays,
+        'prev_month': prev_month_date.month,
+        'prev_year': prev_month_date.year,
+        'next_month': next_month_date.month,
+        'next_year': next_month_date.year,
+        'is_hr': is_hr(request.user),  # Pass HR status to template
+        'legend': {
+            'P': 'Present', 'A': 'Absent', 'L': 'Leave',
+            'H': 'Holiday', 'W': 'Weekend'
+        }
     }
     return render(request, 'attendance_overview.html', context)
+
+
+@login_required
+def update_attendance_status(request):
+    """
+    AJAX view to mark attendance. Restricted to HR.
+    """
+    if not is_hr(request.user):
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+
+    if request.method == 'POST':
+        try:
+            employee_id = request.POST.get('employee_id')
+            date_str = request.POST.get('date')
+            status = request.POST.get('status', 'A').upper()  # Ensure uppercase like 'P', 'A', etc.
+
+            valid_statuses = ['P', 'A', 'L', 'H', 'W']
+            if status not in valid_statuses:
+                return JsonResponse({'status': 'error', 'message': 'Invalid attendance status.'}, status=400)
+
+            date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            employee = AddEmployee.objects.get(id=employee_id)
+
+            if date > timezone.now().date():
+                return JsonResponse({'status': 'error', 'message': 'Cannot mark attendance for a future date.'}, status=400)
+
+            attendance_record, created = Attendance.objects.update_or_create(
+                employee=employee,
+                date=date,
+                defaults={'status': status}
+            )
+
+            return JsonResponse({
+                'status': 'success',
+                'message': f"Marked {employee.full_name} as '{attendance_record.get_status_display()}' on {date}.",
+                'new_status': attendance_record.get_status_display()
+            })
+
+        except (ValueError, AddEmployee.DoesNotExist, TypeError):
+            return JsonResponse({'status': 'error', 'message': 'Invalid data received.'}, status=400)
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
+
+
+
+# your_app/views.py
+
+@login_required
+def download_attendance_csv(request):
+    """
+    View to download the attendance data for a given month/year as a CSV file.
+    This version is corrected to handle future dates and provides a clean CSV output.
+    """
+    # --- 1. Get and Validate Date ---
+    try:
+        month = int(request.GET.get('month', timezone.now().month))
+        year = int(request.GET.get('year', timezone.now().year))
+        # Validate that the month and year form a real date
+        datetime(year, month, 1)
+    except (ValueError, TypeError):
+        # Default to current month/year on invalid input
+        current_time = timezone.now()
+        month = current_time.month
+        year = current_time.year
+
+    # --- 2. Efficient Data Fetching (same as overview) ---
+    all_employees = AddEmployee.objects.filter(is_active=True).order_by('full_name')
+    holidays = set(Holiday.objects.filter(date__year=year, date__month=month).values_list('date', flat=True))
+    leaves = LeaveApplication.objects.filter(
+        status='Approved',
+        from_date__year__lte=year,
+        till_date__year__gte=year,
+        from_date__month__lte=month,
+        till_date__month__gte=month,
+    )
+    manual_attendance = Attendance.objects.filter(
+        employee__in=all_employees,
+        date__year=year,
+        date__month=month
+    )
+
+    # Pre-process data into fast-lookup dictionaries
+    leaves_map = {}
+    for leave in leaves:
+        d = leave.from_date
+        while d <= leave.till_date:
+            if d.year == year and d.month == month:
+                if leave.employee.id not in leaves_map:
+                    leaves_map[leave.employee.id] = set()
+                leaves_map[leave.employee.id].add(d)
+            d += timedelta(days=1)
+
+    attendance_map = {(rec.employee.id, rec.date): rec.get_status_display() for rec in manual_attendance}
+
+    # --- 3. CSV Generation ---
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="attendance_{year}-{month:02d}.csv"'
+
+    writer = csv.writer(response)
+
+    # Write header row
+    _, days_in_month = calendar.monthrange(year, month)
+    header = ['Employee Name', 'Employee ID'] + [str(d) for d in range(1, days_in_month + 1)] + ['Total Present',
+                                                                                                 'Total Absent',
+                                                                                                 'Total Leave',
+                                                                                                 'Total Holiday',
+                                                                                                 'Total Weekend']
+    writer.writerow(header)
+
+    # Write data rows for each employee
+    for employee in all_employees:
+        # Use getattr for safety in case employee_id field doesn't exist on the model
+        employee_data_row = [employee.full_name, getattr(employee, 'employee_id', 'N/A')]
+
+        daily_statuses = []
+        summary = {'P': 0, 'A': 0, 'L': 0, 'H': 0, 'W': 0}
+
+        for day in range(1, days_in_month + 1):
+            date = datetime(year, month, day).date()
+            status_key = 'A'  # Default to Absent for a working day
+
+            # Determine status with clear precedence
+            if date > timezone.now().date():
+                status_key = '-'  # Future date, not counted in summary
+            elif date in holidays:
+                status_key = 'H'
+            elif date.weekday() >= 5:  # Saturday or Sunday
+                status_key = 'W'
+
+            # Employee-specific overrides
+            if employee.id in leaves_map and date in leaves_map[employee.id]:
+                status_key = 'L'
+
+            if (employee.id, date) in attendance_map:
+                # Manual attendance overrides everything else
+                status_key = attendance_map[(employee.id, date)]
+
+            # A day that is not a weekend/holiday/leave and has no manual record is 'Absent'
+            # Our default 'A' already covers this. If you had a check-in system,
+            # you'd set default to 'A' and override with 'P' if a check-in exists.
+
+            daily_statuses.append(status_key)
+
+            # *** THE FIX IS HERE ***
+            # Only increment the summary if the status_key is a valid counter.
+            # This safely ignores '-', which would have caused a KeyError.
+            if status_key in summary:
+                summary[status_key] += 1
+
+        # Now extend the row with the collected data
+        employee_data_row.extend(daily_statuses)
+        employee_data_row.extend([summary['P'], summary['A'], summary['L'], summary['H'], summary['W']])
+
+        # Write the complete row to the CSV
+        writer.writerow(employee_data_row)
+
+    return response
 
 @login_required
 def mark_absent(request):
@@ -2601,7 +2765,7 @@ def mark_absent(request):
         'today': timezone.now().date(),
     }
     return render(request, 'mark_absent.html', context)
-
+from .models import Leave_Type
 
 # Helper function (you might have this elsewhere)
 def get_employee_profile(user):

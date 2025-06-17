@@ -548,7 +548,7 @@ td .btn + .btn {
 {% endblock %}
 
 
-
+</div>
 <!-- REQUIRED SCRIPTS -->
 <script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
 <script src="{% static 'plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
@@ -1033,5 +1033,7 @@ function setStatus(option, text, badgeClass) {
     calendar.render();
   });
 </script>
+{% block custom_js %}
+  {% endblock %}
 </body>
 </html>
