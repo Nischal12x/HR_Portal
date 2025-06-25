@@ -65,7 +65,30 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'hr_app',
+    'django_celery_results',
 ]
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs/payslip_email.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
+
+# Celery config
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # or your actual broker
+CELERY_RESULT_BACKEND = 'django-db'
 
 LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'locale'),
@@ -83,7 +106,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'HR_Portal.urls'
-
+CSRF_FAILURE_VIEW = 'hr_app.views.csrf_failure'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -95,6 +118,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'hr_app.context_processors.notifications_context',
             ],
         },
     },
@@ -151,6 +175,9 @@ USE_TZ = True
 USE_L10N = True # For Django < 5.0
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
+import os
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # or any directory name you prefer
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [

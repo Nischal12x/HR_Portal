@@ -1,0 +1,75 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    width: 80%;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+h2, h3 {
+    text-align: center;
+}
+
+.form-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+.leave-detail, .leave-form {
+    width: 48%;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.leave-detail {
+    background: #007bff;
+    color: white;
+}
+
+.leave-detail table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.leave-detail th, .leave-detail td {
+    padding: 10px;
+    text-align: center;
+    border: 1px solid white;
+}
+
+.leave-form form {
+    display: flex;
+    flex-direction: column;
+}
+
+.leave-form form input,
+.leave-form form select,
+.leave-form form textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.btn:hover {
+    background: #0056b3;
+}

@@ -1,0 +1,103 @@
+{% extends "main1.html" %}
+{% load static %}
+
+{% block title %}My Attendance - {{ month_name }} {{ year }}{% endblock %}
+
+{% block content %}
+{# You can copy the same <style> block from attendance_overview.html #}
+<style>
+    .table-responsive { max-height: 70vh; }
+    .table thead th { position: sticky; top: 0; z-index: 2; background-color: #f8f9fa; }
+    .employee-name-col { position: sticky; left: 0; background-color: #f8f9fa; z-index: 1; }
+    .weekday-sat, .status-W { background-color: #e9ecef !important; color: #6c757d; }
+    .weekday-sun { background-color: #e0e4e8 !important; color: #495057; }
+    .status-badge { font-size: 0.8rem; font-weight: bold; }
+    .status-P { background-color: #28a745 !important; color: white; }
+    .status-A { background-color: #dc3545 !important; color: white; }
+    .status-L { background-color: #ffc107 !important; color: black; }
+    .status-H { background-color: #17a2b8 !important; color: white; }
+    .future-date { color: #adb5bd; }
+</style>
+
+<div class="wrapper">
+  {% include 'navbar.html' %}
+  {% include 'sidebar.html' %}
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h2>My Attendance Record - {{ month_name }} {{ year }}</h2>
+            </div>
+            <div class="col-sm-6 d-flex justify-content-end align-items-center">
+                {# Use the new URL for the "Today" link #}
+                <a href="?month={{ prev_month }}&year={{ prev_year }}" class="btn btn-outline-primary btn-sm mr-2"><i class="fas fa-chevron-left"></i> Prev</a>
+                <a href="{% url 'my_attendance' %}" class="btn btn-outline-secondary btn-sm mr-2">Today</a>
+                <a href="?month={{ next_month }}&year={{ next_year }}" class="btn btn-outline-primary btn-sm">Next <i class="fas fa-chevron-right"></i></a>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-12"> {# Take full width for legend #}
+                <div class="d-flex align-items-center">
+                    <span class="mr-3"><b>Legend:</b></span>
+                    {% for key, value in legend.items %}
+                    <span class="badge status-{{ key }} mr-2">{{ key }} = {{ value }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <div class="card">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover text-center table-sm">
+                <thead>
+                  <tr class="text-nowrap">
+                    <th class="employee-name-col">Employee</th>
+                    {% for day in days_in_month_with_weekdays %}
+                    <th class="day-header weekday-{{ day.weekday|lower }}" title="{{ day.weekday }}">
+                        {{ day.day }}<br><small>{{ day.weekday }}</small>
+                    </th>
+                    {% endfor %}
+                    <th title="Present">P</th>
+                    <th title="Absent">A</th>
+                    <th title="Leave">L</th>
+                    <th title="Holiday">H</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in table_row %} {# Note the new variable name #}
+                  <tr>
+                    <td class="employee-name-col text-left text-nowrap">{{ row.employee.full_name }}</td>
+                    {% for status in row.statuses %}
+                      <td class="status-{{ status }} {% if status == '-' %}future-date{% endif %}">
+                          <span class="badge status-badge status-{{ status }}">{{ status }}</span>
+                      </td>
+                    {% endfor %}
+                    <!-- Summary Counts -->
+                    <td>{{ row.summary.P }}</td>
+                    <td>{{ row.summary.A }}</td>
+                    <td>{{ row.summary.L }}</td>
+                    <td>{{ row.summary.H }}</td>
+                  </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="{{ days_in_month_with_weekdays|length|add:'5' }}" class="text-center p-4">Your attendance data is not available.</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {# No pagination footer needed #}
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

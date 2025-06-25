@@ -36,9 +36,8 @@
         {% endfor %}
     });
 </script>
+    {% endif %}
 
-
-{% endif %}
 
     <section class="content">
       <div class="container-fluid">
@@ -48,6 +47,8 @@
 
           </div>
           <div class="card-body">
+<div id="fileSuccessMessage" class="alert alert-success mt-3" role="alert"
+     style="max-width: 500px; display: none;"></div>
             <form id="csvUploadForm" action="{% url 'upload_salary_csv' %}" method="post" enctype="multipart/form-data">
               {% csrf_token %}
               <div class="form-group">
@@ -61,7 +62,7 @@
                   <small class="text-danger d-block mt-1">(Only .csv format, file size must be under 100KB)</small>
                 </label>
                 <input type="file" class="form-control border border-secondary" id="csv_file" name="csv_file" accept=".csv" required>
-                <p id="fileNamePreview" class="text-muted mt-2"></p>
+                <div id="fileNamePreview" class="alert alert-secondary d-none mt-3" style="max-width: 400px;"></div>
               </div>
 
               <!-- Sample CSV Download -->
@@ -96,66 +97,88 @@
 </div>
 
 <!-- JavaScript for validation, preview, and progress -->
+<!-- JavaScript for validation, preview, and progress -->
 <script>
-const form = document.getElementById("csvUploadForm");
-const fileInput = document.getElementById("csv_file");
-const submitBtn = document.getElementById("submitBtn");
-const progressBar = document.getElementById("uploadProgress");
-const fileNamePreview = document.getElementById("fileNamePreview");
+  const form = document.getElementById("csvUploadForm");
+  const fileInput = document.getElementById("csv_file");
+  const submitBtn = document.getElementById("submitBtn");
+  const progressBar = document.getElementById("uploadProgress");
+  const fileNamePreview = document.getElementById("fileNamePreview");
 
-// Enable/disable submit based on file input
-fileInput.addEventListener("change", function () {
-  const file = this.files[0];
+  // File selection handler
+  fileInput.addEventListener("change", function () {
+    const file = this.files[0];
+    const fileName = file?.name || '';
+    const extension = fileName.split('.').pop().toLowerCase();
 
-  if (!file) {
-    submitBtn.disabled = true;
+    // Reset preview
+    fileNamePreview.classList.add("d-none");
     fileNamePreview.textContent = "";
-    return;
-  }
-
-  const fileName = file.name;
-  const extension = fileName.split('.').pop().toLowerCase();
-
-  if (extension !== "csv") {
-    alert("Only .csv files are allowed.");
-    this.value = "";  // reset input
     submitBtn.disabled = true;
-    fileNamePreview.textContent = "";
-    return;
-  }
 
-  // Show preview name
-  fileNamePreview.textContent = "Selected file: " + fileName;
+    if (!file) return;
 
-  // Enable submit if valid file
-  submitBtn.disabled = false;
-});
+    if (extension !== "csv") {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid file",
+        text: "Only .csv files are allowed.",
+      });
+      this.value = "";
+      return;
+    }
 
-// Form submission handler
-form.addEventListener("submit", function (e) {
-  const file = fileInput.files[0];
-  const maxSizeKB = 100;
+    if (file.size > 100 * 1024) {
+      Swal.fire({
+        icon: "warning",
+        title: "File too large",
+        text: "File size exceeds 100 KB.",
+      });
+      this.value = "";
+      return;
+    }
 
-  if (!file) {
-    alert("Please select a file.");
-    e.preventDefault();
-    return;
-  }
+    // Show selected file name
+    // Show alert
+    const successBox = document.getElementById("fileSuccessMessage");
+    successBox.textContent = `✅ File ready: ${fileName}`;
+    successBox.style.display = "block";
 
-  if (file.size > maxSizeKB * 1024) {
-    alert("File size exceeds 100 KB.");
-    e.preventDefault();
-    return;
-  }
 
-  // Show progress bar, disable button
-  progressBar.classList.remove("d-none");
-  submitBtn.disabled = true;
-});
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+      successBox.style.display = "none";
+    }, 3000);
 
-// Auto-hide progress bar after load (redirect or reload)
-window.addEventListener("load", () => {
-  progressBar.classList.add("d-none");
-});
+    submitBtn.disabled = false;
+  });
+
+  // Form submission progress
+  form.addEventListener("submit", function (e) {
+    const file = fileInput.files[0];
+    const maxSizeKB = 100;
+
+    if (!file) {
+      e.preventDefault();
+      Swal.fire("No file selected", "Please select a CSV file.", "warning");
+      return;
+    }
+
+    if (file.size > maxSizeKB * 1024) {
+      e.preventDefault();
+      Swal.fire("File too large", "File size exceeds 100 KB.", "error");
+      return;
+    }
+
+    // Show progress bar
+    progressBar.classList.remove("d-none");
+    submitBtn.disabled = true;
+  });
+
+  // Hide progress after page load
+  window.addEventListener("load", () => {
+    progressBar.classList.add("d-none");
+  });
 </script>
+
 {% endblock %}

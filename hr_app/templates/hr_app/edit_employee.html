@@ -1,0 +1,72 @@
+{% extends "main1.html" %}
+{% block title %}Edit Employee{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+  {% include 'navbar.html' %}
+  {% include 'sidebar.html' %}
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <h1>Edit Employee: {{ employee.full_name }}</h1>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Employee Details</h3>
+          </div>
+          <!-- /.card-header -->
+          
+          <!-- form start -->
+          <form method="POST" action="">
+            {% csrf_token %}
+            <div class="card-body">
+              
+              <!-- Display success/error messages -->
+              {% if messages %}
+                {% for message in messages %}
+                  <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+
+              <div class="form-group">
+                <label for="fullName">Full Name <span class="text-danger">*</span></label>
+                <input type="text" name="full_name" class="form-control" id="fullName" value="{{ employee.full_name }}" required>
+              </div>
+
+              <div class="form-group">
+    <label>Designation <span class="text-danger">*</span></label>
+    <select name="designation" class="form-control" required>
+        <option value="" disabled>-- Select a Designation --</option>
+
+        <!-- VERIFY THIS VARIABLE NAME -->
+        {% for value, display_name in designation_options %}
+            <option value="{{ value }}" {% if employee.designation == value %}selected{% endif %}>
+                {{ display_name }}
+            </option>
+        {% endfor %}
+    </select>
+</div>
+
+              <!-- Add other fields you want to edit here -->
+
+            </div>
+            <!-- /.card-body -->
+
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+              <a href="{% url 'index' %}" class="btn btn-secondary">Cancel</a> #employee_list
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  {% include 'footer.html' %}
+</div>
+{% endblock %}

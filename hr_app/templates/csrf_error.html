@@ -1,0 +1,58 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>403 Forbidden - CSRF Verification Failed</title>
+    <link rel="stylesheet" href="{% static 'css/adminlte.min.css' %}" />
+    <link
+      rel="stylesheet"
+      href="{% static 'plugins/fontawesome-free/css/all.min.css' %}"
+    />
+    <style>
+      body {
+        background-color: #f8d7da;
+        font-family: "Source Sans Pro", sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
+      .csrf-box {
+        background: white;
+        border: 1px solid #f5c2c7;
+        border-radius: 12px;
+        padding: 30px;
+        max-width: 500px;
+        text-align: center;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+      .csrf-box h1 {
+        font-size: 24px;
+        color: #842029;
+      }
+      .csrf-box p {
+        color: #6c757d;
+      }
+      .csrf-box a.btn {
+        margin-top: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="csrf-box">
+      <h1>
+        <i class="fas fa-exclamation-triangle text-danger"></i> CSRF
+        Verification Failed
+      </h1>
+      <p>
+        It looks like your session has expired or the form was submitted
+        incorrectly.
+      </p>
+      <p><strong>Reason:</strong> {{ reason|default:"Unknown error." }}</p>
+      <a href="{% url 'login' %}" class="btn btn-danger"
+        ><i class="fas fa-sign-in-alt"></i> Go to Login</a
+      >
+    </div>
+  </body>
+</html>

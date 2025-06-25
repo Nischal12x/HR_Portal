@@ -1,0 +1,54 @@
+{% extends "main1.html" %}
+{% block title %}User Settings{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+  {% include 'navbar.html' %}
+  {% include 'sidebar.html' %}
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <h1>My Settings</h1>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card card-primary">
+              <div class="card-header">
+                <h3 class="card-title">Timesheet Preference</h3>
+              </div>
+              <form method="POST" action="{% url 'user_settings' %}">
+                {% csrf_token %}
+                <div class="card-body">
+                  {% if messages %}
+                    {% for message in messages %}
+                      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                  {% endif %}
+                  <p>Select your default timesheet entry method. This will change the options you see in the sidebar.</p>
+                  <div class="form-group">
+                    <label for="timesheet_preference">My Preferred Timesheet</label>
+                    <select name="timesheet_preference" id="timesheet_preference" class="form-control">
+                      <option value="daily" {% if current_preference == 'daily' %}selected{% endif %}>Daily Timesheet</option>
+                      <option value="weekly" {% if current_preference == 'weekly' %}selected{% endif %}>Weekly Timesheet</option>
+                      <option value="image" {% if current_preference == 'image' %}selected{% endif %}>Image Timesheet</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <button type="submit" class="btn btn-primary">Save Preference</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  {% include 'footer.html' %}
+</div>
+{% endblock %}

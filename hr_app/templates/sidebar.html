@@ -48,12 +48,12 @@
                                     <p>Dashboard</p>
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a href="{% url 'dashboardV2' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboardV2' %} active {% endif %}">
-                                    <i class="nav-icon fas fa-tachometer-alt"></i>
-                                    <p>Dashboard V2</p>
-                                </a>
-                            </li>
+<!--                            <li class="nav-item">-->
+<!--                                <a href="{% url 'dashboardV2' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboardV2' %} active {% endif %}">-->
+<!--                                    <i class="nav-icon fas fa-tachometer-alt"></i>-->
+<!--                                    <p>Dashboard V2</p>-->
+<!--                                </a>-->
+<!--                            </li>-->
 
                             <li class="nav-item">
                                 <a href="{% url 'widgets' %}" class="nav-link {% if request.resolver_match.url_name == 'widgets' %} active {% endif %}">
@@ -70,49 +70,89 @@
                             </li>
 
                             <!-- Timesheet Dropdown -->
-                            <li class="nav-item has-treeview {% if request.resolver_match.url_name == 'view_timesheet' or request.resolver_match.url_name == 'timesheet_image_records' or request.resolver_match.url_name == 'time_sheet' or request.resolver_match.url_name == 'add_daily_timesheet' or request.resolver_match.url_name == 'add_image_timesheet' or request.resolver_match.url_name == 'last_week_timesheet' %} menu-open {% endif %}">
-                                <a href="#" class="nav-link {% if request.resolver_match.url_name == 'view_timesheet' or request.resolver_match.url_name == 'timesheet_image_records' or request.resolver_match.url_name == 'time_sheet' or request.resolver_match.url_name == 'add_daily_timesheet' or request.resolver_match.url_name == 'add_image_timesheet' or request.resolver_match.url_name == 'last_week_timesheet' %} active {% endif %}">
-                                    <i class="nav-icon fas fa-table"></i>
-                                    <p>Timesheet <i class="fas fa-angle-left right"></i></p>
-                                </a>
-                                <ul class="nav nav-treeview">
-                                    <li class="nav-item has-treeview {% if request.resolver_match.url_name == 'view_timesheet' or request.resolver_match.url_name == 'timesheet_image_records' %} menu-open {% endif %}">
-                                        <a href="#" class="nav-link {% if request.resolver_match.url_name == 'view_timesheet' or request.resolver_match.url_name == 'timesheet_image_records' %} active {% endif %}">
-                                            <i class="far fa-circle nav-icon"></i>
-                                            <p>Records <i class="fas fa-angle-left right"></i></p>
-                                        </a>
-                                        <ul class="nav nav-treeview">
-                                            <li class="nav-item">
-                                                <a href="{% url 'view_timesheet' %}" class="nav-link {% if request.resolver_match.url_name == 'view_timesheet' %} active {% endif %}">
-                                                    <i class="far fa-dot-circle nav-icon"></i> <p>Records</p>
-                                                </a>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a href="{% url 'timesheet_image_records' %}" class="nav-link {% if request.resolver_match.url_name == 'timesheet_image_records' %} active {% endif %}">
-                                                    <i class="far fa-dot-circle nav-icon"></i> <p>Records I.Timesheet</p>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{% url 'time_sheet' %}" class="nav-link {% if request.resolver_match.url_name == 'time_sheet' %} active {% endif %}">
-                                            <i class="far fa-circle nav-icon"></i> <p>Add Weekly Record</p>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{% url 'add_daily_timesheet' %}" class="nav-link {% if request.resolver_match.url_name == 'add_daily_timesheet' %} active {% endif %}">
-                                            <i class="far fa-circle nav-icon"></i> <p>Daily Timesheet</p>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{% url 'add_image_timesheet' %}" class="nav-link {% if request.resolver_match.url_name == 'add_image_timesheet' %} active {% endif %}">
-                                            <i class="far fa-circle nav-icon"></i> <p>Image Timesheet</p>
-                                        </a>
-                                    </li>
+                            {% if request.session.role == 'HR' %}
+    <!-- ============================================= -->
+    <!--  HR VIEW: HR sees all options, always.        -->
+    <!-- ============================================= -->
+    <li class="nav-item has-treeview {% if request.resolver_match.url_name in 'view_timesheet,timesheet_image_records,time_sheet,add_daily_timesheet,add_image_timesheet,last_week_timesheet' %} menu-open {% endif %}">
+        <a href="#" class="nav-link {% if request.resolver_match.url_name in 'view_timesheet,timesheet_image_records,time_sheet,add_daily_timesheet,add_image_timesheet,last_week_timesheet' %} active {% endif %}">
+            <i class="nav-icon fas fa-table"></i>
+            <p>Timesheet (Admin) <i class="fas fa-angle-left right"></i></p>
+        </a>
+        <ul class="nav nav-treeview">
+            <li class="nav-item">
+                <a href="{% url 'add_daily_timesheet' %}" class="nav-link {% if request.resolver_match.url_name == 'add_daily_timesheet' %} active {% endif %}">
+                    <i class="far fa-circle nav-icon"></i> <p>Add Daily Timesheet</p>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'time_sheet' %}" class="nav-link {% if request.resolver_match.url_name == 'time_sheet' %} active {% endif %}">
+                    <i class="far fa-circle nav-icon"></i> <p>Add Weekly Record</p>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'add_image_timesheet' %}" class="nav-link {% if request.resolver_match.url_name == 'add_image_timesheet' %} active {% endif %}">
+                    <i class="far fa-circle nav-icon"></i> <p>Add Image Timesheet</p>
+                </a>
+            </li>
+             <li class="nav-item">
+                <a href="{% url 'view_timesheet' %}" class="nav-link {% if request.resolver_match.url_name == 'view_timesheet' %} active {% endif %}">
+                    <i class="far fa-dot-circle nav-icon"></i> <p>View All Records</p>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'timesheet_image_records' %}" class="nav-link {% if request.resolver_match.url_name == 'timesheet_image_records' %} active {% endif %}">
+                    <i class="far fa-dot-circle nav-icon"></i> <p>View Image Records</p>
+                </a>
+            </li>
+        </ul>
+    </li>
 
-                                </ul>
-                            </li>
+{% else %}
+    <!-- ============================================= -->
+    <!--  EMPLOYEE VIEW: Based on their preference     -->
+    <!-- ============================================= -->
+    <li class="nav-item">
+        <a href="{% url 'user_settings' %}" class="nav-link {% if request.resolver_match.url_name == 'user_settings' %} active {% endif %}">
+            <i class="nav-icon fas fa-cog"></i>
+            <p>Settings</p>
+        </a>
+    </li>
 
+    {% if request.session.timesheet_preference == 'daily' %}
+    <li class="nav-item has-treeview {% if request.resolver_match.url_name in 'add_daily_timesheet,view_timesheet' %} menu-open {% endif %}">
+        <a href="#" class="nav-link {% if request.resolver_match.url_name in 'add_daily_timesheet,view_timesheet' %} active {% endif %}">
+            <i class="nav-icon fas fa-calendar-day"></i><p>Daily Timesheet<i class="fas fa-angle-left right"></i></p>
+        </a>
+        <ul class="nav nav-treeview">
+            <li class="nav-item"><a href="{% url 'add_daily_timesheet' %}" class="nav-link {% if request.resolver_match.url_name == 'add_daily_timesheet' %} active {% endif %}"><i class="far fa-circle nav-icon"></i><p>Add Entry</p></a></li>
+            <li class="nav-item"><a href="{% url 'view_timesheet' %}" class="nav-link {% if request.resolver_match.url_name == 'view_timesheet' %} active {% endif %}"><i class="far fa-circle nav-icon"></i><p>My Records</p></a></li>
+        </ul>
+    </li>
+    {% elif request.session.timesheet_preference == 'weekly' %}
+    <li class="nav-item has-treeview {% if request.resolver_match.url_name in 'time_sheet,view_timesheet' %} menu-open {% endif %}">
+        <a href="#" class="nav-link {% if request.resolver_match.url_name in 'time_sheet,view_timesheet' %} active {% endif %}">
+            <i class="nav-icon fas fa-calendar-week"></i><p>Weekly Timesheet<i class="fas fa-angle-left right"></i></p>
+        </a>
+        <ul class="nav nav-treeview">
+            <li class="nav-item"><a href="{% url 'time_sheet' %}" class="nav-link {% if request.resolver_match.url_name == 'time_sheet' %} active {% endif %}"><i class="far fa-circle nav-icon"></i><p>Add Entry</p></a></li>
+            <li class="nav-item"><a href="{% url 'view_timesheet' %}" class="nav-link {% if request.resolver_match.url_name == 'view_timesheet' %} active {% endif %}"><i class="far fa-circle nav-icon"></i><p>My Records</p></a></li>
+        </ul>
+    </li>
+    {% elif request.session.timesheet_preference == 'image' %}
+    <li class="nav-item has-treeview {% if request.resolver_match.url_name in 'add_image_timesheet,timesheet_image_records' %} menu-open {% endif %}">
+        <a href="#" class="nav-link {% if request.resolver_match.url_name in 'add_image_timesheet,timesheet_image_records' %} active {% endif %}">
+            <i class="nav-icon fas fa-camera"></i><p>Image Timesheet<i class="fas fa-angle-left right"></i></p>
+        </a>
+        <ul class="nav nav-treeview">
+            <li class="nav-item"><a href="{% url 'add_image_timesheet' %}" class="nav-link {% if request.resolver_match.url_name == 'add_image_timesheet' %} active {% endif %}"><i class="far fa-circle nav-icon"></i><p>Add Entry</p></a></li>
+            <li class="nav-item"><a href="{% url 'timesheet_image_records' %}" class="nav-link {% if request.resolver_match.url_name == 'timesheet_image_records' %} active {% endif %}"><i class="far fa-circle nav-icon"></i><p>My Records</p></a></li>
+        </ul>
+    </li>
+    {% endif %}
+
+{% endif %}
+<!-- End Timesheet Dropdown -->
                             <!-- Leave Management Dropdown -->
                             <li class="nav-item has-treeview {% if request.resolver_match.url_name == 'leave_dashboard' or request.resolver_match.url_name == 'index2' or request.resolver_match.url_name == 'leave_dashboard1' %} menu-open {% endif %}">
                                 <a href="#" class="nav-link {% if request.resolver_match.url_name == 'leave_dashboard' or request.resolver_match.url_name == 'index2' or request.resolver_match.url_name == 'leave_dashboard1' %} active {% endif %}">
@@ -169,16 +209,7 @@
                                     <p>Configuration <i class="fas fa-angle-left right"></i></p>
                                 </a>
                                 <ul class="nav nav-treeview">
-                                    <li class="nav-item">
-                                        <a href="{% url 'payroll_setting' %}" class="nav-link {% if request.resolver_match.url_name == 'payroll_setting' %} active {% endif %}">
-                                            <i class="far fa-circle nav-icon"></i> <p>Payroll Setting</p>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{% url 'employee_salary' %}" class="nav-link {% if request.resolver_match.url_name == 'employee_salary' %} active {% endif %}">
-                                            <i class="far fa-circle nav-icon"></i> <p>Employee Salary</p>
-                                        </a>
-                                    </li>
+
                                     <li class="nav-item">
                                         <a href="{% url 'add_employees' %}" class="nav-link {% if request.resolver_match.url_name == 'add_employees' %} active {% endif %}">
                                             <i class="far fa-circle nav-icon"></i> <p>Employee</p>
@@ -249,28 +280,56 @@
                                     <i class="nav-icon fas fa-calendar-alt"></i> <p>Calendar</p>
                                 </a>
                             </li>
+                            <!-- your_project/templates/sidebar.html -->
 
-                            <li class="nav-item">
-                                <a href="{% url 'attendance_overview' %}" class="nav-link {% if request.resolver_match.url_name == 'attendance_overview' %} active {% endif %}">
-                                    <i class="nav-icon fas fa-user-check"></i> <p>Attendance</p>
-                                </a>
-                            </li>
+<!-- ==================== NEW ATTENDANCE DROPDOWN ==================== -->
+  <li class="nav-item has-treeview {% if 'attendance' in request.resolver_match.url_name %}menu-open{% endif %}">
+    <a href="#" class="nav-link {% if 'attendance' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="nav-icon fas fa-calendar-alt"></i>
+      <p>
+        Attendance
+        <i class="right fas fa-angle-left"></i>
+      </p>
+    </a>
+    <ul class="nav nav-treeview">
+      <li class="nav-item">
+        <a href="{% url 'my_attendance' %}" class="nav-link {% if request.resolver_match.url_name == 'my_attendance' %}active{% endif %}">
+          <i class="far fa-circle nav-icon"></i>
+          <p>My Record</p>
+        </a>
+      </li>
 
-                            <li class="nav-item">
-                                <a href="#" class="nav-link">
-                                    <i class="nav-icon fas fa-play-circle"></i> <p>Learning Video</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="#" class="nav-link">
-                                    <i class="nav-icon fas fa-chalkboard-teacher"></i> <p>Training Module</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="#" class="nav-link">
-                                    <i class="nav-icon fas fa-file-invoice-dollar"></i> <p>Investment Declaration</p>
-                                </a>
-                            </li>
+      {% if request.session.role == "HR" %}
+      <li class="nav-item">
+        <a href="{% url 'attendance_overview' %}" class="nav-link {% if request.resolver_match.url_name == 'attendance_overview' %}active{% endif %}">
+          <i class="far fa-circle nav-icon"></i>
+          <p>Team Overview</p>
+        </a>
+      </li>
+      {% endif %}
+    </ul>
+  </li>
+
+                            <li class="nav-item has-treeview">
+  <a href="#" class="nav-link"><i class="nav-icon fas fa-play-circle"></i>
+    <p>Learning Modules <i class="right fas fa-angle-left"></i></p>
+  </a>
+  <ul class="nav nav-treeview">
+    <li class="nav-item"><a href="{% url 'learning_videos' %}" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Oracle FCCS Tutorials</p></a></li>
+    <!-- Add more topics as needed -->
+  </ul>
+</li>
+
+<!--                            <li class="nav-item">-->
+<!--                                <a href="#" class="nav-link">-->
+<!--                                    <i class="nav-icon fas fa-chalkboard-teacher"></i> <p>Training Module</p>-->
+<!--                                </a>-->
+<!--                            </li>-->
+<!--                            <li class="nav-item">-->
+<!--                                <a href="#" class="nav-link">-->
+<!--                                    <i class="nav-icon fas fa-file-invoice-dollar"></i> <p>Investment Declaration</p>-->
+<!--                                </a>-->
+<!--                            </li>-->
 
                             <!-- Exit Management Dropdown -->
                             {% if user.is_authenticated %}
@@ -316,12 +375,12 @@
                             </li>
                             {% endif %}
 
-                            <li class="nav-item">
-                                <a href="#" class="nav-link">
-                                    <i class="nav-icon fas fa-qrcode"></i>
-                                    <p>Student QR Scan Record</p>
-                                </a>
-                            </li>
+<!--                            <li class="nav-item">-->
+<!--                                <a href="#" class="nav-link">-->
+<!--                                    <i class="nav-icon fas fa-qrcode"></i>-->
+<!--                                    <p>Student QR Scan Record</p>-->
+<!--                                </a>-->
+<!--                            </li>-->
                             <li class="nav-item">
                                 <a href="{% url 'log_out' %}" class="nav-link">
                                     <i class="nav-icon fas fa-sign-out-alt"></i>

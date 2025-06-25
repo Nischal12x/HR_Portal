@@ -1,44 +1,285 @@
 {% extends "main1.html" %}
 {% load static %}
 
-{% block title %}Apply Leave{% endblock %}
+{% block title %}
+  {% if employee.id %}Update Employee{% else %}Add Employee{% endif %}
+{% endblock %}
+{% block extra_head %}
+<style>
+  /*
+    Custom class for a more professional button hover effect on dark/colored backgrounds.
+  */
+  .btn-header-action {
+    /* This makes the change from default to hover smooth */
+    transition: background-color 0.2s ease-in-out;
+  }
+
+  .btn-header-action:hover {
+    /* On hover, apply a subtle, semi-transparent white background */
+    background-color: rgba(255, 255, 255, 0.15) !important;
+
+    /* Ensure the text stays white on hover */
+    color: #ffffff !important;
+  }
+</style>
+{% endblock %}
 {% block content %}
 <div class="wrapper">
   <!-- Navbar -->
   {% include 'navbar.html' %}
-  <!-- /.navbar -->
-    <!-- Sidebar -->
-
+  <!-- Sidebar -->
   {% include 'sidebar.html' %}
 
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>{% if employee.id or employee %}Update Employee{% else %}Add New Employee{% endif %}</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+              <li class="breadcrumb-item"><a href="#">Employees</a></li>
+              <li class="breadcrumb-item active">{% if employee.id or employee %}Update{% else %}Add{% endif %}</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
 
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row d-flex justify-content-center">
+          <div class="col-md-11">
+            <div class="card card-primary shadow-lg">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title">
+                  <i class="fas fa-user-plus mr-2"></i>
+                  {% if employee.id %}Edit Employee Details{% else %}Employee Registration Form{% endif %}
+                </h3>
+                {% if employee and employee.id %}
+                  <a href="{% url 'employee_history' employee.id %}" class="btn btn-outline-light btn-sm btn-header-action" style="margin-left : auto ;">
+                    <i class="fas fa-history mr-1"></i> View History
+                  </a>
+                {% endif %}
+              </div>
+              <!-- /.card-header -->
 
-  <!-- Content Wrapper -->
-  <div class="content-wrapper d-flex align-items-center justify-content-center" style="background: #f4f6f9;">
-    <section class="content w-100">
-      <div class="container-fluid h-100 d-flex align-items-center justify-content-center">
+              <form action="{% if employee and employee.id %} {% url 'update_employee' employee.id %} {% elif request.POST and employee_id %} {% url 'update_employee' employee_id %} {% else %} {% url 'add-emp' %} {% endif %}"
+                    method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="card-body">
+                  <div class="row g-4">
+                    <!-- Left Side: Personal Details -->
+                    <div class="col-md-6 border-right">
+                      <h5 class="mb-3 text-secondary"><i class="fas fa-user-circle mr-2"></i>Personal Details</h5>
 
-          <div class="container">
-              <section class="content">
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-12">
-        <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-  <h3 class="mb-0">
-    {% if employee and employee.id %} Update Employee {% else %} Add Employee {% endif %}
-  </h3>
-  {% if employee and employee.id %}
-    <div class="ms-auto" style="margin-left : auto ;">
-      <a href="{% url 'employee_history' employee.id %}" class="btn btn-info btn-sm">
-        View History
-      </a>
-    </div>
+                      <!-- Full Name -->
+                      <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        <input type="text" name="full_name" class="form-control {% if errors.full_name %}is-invalid{% endif %}" placeholder="Full Name *" value="{{ employee.full_name|default:'' }}" required>
+                        {% if errors.full_name %}<div class="invalid-feedback">{{ errors.full_name }}</div>{% endif %}
+                      </div>
+
+                      <!-- Email -->
+                      <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                        <input type="email" name="email" class="form-control {% if errors.email %}is-invalid{% endif %}" placeholder="Email Address *" value="{{ employee.email|default:'' }}" required>
+                        {% if errors.email %}<div class="invalid-feedback">{{ errors.email }}</div>{% endif %}
+                      </div>
+
+                      <!-- Phone -->
+                      <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                        <input type="tel" name="phone" class="form-control {% if errors.phone %}is-invalid{% endif %}" placeholder="Phone Number *" value="{{ employee.phone|default:'' }}" required>
+                        {% if errors.phone %}<div class="invalid-feedback">{{ errors.phone }}</div>{% endif %}
+                      </div>
+
+                      <!-- DOB & Gender in one row -->
+                      <div class="row">
+                        <div class="col-sm-6">
+                           <div class="form-group">
+                            <label>Date of Birth <span class="text-danger">*</span></label>
+                            <input type="date" name="dob" class="form-control {% if errors.dob %}is-invalid{% endif %}" value="{% if request.POST.dob %}{{ request.POST.dob }}{% elif employee and employee.dob %}{{ employee.dob|date:'Y-m-d' }}{% endif %}" required>
+                            {% if errors.dob %}<div class="invalid-feedback d-block">{{ errors.dob }}</div>{% endif %}
+                          </div>
+                        </div>
+                        <div class="col-sm-6">
+                          <div class="form-group">
+                            <label>Gender <span class="text-danger">*</span></label>
+                            <select name="gender" class="form-control {% if errors.gender %}is-invalid{% endif %}" required>
+                                <option value="" selected disabled>Select...</option>
+                                <option value="Male" {% if employee.gender == "Male" %}selected{% endif %}>Male</option>
+                                <option value="Female" {% if employee.gender == "Female" %}selected{% endif %}>Female</option>
+                                <option value="Other" {% if employee.gender == "Other" %}selected{% endif %}>Other</option>
+                            </select>
+                            {% if errors.gender %}<div class="invalid-feedback">{{ errors.gender }}</div>{% endif %}
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Marital Status -->
+                      <div class="form-group">
+                        <label>Marital Status <span class="text-danger">*</span></label>
+                        <select class="form-control" name="marital_status" required>
+                            <option value="" selected disabled>Select...</option>
+                            <option value="Single" {% if request.POST.marital_status == "Single" or employee.marital_status == "Single" %}selected{% endif %}>Single</option>
+                            <option value="Married" {% if request.POST.marital_status == "Married" or employee.marital_status == "Married" %}selected{% endif %}>Married</option>
+                        </select>
+                      </div>
+
+                      <!-- Address -->
+                      <div class="form-group">
+                        <label>Address <span class="text-danger">*</span></label>
+                        <textarea name="address" class="form-control {% if errors.address %}is-invalid{% endif %}" rows="3" placeholder="Residential Address" required>{{ employee.address|default:'' }}</textarea>
+                        {% if errors.address %}<div class="invalid-feedback">{{ errors.address }}</div>{% endif %}
+                      </div>
+                    </div>
+
+                    <!-- Right Side: Job Details -->
+                    <div class="col-md-6">
+                      <h5 class="mb-3 text-secondary"><i class="fas fa-briefcase mr-2"></i>Job & Account Details</h5>
+
+                      <!-- Password / Employee ID -->
+                      <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-key"></i></span>
+                        <input type="password" name="password" class="form-control {% if errors.password %}is-invalid{% endif %}" placeholder="Password / Employee ID *" value="{% if request.POST.password %}{{ request.POST.password }}{% elif employee %}{{ employee.employee_id }}{% endif %}" required>
+                         {% if errors.password %}<div class="invalid-feedback">{{ errors.password }}</div>{% endif %}
+                      </div>
+
+                      <!-- Department & Designation in one row -->
+                      <div class="row">
+                        <div class="col-sm-6">
+                          <div class="form-group">
+                            <label>Department <span class="text-danger">*</span></label>
+                            <select name="department" class="form-control" required>
+                              <option value="" selected disabled>Select...</option>
+                              <option value="IT"  {% if employee.department == "IT" %}selected{% endif %}>IT</option>
+                              <option value="HR" {% if employee.department == "HR" %}selected{% endif %}>HR</option>
+                              <option value="Marketing" {% if employee.department == "Marketing" %}selected{% endif %}>Marketing</option>
+                              <option value="Finance" {% if employee.department == "Finance" %}selected{% endif %}>Finance</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="col-sm-6">
+                          <div class="form-group">
+                            <label>Designation <span class="text-danger">*</span></label>
+                            <select name="designation" class="form-control" required>
+                                <option value="" selected disabled>Select...</option>
+                                {% for value, display_name in designation_options %}
+                                    <option value="{{ value }}" {% if employee.designation == value %}selected{% endif %}>{{ display_name }}</option>
+                                {% endfor %}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Joining Date & Salary in one row -->
+                      <div class="row">
+                        <div class="col-sm-6">
+                          <div class="form-group">
+                            <label>Date of Joining <span class="text-danger">*</span></label>
+                            <input type="date" name="joining_date" class="form-control {% if errors.joining_date %}is-invalid{% endif %}" value="{% if request.POST.joining_date %}{{ request.POST.joining_date }}{% elif employee and employee.joining_date %}{{ employee.joining_date|date:'Y-m-d' }}{% endif %}"
+                         required>
+                            {% if errors.joining_date %}<div class="invalid-feedback d-block">{{ errors.joining_date }}</div>{% endif %}
+                          </div>
+                        </div>
+                        <div class="col-sm-6">
+                           <div class="form-group">
+                            <label>Salary <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                              <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                              <input type="number" name="salary" class="form-control {% if errors.salary %}is-invalid{% endif %}" placeholder="e.g., 50000" value="{{employee.salary}}" required>
+                              {% if errors.salary %}<div class="invalid-feedback">{{ errors.salary }}</div>{% endif %}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Employment Type & Role in one row -->
+                      <div class="row">
+                        <div class="col-sm-6">
+                          <div class="form-group">
+                            <label>Employment Type <span class="text-danger">*</span></label>
+                            <select name="employment_type" class="form-control" required>
+                              <option value="" selected disabled>Select...</option>
+                              <option value="Full-Time" {% if employee.employment_type == "Full-Time" %}selected{% endif %}>Full-Time</option>
+                              <option value="Part-Time" {% if employee.employment_type == "Part-Time" %}selected{% endif %}>Part-Time</option>
+                              <option value="Contract" {% if employee.employment_type == "Contract" %}selected{% endif %}>Contract</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="col-sm-6">
+                          <div class="form-group">
+                            <label>System Role <span class="text-danger">*</span></label>
+                            <select name="role" class="form-control" required>
+                                <option value="" selected disabled>Select...</option>
+                                {% for role in roles %}
+                                <option value="{{ role.id }}"
+                                    {% if request.POST.role == role.id|stringformat:"s" or employee.role.id == role.id %}selected{% endif %}>
+                                    {{ role.name }}
+                                </option>
+                            {% endfor %}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Attachment -->
+                      <div class="form-group">
+                        <label for="attachment">Upload Attachment</label>
+                        <input type="file" name="attachment" class="form-control-file" id="attachment" accept=".pdf,.doc,.docx,.jpg,.png">
+                        <small class="form-text text-muted">Upload resume, offer letter, or other documents.</small>
+                        {% if employee and employee.attachment or employee_attachment %}
+                          <div class="mt-2">
+                            <small>Current file:</small>
+                            <a href="{{ employee.attachment.url }}" target="_blank" class="ml-2">
+                              <i class="fas fa-paperclip"></i>{% if employee_attachment %} {{employee_attachment.name|cut:"attachments/"}} {% else %} {{ employee.attachment.name|cut:"attachments/" }} {% endif %}
+                            </a>
+                          </div>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- /.card-body -->
+
+                <div class="card-footer text-center">
+  <!-- The primary submit button -->
+  <button type="submit" class="btn btn-lg btn-primary mx-2">
+    <i class="fas fa-save mr-2"></i>{% if employee.id or employee %}Update Employee{% else %}Save Employee{% endif %}
+  </button>
+
+  <!-- Conditional Reset/Clear Button -->
+  {% if employee or employee.id %}
+    <!-- On UPDATE form, this button resets fields to their saved values -->
+    <button type="reset" class="btn btn-lg btn-secondary mx-2">
+      <i class="fas fa-undo mr-2"></i>Reset Changes
+    </button>
+  {% else %}
+    <!-- On ADD form, this button clears all fields -->
+    <button type="reset" class="btn btn-lg btn-outline-secondary mx-2">
+      <i class="fas fa-eraser mr-2"></i>Clear Form
+    </button>
   {% endif %}
 </div>
+              </form>
+            </div>
+            <!-- /.card -->
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+</div>
 
-          <div class="card-body">
-            {% if messages %}
+{% if messages %}
   <script>
     document.addEventListener("DOMContentLoaded", function () {
         {% for message in messages %}
@@ -47,202 +288,10 @@
                 text: "{{ message|escapejs }}",
                 icon: "{{ message.tags }}",
                 confirmButtonText: "OK",
-                confirmButtonColor: "{% if message.tags == 'success' %}#28a745{% else %}#dc3545{% endif %}"
+                confirmButtonColor: "{% if message.tags == 'success' %}#28a745{% elif message.tags == 'info' %}#17a2b8{% else %}#dc3545{% endif %}"
             });
         {% endfor %}
     });
 </script>
-
-
 {% endif %}
-
-
-               <form action="{% if employee and employee.id %} {% url 'update_employee' employee.id %} {% else %} {% url 'add-emp' %} {% endif %}"
-          method="POST" enctype="multipart/form-data">
-  {% csrf_token %}
-              <div class="row">
-
-                <!-- Left Side: Personal Details -->
-                <div class="col-md-6">
-                  <h4>Personal Details</h4>
-
-                  <div class="form-group">
-                    <label>Full Name <span class="text-danger">*</span></label>
-                    <input type="text" name="full_name" class="form-control" value="{{ employee.full_name|default:'' }}" required>
-                      {% if errors.full_name %}
-                        <small class="text-danger">{{ errors.full_name }}</small>
-                      {% endif %}
-                  </div>
-
-                  <div class="form-group">
-                    <label>Email <span class="text-danger">*</span></label>
-                    <input type="email" name="email" class="form-control" value="{{ employee.email|default:'' }}" required>
-                      {% if errors.email %}
-        <small class="text-danger">{{ errors.email }}</small>
-    {% endif %}
-                  </div>
-
-                  <div class="form-group">
-                    <label>Phone Number <span class="text-danger">*</span></label>
-                    <input type="tel" name="phone" class="form-control" value="{{ employee.phone|default:'' }}" required>
-                      {% if errors.phone %}<small class="text-danger">{{ errors.phone }}</small>{% endif %}
-                  </div>
-
-
-                    <div class="form-group">
-                      <label>Date of Birth <span class="text-danger">*</span></label>
-                      <input type="date" name="dob" class="form-control"
-                             id="dob"
-                             value="{% if request.POST.dob %}{{ request.POST.dob }}{% elif employee and employee.dob %}{{ employee.dob|date:'Y-m-d' }}{% endif %}"
-                             required>
-                         {% if errors.dob %}
-                            <small class="text-danger">{{ errors.dob }}</small>
-                        {% endif %}
-                    </div>
-
-                  <div class="form-group">
-                    <label>Gender <span class="text-danger">*</span></label>
-                    <select name="gender" class="form-control" required>
-                        <option value="">Select Gender</option>
-                        <option value="Male" {% if employee.gender == "Male" %}selected{% endif %}>Male</option>
-                        <option value="Female" {% if employee.gender == "Female" %}selected{% endif %}>Female</option>
-                        <option value="Other" {% if employee.gender == "Other" %}selected{% endif %}>Other</option>
-                    </select>
-                      {% if errors.gender %}
-                        <small class="text-danger">{{ errors.gender }}</small>
-                    {% endif %}
-                  </div>
-
-                  <div class="form-group">
-                    <label>Address <span class="text-danger">*</span></label>
-                    <textarea name="address" class="form-control" rows="3" required>{{ employee.address|default:'' }}</textarea>
-
-                  </div>
-
-                    <div class="form-group">
-    <label for="marital_status">Marital Status</label>
-    <select class="form-control" id="marital_status" name="marital_status" required>
-        <option value="">-- Select --</option>
-        <option value="Single"
-            {% if request.POST.marital_status == "Single" or employee.marital_status == "Single" %}selected{% endif %}>
-            Single
-        </option>
-        <option value="Married"
-            {% if request.POST.marital_status == "Married" or employee.marital_status == "Married" %}selected{% endif %}>
-            Married
-        </option>
-    </select>
-</div>
-
-                </div>
-
-                <!-- Right Side: Job Details -->
-                <div class="col-md-6">
-                  <h4>Job Details</h4>
-
-                  <div class="form-group">
-    <label>Password <span class="text-danger">*</span></label>
-    <input type="text" name="password" class="form-control"
-           value="{% if request.POST.password %}{{ request.POST.password }}{% elif employee %}{{ employee.employee_id }}{% endif %}" required>
-        {% if errors.password %}<small class="text-danger">{{ errors.password }}</small>{% endif %}
-</div>
-
-                  <div class="form-group">
-                    <label>Department <span class="text-danger">*</span></label>
-                    <select name="department" class="form-control" required>
-                      <option value="">Select Department</option>
-                      <option value="IT"  {% if employee.department == "IT" %}selected{% endif %}>IT</option>
-                      <option value="HR" {% if employee.department == "HR" %}selected{% endif %}>HR</option>
-                      <option value="Marketing" {% if employee.department == "Marketing" %}selected{% endif %}>Marketing</option>
-                      <option value="Finance" {% if employee.department == "Finance" %}selected{% endif %}>Finance</option>
-                    </select>
-                      {% if errors.department %}
-                        <small class="text-danger">{{ errors.department }}</small>
-                    {% endif %}
-                  </div>
-
-                  <div class="form-group">
-                    <label>Designation <span class="text-danger">*</span></label>
-                    <input type="text" name="designation" class="form-control" value="{{employee.designation}}" required>
-                      {% if errors.designation %}
-                        <small class="text-danger">{{ errors.designation }}</small>
-                    {% endif %}
-                  </div>
-
-                  <div class="form-group">
-                  <label>Date of Joining <span class="text-danger">*</span></label>
-                  <input type="date" name="joining_date" class="form-control"
-                         id="joining_date"
-                         value="{% if request.POST.joining_date %}{{ request.POST.joining_date }}{% elif employee and employee.joining_date %}{{ employee.joining_date|date:'Y-m-d' }}{% endif %}"
-                         required>
-                      {% if errors.joining_date %}
-                        <small class="text-danger">{{ errors.joining_date }}</small>
-                    {% endif %}
-                </div>
-
-                  <div class="form-group">
-                    <label>Salary <span class="text-danger">*</span></label>
-                    <input type="number" name="salary" class="form-control" value="{{employee.salary}}" required>
-                       {% if errors.salary %}
-                        <small class="text-danger">{{ errors.salary }}</small>
-                    {% endif %}
-                  </div>
-
-                  <div class="form-group">
-                    <label>Employment Type <span class="text-danger">*</span></label>
-                    <select name="employment_type" class="form-control" required>
-                      <option value="">Select Type</option>
-                      <option value="Full-Time" {% if employee.employment_type == "Full-Time" %}selected{% endif %}>Full-Time</option>
-                      <option value="Part-Time" {% if employee.employment_type == "Part-Time" %}selected{% endif %}>Part-Time</option>
-                      <option value="Contract" {% if employee.employment_type == "Contract" %}selected{% endif %}>Contract</option>
-                    </select>
-                      {% if errors.employment_type %}
-                        <small class="text-danger">{{ errors.employment_type }}</small>
-                    {% endif %}
-
-<!--                   <p>Employment Type: "{{ employee.employment_type }}"</p>--> <!--here we have checked the value.-->
-                  </div>
-                   <div class="form-group">
-                    <label for="attachment">Upload Attachment</label>
-                    <input type="file" name="attachment" class="form-control" accept=".pdf,.doc,.docx,.jpg,.png">
-
-                    {% if employee and employee.attachment %}
-                        <p>Current Attachment:</p>
-                        <img src="{{ employee.attachment.url }}" alt="Attachment" class="img-thumbnail" width="100">
-                    {% endif %}
-                   </div>
-                    <div class="form-group">
-                        <label for="role"> Role:<span class="text-danger">*</span></label>
-                        <select name="role" class="form-control" required>
-                            <option value="">-- Select Role --</option>
-                            {% for role in roles %}
-                                <option value="{{ role.id }}"
-                                    {% if request.POST.role == role.id|stringformat:"s" or employee.role.id == role.id %}selected{% endif %}>
-                                    {{ role.name }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                </div>
-              </div>
-
-              <!-- Submit Button -->
-              <div class="text-center mt-4">
-                <button type="submit" class="btn btn-primary">{% if employee and employee.id %} Update Employee {% else %} Add Employee {% endif %}</button>
-                {% if employee and employee.id %} <button type="reset" class="btn btn-secondary">Reset</button> {% endif %}
-              </div>
-
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-          </div>
-      </div>
-    </section>
-  </div>
-</div>
 {% endblock %}

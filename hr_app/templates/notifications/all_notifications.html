@@ -1,0 +1,38 @@
+{% extends "main1.html" %}
+{% block title %}All Notifications{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+  {% include 'navbar.html' %}
+  {% include 'sidebar.html' %}
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid"><h1>All Notifications</h1></div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <div class="card">
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+              {% for notification in notifications %}
+                <a href="{{ notification.link | default:'#' }}" class="list-group-item list-group-item-action {% if not notification.is_read %} list-group-item-light text-bold {% endif %}">
+                  <div class="d-flex w-100 justify-content-between">
+                    <p class="mb-1">{{ notification.message }}</p>
+                    <small class="text-muted">{{ notification.created_at|date:"d M Y, H:i" }}</small>
+                  </div>
+                </a>
+              {% empty %}
+                <div class="list-group-item">
+                  <p class="text-muted text-center mb-0">You have no notifications.</p>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  {% include 'footer.html' %}
+</div>
+{% endblock %}

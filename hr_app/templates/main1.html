@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}BISP Solutions{% endblock %}</title>
 <!-- FullCalendar CSS -->
+  {% block extra_head %}
+  {% endblock %}
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/main.min.css" rel="stylesheet">
 <!-- fullCalendar -->
   <link rel="stylesheet" href="{% static 'plugins/fullcalendar/main.css' %}">
@@ -1033,6 +1035,18 @@ function setStatus(option, text, badgeClass) {
     calendar.render();
   });
 </script>
+<script>
+  // Auto-hide the employee update success message after 3 seconds
+  setTimeout(function() {
+    const msg = document.getElementById('employee-success-msg');
+    if (msg) {
+      msg.classList.remove('show');
+      msg.classList.add('fade');
+      msg.style.display = 'none';
+    }
+  }, 3000); // 3000ms = 3 seconds
+</script>
+
 {% block custom_js %}
   {% endblock %}
 </body>

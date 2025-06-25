@@ -161,6 +161,18 @@ class AddEmployee(models.Model):
         ('Female', 'Female'),
         ('Other', 'Other'),
     ]
+    DESIGNATION_CHOICES = [
+        ('Software Engineer', 'Software Engineer'),
+        ('Senior Software Engineer', 'Senior Software Engineer'),
+        ('Project Manager', 'Project Manager'),
+        ('Team Lead', 'Team Lead'),
+        ('HR Manager', 'HR Manager'),
+        ('HR Executive', 'HR Executive'),
+        ('System Administrator', 'System Administrator'),
+        ('Business Analyst', 'Business Analyst'),
+        ('UI/UX Designer', 'UI/UX Designer'),
+        # --- Add as many designations as you need ---
+    ]
     marital_status = models.CharField(
     max_length=10,
     choices=MARITAL_CHOICES,
@@ -181,7 +193,12 @@ class AddEmployee(models.Model):
     ]
     department = models.CharField(max_length=20, choices=DEPARTMENT_CHOICES)
 
-    designation = models.CharField(max_length=50)
+    designation = models.CharField(
+        max_length=100,
+        choices=DESIGNATION_CHOICES,
+        null=True,  # Or provide a default='...'
+        blank=True
+    )
     joining_date = models.DateField()
     salary = models.DecimalField(max_digits=10, decimal_places=2)
 
@@ -198,7 +215,18 @@ class AddEmployee(models.Model):
         max_length=10
     )
     is_active = models.BooleanField(default=True)
+    TIMESHEET_CHOICES = [
+        ('daily', 'Daily Timesheet'),
+        ('weekly', 'Weekly Timesheet'),
+        ('image', 'Image Timesheet'),
+    ]
 
+    timesheet_preference = models.CharField(
+        max_length=10,
+        choices=TIMESHEET_CHOICES,
+        default='daily',  # Set a sensible default for all users
+        help_text="The user's preferred method for filling out their timesheet."
+    )
     def is_locked(self):
         """Checks if the account is currently locked."""
         if self.lockout_until and self.lockout_until > timezone.now():
@@ -598,3 +626,345 @@ class ExitActivityLog(models.Model):
 
     def __str__(self):
         return f'{self.action} on {self.exit_request.employee.full_name} at {self.timestamp}'
+
+
+# hr_app/models.py
+from django.db import models
+from django.utils import timezone
+
+
+# Make sure your Employee model is imported if it's in the same file, or from .models import Employee
+# from .models import AddEmployee as Employee # Or whatever your Employee model is named
+
+class Notification(models.Model):
+    # The user who will receive the notification.
+    user = models.ForeignKey(AddEmployee, on_delete=models.CASCADE, related_name='notifications')
+
+    # The content of the notification.
+    message = models.TextField()
+
+    # A link to the relevant page (e.g., a specific task or project).
+    link = models.URLField(max_length=200, blank=True, null=True)
+
+    # Tracks whether the user has seen the notification.
+    is_read = models.BooleanField(default=False)
+
+    # The timestamp for when the notification was created.
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Notification for {self.user.full_name}: {self.message[:30]}"
+
+    class Meta:
+        # Order notifications so the newest are always first.
+        ordering = ['-created_at']
+
+
+# hr_app/models.py (at the bottom)
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.urls import reverse
+
+
+# Assuming your Task model is named 'Task'
+@receiver(post_save, sender=Task)
+def create_task_assignment_notification(sender, instance, created, **kwargs):
+    """
+    Creates a notification when a new task is created and assigned.
+    """
+    if created and instance.assignee:
+        # 'created' is True only when the Task object is first saved to the database.
+        message = f"You have been assigned a new task: '{instance.name}'"
+
+        # Create a dynamic link to the task detail page.
+        # Make sure you have a URL named 'task_detail' that takes a task ID.
+        try:
+            link = reverse('task_detail', args=[instance.id])
+        except:
+            link = None  # Fails gracefully if the URL doesn't exist
+
+        Notification.objects.create(
+            user=instance.assignee,
+            message=message,
+            link=link
+        )
+
+
+# hr_app/models.py (add this to the bottom of the file)
+
+# Make sure all necessary imports are at the top of your file
+from django.db.models.signals import post_save, m2m_changed
+from django.dispatch import receiver
+from django.urls import reverse
+
+
+# from .models import Notification, AddEmployee, Project # Ensure these are imported
+
+# --- Signal Handler 1: For Project Creation (Leader & Admin) ---
+
+@receiver(post_save, sender=Project)
+def create_project_role_notification(sender, instance, created, **kwargs):
+    """
+    Creates notifications when a new project is created, for the leader and admin.
+    """
+    # This signal only runs when a project is FIRST created.
+    if created:
+        # Generate a link to the project detail page
+        try:
+            link = reverse('project_detail', args=[instance.id])
+        except:
+            link = None  # Fails gracefully if the URL doesn't exist
+
+        # Notify the Project Leader
+        if instance.leader:
+            message = f"You have been assigned as the Project Leader for '{instance.name}'."
+            Notification.objects.create(
+                user=instance.leader,
+                message=message,
+                link=link
+            )
+
+        # Notify the Project Admin
+        if instance.admin:
+            # Avoid sending a duplicate notification if the admin is also the leader
+            if not instance.leader or instance.admin.id != instance.leader.id:
+                message = f"You have been assigned as the Project Admin for '{instance.name}'."
+                Notification.objects.create(
+                    user=instance.admin,
+                    message=message,
+                    link=link
+                )
+
+
+# --- Signal Handler 2: For Team Member Assignment (ManyToManyField) ---
+
+@receiver(m2m_changed, sender=Project.team_members.through)
+def create_team_member_notification(sender, instance, action, pk_set, **kwargs):
+    """
+    Creates notifications when one or more users are added to a project's team.
+    """
+    # This signal runs only AFTER new members are successfully added.
+    if action == 'post_add':
+        # Generate a link to the project detail page
+        try:
+            link = reverse('project_detail', args=[instance.id])
+        except:
+            link = None
+
+        # pk_set contains the primary keys (IDs) of the employees who were just added.
+        for employee_id in pk_set:
+            try:
+                member = AddEmployee.objects.get(pk=employee_id)
+                message = f"You have been added to the team for the project: '{instance.name}'."
+
+                # Check if this member is already the leader or admin to avoid duplicate notifications
+                is_leader = instance.leader and instance.leader.id == member.id
+                is_admin = instance.admin and instance.admin.id == member.id
+
+                if not is_leader and not is_admin:
+                    Notification.objects.create(
+                        user=member,
+                        message=message,
+                        link=link
+                    )
+            except AddEmployee.DoesNotExist:
+                continue  # Ignore if an invalid ID was somehow passed
+
+
+# hr_app/models.py (add this to the bottom of the file)
+
+# Make sure all necessary imports are at the top of your file
+# from django.db.models.signals import post_save
+# from django.dispatch import receiver
+# from django.urls import reverse
+# from .models import Notification, AddEmployee, LeaveApplication
+
+# --- Signal Handler for Leave Applications ---
+
+# hr_app/models.py (Corrected Signal Handler)
+
+@receiver(post_save, sender=LeaveApplication)
+def create_leave_application_notifications(sender, instance, created, **kwargs):
+    """
+    Creates notifications for leave applications based on their status.
+    - When a new leave is created (Pending).
+    - When an existing leave is Approved or Rejected.
+    """
+
+    # --- Case 1: A NEW leave application is submitted by an employee ---
+    if created:
+        # The employee has just applied, so we need to notify their reporting manager.
+        if instance.employee.reporting_manager:
+            manager_user_object = instance.employee.reporting_manager
+
+            # We need to find the AddEmployee profile linked to this manager User
+            try:
+                manager_profile = AddEmployee.objects.get(user=manager_user_object)
+
+                message = f"{instance.employee.full_name} has applied for {instance.leave_type.leavetype}."
+
+                # Link to a page where managers can review leave requests
+                try:
+                    # Assuming you have a URL like 'manage_leave_requests'
+                    link = reverse('manage_leave_requests')
+                except:
+                    link = None
+
+                Notification.objects.create(user=manager_profile, message=message, link=link)
+            except AddEmployee.DoesNotExist:
+                # This case means the manager's User object doesn't have a linked AddEmployee profile.
+                # As a fallback, notify HR.
+                notify_hr_of_leave_request(instance)
+        else:
+            # If the employee has no reporting manager, notify all HR users as a fallback.
+            notify_hr_of_leave_request(instance)
+
+    # --- Case 2: An EXISTING leave application's status has been updated ---
+    else:
+        # Check if the 'status' field was actually updated (optimization)
+        try:
+            old_instance = LeaveApplication.objects.get(pk=instance.pk)
+            if old_instance.status == instance.status:
+                return  # Do nothing if status hasn't changed
+        except LeaveApplication.DoesNotExist:
+            return
+
+        # Create notifications for the applicant based on the new status
+        applicant = instance.employee
+        try:
+            link = reverse('my_leave_history')  # Link to the employee's leave history
+        except:
+            link = None
+
+        if instance.status == 'Approved':
+            message = f"Your leave request for {instance.leave_type.leavetype} from {instance.from_date.strftime('%d-%b')} has been approved."
+            Notification.objects.create(user=applicant, message=message, link=link)
+
+        elif instance.status == 'Rejected':
+            message = f"Your leave request for {instance.leave_type.leavetype} from {instance.from_date.strftime('%d-%b')} has been rejected."
+            Notification.objects.create(user=applicant, message=message, link=link)
+
+
+def notify_hr_of_leave_request(instance):
+    """
+    Helper function to send a notification to all HR users.
+    This is used as a fallback.
+    """
+    hr_users = AddEmployee.objects.filter(role__name='HR')  # Assumes role has a name field
+    message = f"{instance.employee.full_name} has applied for {instance.leave_type.leavetype}."
+    try:
+        link = reverse('manage_leave_requests')
+    except:
+        link = None
+
+    for hr in hr_users:
+        # Avoid notifying the HR person if they are the one applying for leave
+        if hr.id != instance.employee.id:
+            Notification.objects.create(user=hr, message=message, link=link)
+
+
+# hr_app/models.py (add this to the bottom of the file)
+
+# Make sure all necessary imports are at the top of your file
+# from django.db.models.signals import post_save
+# from django.dispatch import receiver
+# from django.urls import reverse
+# from .models import Notification, AddEmployee, ExitRequest
+
+# --- Signal Handler for Exit Requests ---
+
+@receiver(post_save, sender=ExitRequest)
+def create_exit_request_notifications(sender, instance, created, **kwargs):
+    """
+    Creates notifications for the multi-step exit request process.
+    """
+    employee = instance.employee
+    manager_user = employee.reporting_manager
+    hr_users = AddEmployee.objects.filter(role__name='HR')
+
+    # Try to get the manager's AddEmployee profile
+    manager_profile = None
+    if manager_user:
+        try:
+            manager_profile = AddEmployee.objects.get(user=manager_user)
+        except AddEmployee.DoesNotExist:
+            manager_profile = None  # Manager has a User account but no AddEmployee profile
+
+    # --- Case 1: A NEW exit request is submitted by an employee ---
+    if created:
+        # Notify the reporting manager that a request is pending their approval
+        if manager_profile:
+            message = f"{employee.full_name} has submitted a resignation request."
+            try:
+                link = reverse('manage_exit_requests')  # URL for managers/HR to see requests
+            except:
+                link = None
+            Notification.objects.create(user=manager_profile, message=message, link=link)
+        else:
+            # Fallback: If no manager, notify HR immediately
+            message = f"{employee.full_name} submitted a resignation, but has no manager assigned. The request is pending HR approval."
+            for hr in hr_users:
+                Notification.objects.create(user=hr, message=message, link=link)
+
+        return  # End here for new requests
+
+    # --- Case 2: An EXISTING exit request is updated ---
+    try:
+        old_instance = ExitRequest.objects.get(pk=instance.pk)
+        if old_instance.status == instance.status:
+            return  # Do nothing if status hasn't changed
+    except ExitRequest.DoesNotExist:
+        return
+
+    # --- Logic for status transitions ---
+    new_status = instance.status
+    link = reverse('my_exit_request_status')  # URL for the employee to see their request status
+
+    # Transition: Manager approves, now pending HR
+    if new_status == 'PENDING_HR_APPROVAL':
+        # Notify all HR users that the request is now in their queue
+        message = f"Exit request for {employee.full_name} has been approved by the manager and is now pending your approval."
+        for hr in hr_users:
+            Notification.objects.create(user=hr, message=message, link=reverse('manage_exit_requests'))
+        # Also notify the employee that their request has moved to the next step
+        employee_message = "Your resignation request has been approved by your manager and is now with HR."
+        Notification.objects.create(user=employee, message=employee_message, link=link)
+
+    # Transition: Manager rejects
+    elif new_status == 'REJECTED_BY_RM':
+        # Notify the employee that their request was rejected by their manager
+        employee_message = "Your resignation request has been rejected by your reporting manager."
+        Notification.objects.create(user=employee, message=employee_message, link=link)
+
+    # Transition: HR gives final approval
+    elif new_status == 'APPROVED':
+        # Notify the employee of the final approval
+        employee_message = "Your resignation request has been fully approved by HR."
+        Notification.objects.create(user=employee, message=employee_message, link=link)
+        # Also notify the manager that the process is complete
+        if manager_profile:
+            manager_message = f"The exit request for {employee.full_name} has been approved by HR."
+            Notification.objects.create(user=manager_profile, message=manager_message,
+                                        link=reverse('manage_exit_requests'))
+
+    # Transition: HR rejects
+    elif new_status == 'REJECTED_BY_HR':
+        # Notify the employee that their request was rejected by HR
+        employee_message = "Your resignation request has been rejected by HR."
+        Notification.objects.create(user=employee, message=employee_message, link=link)
+        # Also notify the manager of the rejection
+        if manager_profile:
+            manager_message = f"The exit request for {employee.full_name} has been rejected by HR."
+            Notification.objects.create(user=manager_profile, message=manager_message,
+                                        link=reverse('manage_exit_requests'))
+
+    # Transition: Employee withdraws the request
+    elif new_status == 'WITHDRAWN':
+        # Notify the manager and HR that the request was withdrawn
+        message = f"The resignation request for {employee.full_name} has been withdrawn by the employee."
+        # Notify Manager
+        if manager_profile:
+            Notification.objects.create(user=manager_profile, message=message, link=reverse('manage_exit_requests'))
+        # Notify HR
+        for hr in hr_users:
+            Notification.objects.create(user=hr, message=message, link=reverse('manage_exit_requests'))

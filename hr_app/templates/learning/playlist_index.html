@@ -1,0 +1,146 @@
+{% extends "main1.html" %}
+{% load static %}
+{% block title %}Learning Playlists{% endblock %}
+
+{% block extra_head %}
+  <!-- ... (your existing style blocks are perfect, no changes needed here) ... -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    /* ... */
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+  {% include 'navbar.html' %}
+  {% include 'sidebar.html' %}
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="text-primary border-bottom pb-2">Learning Playlists</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="/">Home</a></li>
+              <li class="breadcrumb-item active">Learning Playlists</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <div class="card main-card p-4 mb-4">
+          <div class="row">
+            <div class="col-12">
+
+              <div class="text-center mb-4">
+                  <p class="lead">Browse our curated video playlists from the <a href="{{ channel_url }}" target="_blank" class="text-decoration-none">BISP Solutions YouTube Channel</a>.</p>
+              </div>
+
+              <!-- UPDATED: Check for page_obj instead of playlists -->
+              {% if page_obj %}
+              <div class="row g-4">
+                  <!-- UPDATED: Loop through page_obj -->
+                  {% for playlist in page_obj %}
+                  <div class="col-lg-4 col-md-6 d-flex align-items-stretch">
+                      <div class="card w-100 shadow-sm playlist-card">
+                          <!-- ... (The entire card content remains exactly the same) ... -->
+                          <div class="card-img-container"
+                               data-bs-toggle="modal"
+                               data-bs-target="#videoModal"
+                               data-playlist-id="{{ playlist.playlist_id }}"
+                               data-playlist-title="{{ playlist.title }}">
+                              <img src="{{ playlist.thumbnail_url }}" class="card-img-top" alt="{{ playlist.title }}" onerror="this.onerror=null;this.src='https://via.placeholder.com/480x270.png?text=No+Thumbnail';">
+                              <div class="play-icon"><i class="bi bi-play-circle-fill"></i></div>
+                              <span class="video-count-badge">{{ playlist.video_count }}</span>
+                          </div>
+                          <div class="card-body d-flex flex-column">
+                              <h5 class="card-title">{{ playlist.title }}</h5>
+                              <div class="mt-auto pt-3">
+                                  <a href="{{ playlist.playlist_url }}" target="_blank" class="btn btn-danger w-100">
+                                      <i class="fab fa-youtube me-2"></i> Watch Full Playlist
+                                  </a>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                  {% endfor %}
+              </div>
+              {% else %}
+              <div class="alert alert-warning text-center" role="alert">
+                <i class="icon fas fa-exclamation-triangle"></i>
+                Could not load video playlists at this time. Please try again later.
+              </div>
+              {% endif %}
+
+              <!-- ================================================================= -->
+              <!-- NEW: PAGINATION CONTROLS                                          -->
+              <!-- ================================================================= -->
+              {% if page_obj.has_other_pages %}
+                <nav aria-label="Page navigation" class="mt-5 d-flex justify-content-center">
+                  <ul class="pagination">
+
+                    <!-- Previous Page Link -->
+                    {% if page_obj.has_previous %}
+                      <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                          <span aria-hidden="true">«</span>
+                        </a>
+                      </li>
+                    {% else %}
+                      <li class="page-item disabled">
+                        <span class="page-link">«</span>
+                      </li>
+                    {% endif %}
+
+                    <!-- Page Number Links -->
+                    {% for num in page_obj.paginator.page_range %}
+                      {% if page_obj.number == num %}
+                        <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span></li>
+                      {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                      {% endif %}
+                    {% endfor %}
+
+                    <!-- Next Page Link -->
+                    {% if page_obj.has_next %}
+                      <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                          <span aria-hidden="true">»</span>
+                        </a>
+                      </li>
+                    {% else %}
+                      <li class="page-item disabled">
+                        <span class="page-link">»</span>
+                      </li>
+                    {% endif %}
+
+                  </ul>
+                </nav>
+              {% endif %}
+              <!-- ================================================================= -->
+              <!-- END: PAGINATION CONTROLS                                          -->
+              <!-- ================================================================= -->
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  {% include 'footer.html' %}
+</div>
+
+<!-- ... (your modal and custom_js block remain the same) ... -->
+<div class="modal fade" id="videoModal"> ... </div>
+{% endblock %}
+
+{% block custom_js %}
+  <!-- ... -->
+{% endblock %}

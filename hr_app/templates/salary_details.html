@@ -18,6 +18,29 @@
         <div class="col-sm-6">
           <h1>Monthly Payroll - {{ month_year_display }}</h1>
         </div>
+        <div class="col-sm-6 text-right">
+          <form method="get" action="">
+            <div class="form-inline justify-content-end">
+              <select name="month" class="form-control mr-2">
+                {% for month_num, month_name in month_choices %}
+                  <option value="{{ month_num }}" {% if selected_month == month_num %}selected{% endif %}>{{ month_name }}</option>
+                {% endfor %}
+              </select>
+              <select name="year" class="form-control mr-2">
+                {% for year in year_choices %}
+                  <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-primary">Filter</button>
+            </div>
+          </form>
+          <form method="post" action="{% url 'email_payslips_to_all' %}" style="margin-top: 10px;">
+            {% csrf_token %}
+            <input type="hidden" name="month" value="{{ selected_month }}">
+            <input type="hidden" name="year" value="{{ selected_year }}">
+            <button type="submit" class="btn btn-danger btn-sm">Send Payslips to All</button>
+          </form>
+        </div>
       </div>
     </div>
   </section>
@@ -41,17 +64,18 @@
           {% for record in salary_data %}
           <tr>
             <td>{{ forloop.counter }}</td>
-            <td>  <a href="{% url 'employee_payslip_list_by_id' record.employee_identifier.id %}">
-    {{ record.employee_identifier.full_name }}
-  </a></td>
+            <td><a href="{% url 'employee_payslip_list_by_id' record.employee_identifier.id %}">{{ record.employee_identifier.full_name }}</a></td>
             <td>{{ record.present_days }}</td>
             <td>{{ record.paid_leaves }}</td>
             <td>{{ record.unpaid_leaves }}</td>
             <td>₹{{ record.basic_salary|floatformat:2 }}</td>
             <td><b>₹{{ record.total_salary|floatformat:2 }}</b></td>
             <td>
-              <a href="{% url 'download_payslip_pdf' record.id %}" class="btn btn-sm btn-success">View PDF</a>
-              <a href="{% url 'email_payslip' record.id %}" class="btn btn-sm btn-primary">Send Email</a>
+              <a href="{% url 'download_payslip_pdf' record.id %}" class="btn btn-sm btn-success">Download PDF</a>
+              <form method="post" action="{% url 'email_payslip' record.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-success">Send Payslip</button>
+              </form>
             </td>
           </tr>
           {% empty %}
@@ -69,8 +93,8 @@
   $(function () {
     $('#employeeTable').DataTable({
       "paging": true,
-      "lengthChange": true, // To show the "Show X entries" dropdown
-      "searching": true,    // To show the search box
+      "lengthChange": true,
+      "searching": true,
       "ordering": true,
       "info": true,
       "autoWidth": false,
@@ -79,4 +103,3 @@
   });
 </script>
 {% endblock %}
-

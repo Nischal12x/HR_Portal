@@ -135,6 +135,12 @@ urlpatterns = [
     path('payroll/email/<int:record_id>/', views.email_payslip, name='email_payslip'),
     path('employee/payslips/<int:employee_id>/', views.employee_payslip_list_by_id, name='employee_payslip_list_by_id'),
     path('exit/update-last-working-date/<int:exit_id>/', views.change_last_working_date, name='change_last_working_date'),
+    path('payroll/email-all/', views.email_payslips_to_all, name='email_payslips_to_all'),
+    path("learning/", learning_videos, name="learning_videos"),
+    path('settings/', views.user_settings, name='user_settings'),
+    path('notifications/', views.all_notifications, name='all_notifications'),
+    path('employee/<int:employee_id>/edit/', views.edit_employee, name='edit_employee'),
+    path('attendance/my-record/', views.my_attendance_view, name='my_attendance'),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
