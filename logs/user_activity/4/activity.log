@@ -1,2 +1,4 @@
 2025-06-25 13:53:10 - INFO - [vijayraj@gmail.com] - Login successful. IP: 127.0.0.1
 2025-06-25 15:55:58 - INFO - [vijayraj@gmail.com] - User logged out.
+2025-06-26 17:03:38 - WARNING - [vijayraj@gmail.com] - Login attempt on account with no active linked user. IP: 127.0.0.1
+2025-06-26 17:03:53 - WARNING - [vijayraj@gmail.com] - Login attempt on account with no active linked user. IP: 127.0.0.1

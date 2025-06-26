@@ -31,7 +31,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import Project
 from django.utils.dateparse import parse_date
 
-from .models import EmployeeHandbook, EmployeeHandbookAcknowledgement, AddEmployee
+from .models import EmployeeHandbook, EmployeeHandbookAcknowledgement, AddEmployee, ActivityLog
 import logging # Import Python's logging
 # Assuming logging_utils.py is in the same app directory
 from .logging_utils import log_user_action, get_user_logger
@@ -1821,9 +1821,29 @@ def task_list(request):
     return render(request, 'task_list.html', {'tasks': page_obj})
 
 @login_required
+@login_required
 def task_detail(request, task_id):
+    """
+    Fetches the task and all necessary context for the detailed view template.
+    """
+    # 1. Get the main task object (this is the same as your original code)
     task = get_object_or_404(Task, id=task_id)
-    return render(request, 'task_details.html', {'task': task})
+
+    # 2. Get all related activity logs for the timeline, newest first
+    #    This is required for the "Activity & Comments" section in the template.
+    activity_logs = task.activity_logs.all().order_by('-timestamp')
+
+    # 3. Create the context dictionary with all the data the template needs
+    context = {
+        'task': task,
+        'activity_logs': activity_logs,
+        'request': request,  # 👈 This is crucial for checking the user's role in the template
+    }
+
+    # 4. Render the template with the complete context
+    #    NOTE: Your error message showed 'task_detail.html', but your view had 'task_details.html'.
+    #    Ensure the template filename here matches your actual file.
+    return render(request, 'task_details.html', context)
 
 @login_required
 def dash_v3(request) :
@@ -3010,7 +3030,7 @@ def mark_absent(request):
 from .models import Leave_Type
 
 # Helper function (you might have this elsewhere)
-@login_required
+
 def get_employee_profile(user):
     try:
         return AddEmployee.objects.get(user=user)
@@ -3169,7 +3189,7 @@ def withdraw_resignation(request, request_id):
 
 
 # --- Views for Reporting Manager ---
-@login_required
+
 def manage_exit_requests_rm(request):
     """
        Displays a list of all exit requests for the employees
@@ -3196,7 +3216,6 @@ def manage_exit_requests_rm(request):
     return render(request, 'employee/manage_exit_requests_rm.html', context)
 
 
-@login_required
 def approve_reject_exit_rm(request, request_id):
     manager_profile = get_employee_profile(request.user)
     # Add robust permission checks: is this user the RM for this request?
@@ -3235,7 +3254,7 @@ from django.contrib.auth.decorators import login_required
 
 from .models import ExitRequest, ExitActivityLog, AddEmployee # Make sure to import your models
 
-@login_required
+
 def resignation_approval_view(request, request_id):
     """
     View for a Reporting Manager to review and FORWARD or REJECT a resignation request.
@@ -3312,7 +3331,7 @@ def resignation_approval_view(request, request_id):
     return render(request, 'employee/resignation_approval.html', context)
 
 # modal for changing exit request actual_last_wking_day
-@login_required
+
 def change_last_working_date(request, exit_id):
     if request.method == 'POST':
         actual_last_working_day = request.POST.get('actual_last_working_day')
@@ -3327,7 +3346,7 @@ def change_last_working_date(request, exit_id):
     print(exit_request.employee.full_name)
     return redirect('resignation_approval', request_id=exit_request.id)  # Adjust this redirect as needed
 # --- Views for HR ---
-@login_required
+
 def manage_exit_requests_hr(request):
     # Implement HR role check
     hr_profile = get_employee_profile(request.user)
@@ -3348,7 +3367,7 @@ def manage_exit_requests_hr(request):
 
 # in your views.py
 
-@login_required
+
 def process_exit_request_hr(request, request_id):
     """
     View for HR to give FINAL approval, manage the checklist, and set the last working day.
@@ -3563,7 +3582,6 @@ from .models import SalaryData
 from django.db.models import Sum
 import tempfile
 from weasyprint import HTML
-@login_required
 def send_monthly_report_email(payroll_data):
     subject = "May 2025 Payroll Summary"
     to_email = "kataranischal@gmail.com"  # Update to the head's email
@@ -3637,7 +3655,6 @@ from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from weasyprint import HTML
 import tempfile
-@login_required
 def send_monthly_report_pdf(payroll_data):
     if not payroll_data.exists():
         return
@@ -3714,9 +3731,10 @@ def monthly_payroll_data_view(request):
         total_pf=Sum('pf'),
         total_tds=Sum('tds'),
     )
-    print(payroll_data)
+    
     if request.method == "POST":
         if 'send_report_email' in request.POST:
+            print(payroll_data)
             send_monthly_report_email(payroll_data)
             messages.success(request, "Monthly report sent to Head via email.")
         elif 'send_pdf_email' in request.POST:
@@ -4118,3 +4136,88 @@ def edit_employee(request, employee_id):
 
 def csrf_failure(request, reason=""):
     return render(request, "csrf_error.html", {"reason": reason})
+    # NEW and REQUIRED view for comments
+
+@login_required
+def add_task_comment(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    if request.method == 'POST':
+        comment_text = request.POST.get('comment')
+        if comment_text:
+            # Use the same log_activity helper
+            action_text = "added a comment"
+            log_activity(task, request.user, action_text, comment=comment_text)
+            messages.success(request, "Your comment has been posted.")
+        else:
+            messages.error(request, "Comment cannot be empty.")
+    
+    return redirect('task_detail', task_id=task.id)
+# This helper function is essential for the timeline
+def log_activity(task, user, action, comment=None):
+    # (Same helper function from my previous answer)
+    # ... logic to create ActivityLog object ...
+    icon_map = {
+        'Pending': ('fas fa-clock', 'warning'),
+        'Claimed Completed': ('fas fa-flag-checkered', 'info'),
+        'Completed': ('fas fa-check-circle', 'success'),
+    }
+    icon, color = icon_map.get(task.status, ('fas fa-info', 'secondary'))
+
+    ActivityLog.objects.create(
+        task=task, user=user, action=action,
+        comment=comment, icon_class=icon, color=color
+    )
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from .models import Notification, AddEmployee
+
+@login_required
+def mark_notification_as_read(request, notification_id):
+    current_employee = get_object_or_404(AddEmployee, id=request.session.get('employee_id'))
+    notification = get_object_or_404(Notification, id=notification_id, user=current_employee)
+    
+    notification.is_read = True
+    notification.save()
+    
+    return redirect(notification.link) if notification.link else redirect('dashboard')
+# hr_app/views.py
+
+@login_required
+def task_detail(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    activity_logs = task.activity_logs.all().order_by('-timestamp')
+    
+    # --- ADD THIS ---
+    # Fetch all messages related to this task to display the conversation
+    task_messages = task.task_messages.all()
+
+    context = {
+        'task': task,
+        'activity_logs': activity_logs,
+        'task_messages': task_messages,  # Pass messages to the template
+        'request': request,
+    }
+    return render(request, 'task_details.html', context)
+# hr_app/views.py
+
+@login_required
+def post_task_message(request, task_id):
+    if request.method == 'POST':
+        task = get_object_or_404(Task, id=task_id)
+        message_content = request.POST.get('message')
+        
+        # Get the sender's AddEmployee profile
+        sender_profile = get_object_or_404(AddEmployee, id=request.session.get('employee_id'))
+
+        if message_content:
+            TaskMessage.objects.create(
+                task=task,
+                sender=sender_profile,
+                message=message_content
+            )
+            # The signal will automatically handle creating the notification
+        else:
+            messages.error(request, "Message cannot be empty.")
+            
+    # Redirect back to the task detail page to see the new message
+    return redirect('task_detail', task_id=task_id)

@@ -968,3 +968,65 @@ def create_exit_request_notifications(sender, instance, created, **kwargs):
         # Notify HR
         for hr in hr_users:
             Notification.objects.create(user=hr, message=message, link=reverse('manage_exit_requests'))
+# In your tasks/models.py
+class ActivityLog(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='activity_logs')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    action = models.CharField(max_length=255) # e.g., "updated status to Pending", "added a comment"
+    comment = models.TextField(blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    icon_class = models.CharField(max_length=50, default='fas fa-info') # e.g., fas fa-comment, fas fa-check
+    color = models.CharField(max_length=50, default='blue') # e.g., blue, green, yellow
+
+    class Meta:
+        ordering = ['-timestamp']
+# hr_app/models.py
+
+class TaskMessage(models.Model):
+    """
+    Represents a single message in a conversation thread for a specific task.
+    """
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='task_messages')
+    sender = models.ForeignKey(AddEmployee, on_delete=models.CASCADE, related_name='sent_task_messages')
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['timestamp'] # Show oldest messages first, like a chat
+
+    def __str__(self):
+        return f"Message from {self.sender.full_name} on task '{self.task.name}'"
+# hr_app/models.py (at the bottom)
+
+@receiver(post_save, sender=TaskMessage)
+def create_new_message_notification(sender, instance, created, **kwargs):
+    """
+    When a new TaskMessage is created, send a notification to the other party.
+    """
+    if created:
+        task = instance.task
+        message_sender = instance.sender
+        
+        # Determine the recipient based on our assumption
+        recipient = None
+        if task.project.leader and message_sender.id == task.assignee.id:
+            # If the assignee sends a message, notify the project leader
+            recipient = task.project.leader
+        elif task.project.leader and message_sender.id == task.project.leader.id:
+            # If the project leader sends a message, notify the assignee
+            recipient = task.assignee
+
+        # Create the notification only if a recipient is determined and is not the sender
+        if recipient and recipient.id != message_sender.id:
+            notification_message = f"New message from {message_sender.full_name} on task: '{task.name}'"
+            try:
+                # The link will take the user directly to the task detail page
+                link = reverse('task_detail', args=[task.id])
+            except:
+                link = None
+
+            Notification.objects.create(
+                user=recipient,
+                message=notification_message,
+                link=link
+            )

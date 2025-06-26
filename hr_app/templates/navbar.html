@@ -174,69 +174,43 @@
           </form>
         </div>
       </li>
-
-<!--      &lt;!&ndash; Messages Dropdown Menu &ndash;&gt;-->
-<!--      <li class="nav-item dropdown">-->
-<!--        <a class="nav-link" data-toggle="dropdown" href="#">-->
-<!--          <i class="far fa-comments"></i>-->
-<!--          <span class="badge badge-danger navbar-badge">3</span>-->
-<!--        </a>-->
-<!--        <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">-->
-<!--          <a href="#" class="dropdown-item">-->
-<!--            &lt;!&ndash; Message Start &ndash;&gt;-->
-<!--            <div class="media">-->
-<!--<img src="{% static 'img/user1-128x128.jpg' %}" alt="User Avatar" class="img-size-50 mr-3 img-circle">-->
-
-<!--              <div class="media-body">-->
-<!--                <h3 class="dropdown-item-title">-->
-<!--                  Brad Diesel-->
-<!--                  <span class="float-right text-sm text-danger"><i class="fas fa-star"></i></span>-->
-<!--                </h3>-->
-<!--                <p class="text-sm">Call me whenever you can...</p>-->
-<!--                <p class="text-sm text-muted"><i class="far fa-clock mr-1"></i> 4 Hours Ago</p>-->
-<!--              </div>-->
-<!--            </div>-->
-<!--            &lt;!&ndash; Message End &ndash;&gt;-->
-<!--          </a>-->
-<!--          <div class="dropdown-divider"></div>-->
-<!--          <a href="#" class="dropdown-item">-->
-<!--            &lt;!&ndash; Message Start &ndash;&gt;-->
-<!--            <div class="media">-->
-
-<!--<img src="{% static 'img/user8-128x128.jpg' %}" alt="User Avatar" class="img-size-50 img-circle mr-3">-->
-
-<!--              <div class="media-body">-->
-<!--                <h3 class="dropdown-item-title">-->
-<!--                  John Pierce-->
-<!--                  <span class="float-right text-sm text-muted"><i class="fas fa-star"></i></span>-->
-<!--                </h3>-->
-<!--                <p class="text-sm">I got your message bro</p>-->
-<!--                <p class="text-sm text-muted"><i class="far fa-clock mr-1"></i> 4 Hours Ago</p>-->
-<!--              </div>-->
-<!--            </div>-->
-<!--            &lt;!&ndash; Message End &ndash;&gt;-->
-<!--          </a>-->
-<!--          <div class="dropdown-divider"></div>-->
-<!--          <a href="#" class="dropdown-item">-->
-<!--            &lt;!&ndash; Message Start &ndash;&gt;-->
-<!--            <div class="media">-->
-<!--<img src="{% static 'img/user3-128x128.jpg' %}" alt="User Avatar" class="img-size-50 img-circle mr-3">-->
-
-<!--              <div class="media-body">-->
-<!--                <h3 class="dropdown-item-title">-->
-<!--                  Nora Silvester-->
-<!--                  <span class="float-right text-sm text-warning"><i class="fas fa-star"></i></span>-->
-<!--                </h3>-->
-<!--                <p class="text-sm">The subject goes here</p>-->
-<!--                <p class="text-sm text-muted"><i class="far fa-clock mr-1"></i> 4 Hours Ago</p>-->
-<!--              </div>-->
-<!--            </div>-->
-<!--            &lt;!&ndash; Message End &ndash;&gt;-->
-<!--          </a>-->
-<!--          <div class="dropdown-divider"></div>-->
-<!--          <a href="#" class="dropdown-item dropdown-footer">See All Messages</a>-->
-<!--        </div>-->
-<!--      </li>-->
+<!-- Messages Dropdown Menu -->
+<li class="nav-item dropdown">
+  <a class="nav-link" data-toggle="dropdown" href="#">
+    <i class="far fa-comments"></i>
+    {% if unread_notifications_count > 0 %}
+      <span class="badge badge-danger navbar-badge">{{ unread_notifications_count }}</span>
+    {% endif %}
+  </a>
+  <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+    {% for notification in recent_notifications %}
+    <a href="{% url 'mark_notification_as_read' notification.id %}" class="dropdown-item {% if not notification.is_read %}font-weight-bold{% endif %}">
+      <!-- Message Start -->
+      <div class="media">
+        <span class="img-size-50 mr-3 img-circle d-flex align-items-center justify-content-center bg-primary">
+            <i class="fas fa-bell text-white"></i>
+        </span>
+        <div class="media-body">
+          <h3 class="dropdown-item-title text-wrap">
+            {{ notification.message|truncatewords:8 }}
+            {% if not notification.is_read %}
+              <span class="float-right text-sm text-success"><i class="fas fa-star"></i></span>
+            {% endif %}
+          </h3>
+          <p class="text-sm text-muted"><i class="far fa-clock mr-1"></i> {{ notification.created_at|timesince }} ago</p>
+        </div>
+      </div>
+      <!-- Message End -->
+    </a>
+    <div class="dropdown-divider"></div>
+    {% empty %}
+      <a href="#" class="dropdown-item">
+          <p class="text-center text-muted p-2">You have no new notifications.</p>
+      </a>
+    {% endfor %}
+    <a href="#" class="dropdown-item dropdown-footer">See All Notifications</a>
+  </div>
+</li>
       <!-- hr_app/templates/navbar.html -->
 
       <!-- Notifications Dropdown Menu -->

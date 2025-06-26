@@ -141,6 +141,9 @@ urlpatterns = [
     path('notifications/', views.all_notifications, name='all_notifications'),
     path('employee/<int:employee_id>/edit/', views.edit_employee, name='edit_employee'),
     path('attendance/my-record/', views.my_attendance_view, name='my_attendance'),
+    path('task/<int:task_id>/comment/', views.add_task_comment, name='add_task_comment'),
+    path('notification/read/<int:notification_id>/', views.mark_notification_as_read, name='mark_notification_as_read'),
+    path('task/<int:task_id>/post_message/', views.post_task_message, name='post_task_message'),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
